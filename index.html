@@ -28,6 +28,7 @@
     --lav-soft:#EDE9F0;
     --blue:#A6C3D6;
     --blue-soft:#E4EEF4;
+    --font-main:"CuHsianTi";
     --ink:#5E554C;
     --ink-soft:#A69C90;
     --line:#EAE3D8;
@@ -47,16 +48,23 @@
     font-style: normal;
     font-display: swap;
   }
+  @font-face {
+    font-family: 'CuHsianTi';
+    src: url("assets/cuhsian-full.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
   *{box-sizing:border-box;}
   body{
     margin:0;
     background: var(--cream);
     color:var(--ink);
-    font-family:"RedBeanCream", "Noto Sans TC", -apple-system, sans-serif;
+    font-family:var(--font-main), "Noto Sans TC", -apple-system, sans-serif;
     padding-bottom:60px;
     -webkit-font-smoothing:antialiased;
   }
-  .cute{ font-family:"RedBeanCream", "ZCOOL KuaiLe", "Noto Sans TC", sans-serif; }
+  .cute{ font-family:var(--font-main), "ZCOOL KuaiLe", "Noto Sans TC", sans-serif; }
 
   .stamp-row{
     display:flex; align-items:center; justify-content:space-between;
@@ -305,6 +313,8 @@
   .food-suggest .fs-item:last-child{ border-bottom:none; }
   .food-suggest .fs-item:active{ background:var(--pink-soft); }
   .food-suggest .fs-k{ color:var(--ink-soft); white-space:nowrap; }
+  .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:6px 4px 12px; border-bottom:1px dashed var(--line); margin-bottom:8px; font-size:var(--fs-label); color:var(--ink-soft); }
   .plan-bar{ display:flex; justify-content:center; padding:12px 20px 2px; }
   .plan-current{ background:var(--pink-soft); color:var(--ink); border:none; border-radius:20px;
     padding:8px 20px; font-size:var(--fs-body); font-weight:700; cursor:pointer; font-family:inherit; }
@@ -408,6 +418,7 @@
   <button id="planCurrent" class="plan-current cute">減重計畫 ▾</button>
 </div>
 <div class="plan-panel" id="planPanel">
+  <div class="settings-row"><span>字體</span><button type="button" class="mini-btn" id="fontToggle">粗線體</button></div>
   <div class="plan-list" id="planList"></div>
   <div class="plan-new">
     <div style="font-size:18.4px;color:var(--ink-soft);font-weight:700;">新增計畫</div>
@@ -428,7 +439,7 @@
 
 <header class="hero" id="heroSection">
   <div class="washi"></div>
-  <h1 class="cute">64kg → 60kg 大作戰</h1>
+  <h1 class="cute"><span id="heroTitle">64kg → 60kg 大作戰</span> <span class="edit-pencil" id="heroTitleEdit">✏️</span></h1>
   <div class="countdown-strip">
     <div class="metric">
       <div class="num" id="daysLeft">--</div>
@@ -2174,9 +2185,42 @@
     document.getElementById("addPlanBtn").addEventListener("click", addPlan);
   }
 
+  // ---------- 字體切換(粗線體 / 紅豆奶霜體,可比較) ----------
+  let fontPref = "cu";   // 全域設定(不分計畫)
+  function applyFont(){
+    document.documentElement.style.setProperty("--font-main", fontPref==="cu" ? '"CuHsianTi"' : '"RedBeanCream"');
+    const b=document.getElementById("fontToggle");
+    if(b) b.textContent = fontPref==="cu" ? "粗線體(點我換紅豆奶霜體)" : "紅豆奶霜體(點我換粗線體)";
+  }
+  async function loadFontPref(){
+    try{ const r=await window.storage.get("fontpref",false); if(r&&r.value) fontPref=r.value; }catch(e){}
+    applyFont();
+  }
+  function initFontModule(){
+    const b=document.getElementById("fontToggle");
+    if(b) b.addEventListener("click", async ()=>{ fontPref = fontPref==="cu" ? "redbean" : "cu"; applyFont(); try{ await window.storage.set("fontpref", fontPref, false); }catch(e){} });
+  }
+
+  // ---------- 標題可編輯(自動儲存) ----------
+  async function loadHeroTitle(){
+    const el=document.getElementById("heroTitle"); if(!el) return;
+    try{ const r=await window.storage.get(K("herotitle"),false); if(r&&r.value) el.textContent=r.value; }catch(e){}
+  }
+  function initHeroTitle(){
+    const el=document.getElementById("heroTitle"), pen=document.getElementById("heroTitleEdit");
+    if(!el||!pen) return;
+    pen.addEventListener("click", ()=>{ el.contentEditable="true"; el.focus(); document.getSelection().selectAllChildren(el); });
+    el.addEventListener("blur", async ()=>{ el.contentEditable="false"; const v=el.textContent.trim();
+      if(v){ try{ await window.storage.set(K("herotitle"), v, false); }catch(e){} } });
+  }
+
   async function init(){
     await loadPlans();
     initPlanModule();
+    initFontModule();
+    await loadFontPref();
+    initHeroTitle();
+    await loadHeroTitle();
     applyPlanView();
     await loadOverrides();
     renderTodayMenu();
