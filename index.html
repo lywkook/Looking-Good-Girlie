@@ -316,6 +316,10 @@
   .ai-key-row input{ flex:1; min-width:0; border:1.5px solid var(--line); border-radius:12px; padding:9px 12px; font-size:16px; font-family:inherit; background:#fff; color:var(--ink); }
   .ai-key-hint{ font-size:14.5px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
   .ai-key-hint a{ color:var(--mint); font-weight:900; }
+  .menu-regen-box{ display:none; margin-top:12px; padding:14px; background:var(--mint-soft); border-radius:16px; }
+  .menu-regen-box.show{ display:block; }
+  .menu-regen-box input{ width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px;
+    padding:11px 13px; font-size:18px; font-family:inherit; background:#fff; color:var(--ink); }
   .wo-field{ margin:12px 0; }
   .wo-field label{ display:block; font-size:16.5px; color:var(--ink-soft); margin-bottom:6px; }
   .wo-textarea{ width:100%; box-sizing:border-box; min-height:78px; border:1.5px solid var(--line); border-radius:14px;
@@ -386,6 +390,12 @@
   <h2 class="cute"><span class="dot"></span>今日菜單 🍽️</h2>
   <div class="weight-box" id="todayMenuBox" style="border-style:solid;">
     <!-- filled by JS -->
+  </div>
+  <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;">🔄 不想吃這些?換一份</button>
+  <div class="menu-regen-box" id="menuRegenBox">
+    <input id="menuWish" placeholder="想吃什麼?例:牛肉麵、清淡的、日式(可留空)" autocomplete="off">
+    <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">產生新菜單 ✨</button>
+    <div class="ai-photo-status" id="menuRegenStatus"></div>
   </div>
 </div>
 
@@ -614,23 +624,22 @@
       exercises: [{name:"跑步機間歇", detail:"快走 2 分鐘、慢跑或加速走 1 分鐘,重複 7-8 輪,共 20-25 分鐘"}].concat(cardioExercises)};
   }
 
-  // 午餐用比較自然的口吻寫,對應 proteinRotation 的順序:雞肉/鱸魚/牛肉片/蝦仁/牛排/嫩豆腐鍋
+  // 只寫「吃什麼」,對應 proteinRotation 順序:雞肉/鱸魚/牛肉片/蝦仁/牛排/嫩豆腐鍋
   const lunchText = [
-    "雞胸肉或雞腿肉煎一煎,配一碗白飯,青菜就用小黃瓜或蔥炒一下,簡單吃飽最重要。",
-    "中午吃鱸魚,清蒸或煎過都好,配飯配點蔬菜,清爽不油膩,很適合忙碌的中午。",
-    "牛肉片燙一燙或快炒都行,配一碗白飯,蔬菜盡量多夾一點不用手軟。",
-    "蝦仁蒜炒一下很快就熟,配飯配菜,今天這餐可以吃得豐盛一點沒關係。",
-    "想吃牛排的話中午吃,煎到自己喜歡的熟度,配菜多放一點,飯照舊一碗份量。",
-    "中午吃嫩豆腐鍋或豆腐也可以,配一碗白飯,湯喝個大半就好,鈉偏高別喝到見底。"
+    "雞胸肉(或雞腿) + 白飯一碗 + 炒青菜",
+    "清蒸鱸魚 + 白飯 + 燙青菜",
+    "燙牛肉片 + 白飯一碗 + 青菜",
+    "蒜炒蝦仁 + 白飯 + 蔬菜",
+    "煎牛排一片 + 白飯一碗 + 大量蔬菜",
+    "韓式嫩豆腐鍋 + 白飯"
   ];
-  // 晚餐搭配對應 (idx+3) 的蛋白質,語氣稍微輕鬆一點,澱粉依 corn/白飯邏輯調整
   const dinnerText = [
-    "晚上吃雞肉,配蔬菜為主,{carb}",
-    "晚上換鱸魚,清蒸最方便,配蔬菜,{carb}",
-    "晚上牛肉片快炒一下配蔬菜,{carb}",
-    "晚上蝦仁配蔬菜,煮起來快又不會太油,{carb}",
-    "晚上吃牛排的話份量不用太大,配大量蔬菜,{carb}",
-    "晚上煮個嫩豆腐鍋或豆腐料理,湯喝一半就好,{carb}"
+    "雞肉 + 蔬菜{carb}",
+    "清蒸鱸魚 + 蔬菜{carb}",
+    "牛肉片炒蔬菜{carb}",
+    "蝦仁 + 蔬菜{carb}",
+    "牛排(份量小) + 大量蔬菜{carb}",
+    "嫩豆腐鍋{carb}"
   ];
 
   function dietForDay(idx){
@@ -638,14 +647,12 @@
     const dinnerIdx = (idx + 3) % 6;
     const fruit = fruitRotation[idx % fruitRotation.length];
     const cornDay = (idx % 4 === 3);
-    const carb = cornDay
-      ? "澱粉就吃那根玉米,今天剛好留給它上場。"
-      : "飯的話半碗就好,中午已經吃得比較飽了,不吃也沒問題。";
+    const carb = cornDay ? " + 玉米" : " + 半碗飯";
     return {
-      breakfast: "水煮蛋 1 顆" + (idx % 2 === 0 ? "" : ",想配水果就配一份 " + fruit) ,
+      breakfast: "水煮蛋 1 顆",
       lunch: lunchText[lunchIdx],
       dinner: dinnerText[dinnerIdx].replace("{carb}", carb),
-      fruit: fruit + " 一份,想吃就配在早餐後或下午,沒有硬性規定一定要吃"
+      fruit: fruit + " 一份"
     };
   }
 
@@ -694,6 +701,61 @@
         renderDays(); // 同步更新下方每日清單裡的文字
       });
     });
+  }
+
+  // ---------- 換今日菜單(不想吃就選想吃的、重新給一份) ----------
+  let menuVariant = 0;
+  function applyMenu(menu){
+    const iso = isoDate(today);
+    const te = days.find(d=>d.iso===iso) || days[0];
+    ["breakfast","lunch","dinner","fruit"].forEach(f=>{
+      if(menu[f]!=null && String(menu[f]).trim()){
+        te.diet[f] = String(menu[f]).trim();
+        try{ window.storage.set("dietover:"+iso+":"+f, te.diet[f], false); }catch(e){}
+      }
+    });
+    renderTodayMenu(); renderDays();
+  }
+  function localNewMenu(){
+    const iso = isoDate(today);
+    const te = days.find(d=>d.iso===iso) || days[0];
+    menuVariant++;
+    return dietForDay((te.idx - 1) + menuVariant);  // 換一個輪替組合(不同蛋白質/澱粉)
+  }
+  async function regenMenu(){
+    const status = document.getElementById("menuRegenStatus");
+    const wish = (document.getElementById("menuWish").value||"").trim();
+    if(!geminiKey){
+      applyMenu(localNewMenu());
+      status.innerHTML = '<span class="ok">已換一份 ✅</span>' + (wish ? ' <span style="color:var(--ink-soft);font-size:14.5px">想精準指定「'+esc(wish)+'」需到下方「飲食紀錄」貼上免費 AI 金鑰</span>' : '');
+      return;
+    }
+    const btn = document.getElementById("menuGenBtn"); const old = btn.textContent;
+    btn.disabled = true; btn.textContent = "產生中…";
+    status.innerHTML = '<span class="ai-spin"></span>重新設計中…';
+    try{
+      const target = parseInt(document.getElementById("inKcalTarget").value,10) || kcalTarget || 1500;
+      const prompt = '你是營養師,幫正在減重的人重新設計「今天一天」的菜單。'
+        + '每日熱量目標約 '+target+' 大卡,以原型食物、好準備為主。'
+        + '使用者的需求 / 想吃的:'+(wish || '沒特別指定,給清爽好準備的')+'。'
+        + '冰箱可能有:牛排、雞肉、鱸魚、牛肉片、蝦仁、豆腐、白飯、白麵、蔬菜、蕃茄橘子蘋果玉米(不一定要全用,想吃外食也可以)。'
+        + '只回傳 JSON,每一項「只寫吃什麼」、不要說明或理由、不超過 25 字,格式:{"breakfast":"...","lunch":"...","dinner":"...","fruit":"..."}。';
+      const m = await geminiJSON(prompt, null, 0.6);
+      if(!m || !m.lunch) throw new Error("回傳格式看不懂");
+      applyMenu(m);
+      status.innerHTML = '<span class="ok">新菜單好了 ✅ 已套用到上面</span>';
+    }catch(e){
+      applyMenu(localNewMenu());
+      status.innerHTML = '<span class="err">AI 失敗('+esc(e.message||e)+'),先幫你換一種現成組合。</span>';
+    }
+    btn.disabled = false; btn.textContent = old;
+  }
+  function initMenuModule(){
+    const tgl = document.getElementById("menuRegenBtn");
+    const box = document.getElementById("menuRegenBox");
+    if(tgl && box) tgl.addEventListener("click", ()=> box.classList.toggle("show"));
+    const gen = document.getElementById("menuGenBtn");
+    if(gen) gen.addEventListener("click", regenMenu);
   }
 
   const listEl = document.getElementById("dayList");
@@ -1790,6 +1852,7 @@
     applyPlanView();
     await loadOverrides();
     renderTodayMenu();
+    initMenuModule();
     await loadDoneState();
     await loadLog();
     initMetricsCollapse();
