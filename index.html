@@ -487,10 +487,10 @@
     const todayIso = isoDate(today);
     const todayEntry = days.find(d=>d.iso===todayIso) || days[0];
     const box = document.getElementById("todayMenuBox");
-    const fields = [["breakfast","🍳 早餐"],["lunch","🍚 午餐"],["dinner","🍲 晚餐"],["fruit","🍎 水果點心"]];
+    const fields = [["breakfast","早餐"],["lunch","午餐"],["dinner","晚餐"],["fruit","水果點心"]];
     box.innerHTML = fields.map(([f,label],i)=>`
       <div class="blk" style="${i===fields.length-1?'margin-bottom:0;':''}">
-        <div class="blk-title">${label} <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}">✏️</span></div>
+        <div class="blk-title"><b style="font-weight:700;">${label}</b> <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}">✏️</span></div>
         <div class="editable-content" data-field="${f}" data-iso="${todayEntry.iso}">${todayEntry.diet[f]}</div>
       </div>`).join("");
     box.querySelectorAll(".edit-pencil").forEach(p=>{
