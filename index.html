@@ -26,6 +26,8 @@
     --mint-soft:#E9EDE7;
     --lav:#C3BDCB;
     --lav-soft:#EDE9F0;
+    --blue:#A6C3D6;
+    --blue-soft:#E4EEF4;
     --ink:#5E554C;
     --ink-soft:#A69C90;
     --line:#EAE3D8;
@@ -252,14 +254,14 @@
   .kcal-bar{ height:14px; border-radius:10px; background:var(--pink-soft); overflow:hidden; margin:8px 0 2px; }
   .kcal-bar > span{ display:block; height:100%; border-radius:10px; background:var(--pink); }
   .kcal-bar.over > span{ background:#CDA9A2; }
-  .advice{ background:var(--mint-soft); border-radius:16px; padding:12px 14px; margin:12px 0 2px;
+  .advice{ background:var(--pink-soft); border-radius:16px; padding:12px 14px; margin:12px 0 2px;
     font-size:var(--fs-body); line-height:1.6; color:var(--ink); }
   .advice.over{ background:#EFE6E1; }
   .advice.warn{ background:var(--lav-soft); }
   .meal-group{ margin-top:14px; }
   .meal-group-title{ font-size:var(--fs-label); font-weight:900; color:var(--pink); margin-bottom:2px;
     display:flex; align-items:center; gap:8px; }
-  .mg-add{ margin-left:auto; font-weight:700; color:var(--ink); background:var(--mint-soft);
+  .mg-add{ margin-left:auto; font-weight:700; color:var(--ink); background:var(--pink-soft);
     border-radius:12px; padding:4px 12px; cursor:pointer; font-size:var(--fs-label); }
   .mg-add:active{ transform:scale(0.96); }
   .field select{
@@ -307,34 +309,38 @@
   #foodPhotoPreview{ display:inline-flex; align-items:center; gap:6px; }
   .food-thumb-prev{ width:44px; height:44px; object-fit:cover; border-radius:8px; }
   .pp-x{ color:var(--ink-soft); cursor:pointer; font-size:var(--fs-body); padding:0 4px; }
-  .ai-photo-box{ background:var(--mint-soft); border-radius:16px; padding:14px; margin:14px 0; }
+  .ai-photo-box{ background:var(--pink-soft); border-radius:16px; padding:14px; margin:14px 0; }
   .ai-photo-title{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:10px; }
-  .ai-badge{ background:var(--mint); color:#fff; font-size:var(--fs-hint); font-weight:900; padding:2px 8px; border-radius:10px; vertical-align:middle; margin-left:4px; }
-  .ai-photo-btn{ width:100%; background:var(--mint); color:#fff; border:none; border-radius:14px;
-    padding:13px; font-size:var(--fs-body); font-weight:900; font-family:inherit; cursor:pointer; box-shadow:0 4px 0 #A7B4A4; }
-  .ai-photo-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #A7B4A4; }
+  .ai-badge{ background:var(--pink); color:#fff; font-size:var(--fs-hint); font-weight:900; padding:2px 8px; border-radius:10px; vertical-align:middle; margin-left:4px; }
+  .ai-photo-btn{ width:100%; background:var(--pink); color:#fff; border:none; border-radius:14px;
+    padding:13px; font-size:var(--fs-body); font-weight:900; font-family:inherit; cursor:pointer; box-shadow:0 4px 0 #B49599; }
+  .ai-photo-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #B49599; }
   .ai-photo-btn:disabled{ opacity:.6; cursor:default; }
   .ai-photo-status{ font-size:var(--fs-label); color:var(--ink); margin-top:10px; text-align:center; min-height:1px; }
   .ai-photo-status .ok{ color:var(--ink); font-weight:900; }
   .ai-photo-status .err{ color:#B5766F; }
-  .ai-add-more{ display:inline-block; margin-top:8px; background:#fff; border:1.5px solid var(--mint);
+  .ai-add-more{ display:inline-block; margin-top:8px; background:#fff; border:1.5px solid var(--pink);
     color:var(--ink); border-radius:12px; padding:6px 14px; cursor:pointer; font-weight:700; font-size:var(--fs-label); }
   .ai-add-more:active{ transform:scale(0.96); }
   .ai-spin{ display:inline-block; width:16px; height:16px; border:3px solid var(--mint); border-top-color:transparent;
     border-radius:50%; animation:aispin .8s linear infinite; vertical-align:-3px; margin-right:6px; }
   @keyframes aispin{ to{ transform:rotate(360deg); } }
-  .ai-key-toggle{ display:inline-block; margin-top:10px; font-size:var(--fs-label); color:var(--ink-soft); cursor:pointer; text-decoration:underline; }
+  .ai-key-line{ margin-top:10px; font-size:var(--fs-label); }
+  .ai-key-toggle{ display:inline-block; color:var(--ink-soft); cursor:pointer; text-decoration:underline; }
+  .ai-key-link{ color:var(--pink); font-weight:700; margin-left:4px; text-decoration:none; }
   .ai-key-row{ display:none; gap:8px; margin-top:10px; }
   .ai-key-row.show{ display:flex; }
   .ai-key-row input{ flex:1; min-width:0; border:1.5px solid var(--line); border-radius:12px; padding:9px 12px; font-size:var(--fs-label); font-family:inherit; background:#fff; color:var(--ink); }
-  .ai-key-hint{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:8px; line-height:1.5; }
-  .ai-key-hint a{ color:var(--mint); font-weight:900; }
   .fridge-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
   .fchip{ display:inline-flex; align-items:center; gap:5px; padding:8px 14px; border-radius:20px;
     background:#FFFDFA; border:2px solid var(--line); color:var(--ink-soft);
     font-size:var(--fs-label); cursor:pointer; user-select:none; }
-  .fchip.on{ background:var(--mint); border-color:var(--mint); color:#fff; font-weight:700; }
-  .fchip .fx{ font-style:normal; opacity:.7; font-size:var(--fs-hint); }
+  .fchip.on{ background:var(--pink); border-color:var(--pink); color:#fff; font-weight:700; }
+  .fchip.add{ background:#FFFDFA; border-color:var(--line); color:var(--ink-soft); }
+  .fchip .fx{ font-style:normal; opacity:.8; font-size:var(--fs-hint); }
+  .fridge-empty{ color:var(--ink-soft); font-size:var(--fs-label); }
+  .fridge-sugg-label{ font-size:var(--fs-hint); color:var(--ink-soft); margin:12px 0 6px; }
+  .fridge-sugg{ display:flex; flex-wrap:wrap; gap:8px; }
   .fridge-add-row{ display:flex; gap:8px; }
   .fridge-add-row input{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
     font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
@@ -342,7 +348,7 @@
     background:#FFFBF6; border:2px solid var(--line); border-radius:14px; padding:11px 14px; margin-top:8px; }
   .dish .d-name{ font-size:var(--fs-body); color:var(--ink); }
   .dish .d-kcal{ font-size:var(--fs-label); color:var(--pink); font-weight:900; white-space:nowrap; }
-  .menu-regen-box{ display:none; margin-top:12px; padding:14px; background:var(--mint-soft); border-radius:16px; }
+  .menu-regen-box{ display:none; margin-top:12px; padding:14px; background:var(--pink-soft); border-radius:16px; }
   .menu-regen-box.show{ display:block; }
   .menu-regen-box input{ width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px;
     padding:11px 13px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); }
@@ -359,14 +365,17 @@
   .wo-items{ margin:0; padding-left:20px; }
   .wo-items li{ font-size:var(--fs-label); color:var(--ink); line-height:1.55; margin-bottom:2px; }
   .water-row{ display:flex; align-items:center; justify-content:center; gap:20px; }
-  .water-btn{ width:56px; height:56px; border-radius:50%; border:none; background:var(--lav-soft);
-    color:var(--ink); font-size:28px; font-weight:900; cursor:pointer; font-family:inherit; line-height:1; }
+  .water-btn{ width:56px; height:56px; border-radius:50%; border:none; background:var(--blue-soft);
+    color:var(--blue); font-size:28px; font-weight:900; cursor:pointer; font-family:inherit; line-height:1; }
   .water-btn:active{ transform:scale(0.94); }
-  .water-count{ font-size:var(--fs-num); font-weight:900; color:var(--ink); min-width:130px; text-align:center; }
+  .water-count{ font-size:var(--fs-num); font-weight:900; color:var(--blue); min-width:130px; text-align:center; }
   .water-cups{ display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin:14px 0 4px; }
-  .water-cups .cup{ width:24px; height:30px; border-radius:5px 5px 10px 10px; border:2px solid var(--lav); background:transparent; }
-  .water-cups .cup.full{ background:var(--lav); }
+  .water-cups .cup{ width:24px; height:30px; border-radius:5px 5px 10px 10px; border:2px solid var(--blue); background:transparent; }
+  .water-cups .cup.full{ background:var(--blue); }
   .water-ml{ text-align:center; color:var(--ink-soft); font-size:var(--fs-label); }
+  /* 喝水那一區的圓點也用藍色 */
+  #waterSection .dot{ background:var(--blue); }
+  #waterSection .weight-box{ border-color:var(--blue-soft); }
 </style>
 </head>
 <body>
@@ -437,9 +446,11 @@
   <div class="weight-box">
     <div class="fridge-chips" id="fridgeChips"></div>
     <div class="fridge-add-row">
-      <input id="fridgeAdd" placeholder="還有別的?打字加入" autocomplete="off">
+      <input id="fridgeAdd" placeholder="打字加入你有的食材" autocomplete="off">
       <button type="button" class="mini-btn" id="fridgeAddBtn">加入</button>
     </div>
+    <div class="fridge-sugg-label">常用(點一下加入):</div>
+    <div class="fridge-sugg" id="fridgeSugg"></div>
     <button type="button" class="ai-photo-btn" id="fridgeGenBtn" style="margin-top:12px;">推薦可以煮的菜 🍳</button>
     <div class="ai-photo-status" id="fridgeStatus"></div>
     <div id="fridgeResult"></div>
@@ -481,7 +492,7 @@
       <label>器材 · 想加強的部位 · 偏好(自由填,越詳細越準)</label>
       <textarea id="woNote" class="wo-textarea" placeholder="例:家裡有 5-8 磅啞鈴 + 跑步機,想練直角肩、大腿內側、手臂拜拜肉,不想跳太吵的動作,膝蓋不好"></textarea>
     </div>
-    <button class="save-btn cute" id="woGenBtn" style="background:var(--mint); box-shadow:0 4px 0 #A7B4A4;">產生我的客製化運動計畫 ✨</button>
+    <button class="save-btn cute" id="woGenBtn">產生我的客製化運動計畫 ✨</button>
     <div id="woResult"></div>
   </div>
 </div>
@@ -505,19 +516,21 @@
       <button type="button" class="mini-btn" id="foodPhotoBtn">📷 加照片(選填)</button>
       <span id="foodPhotoPreview"></span>
     </div>
-    <button class="save-btn cute" id="addFoodBtn" style="background:var(--peach); box-shadow:0 4px 0 #C0A98F;">加入這一餐 🍽️</button>
+    <button class="save-btn cute" id="addFoodBtn">加入這一餐 🍽️</button>
 
     <div class="ai-photo-box" id="aiPhotoBox">
       <div class="ai-photo-title">📷 拍照估熱量 <span class="ai-badge">AI</span></div>
       <input type="file" accept="image/*" id="aiPhotoInput" style="display:none">
       <button type="button" class="ai-photo-btn" id="aiPhotoBtn">上傳食物照片,自動估熱量加入<span id="aiMealName">早餐</span></button>
       <div class="ai-photo-status" id="aiPhotoStatus"></div>
-      <div class="ai-key-toggle" id="aiKeyToggle">🔑 AI 金鑰設定</div>
+      <div class="ai-key-line">
+        <span class="ai-key-toggle" id="aiKeyToggle">🔑 AI 金鑰設定</span>
+        <a class="ai-key-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">(Google AI Studio)</a>
+      </div>
       <div class="ai-key-row" id="aiKeyRow">
         <input type="password" id="inGeminiKey" placeholder="貼上免費的 Google AI 金鑰" autocomplete="off">
         <button type="button" class="mini-btn" id="saveGeminiKey">儲存</button>
       </div>
-      <div class="ai-key-hint" id="aiKeyHint"></div>
     </div>
 
     <div class="target-row">
@@ -547,7 +560,7 @@
 </div>
 
 <div class="section" id="metricsSection">
-  <h2 class="cute" id="mxToggle"><span class="dot"></span>今日量測紀錄 <span class="pf-caret" id="mxCaret">▾</span></h2>
+  <h2 class="cute" id="mxToggle"><span class="dot"></span>今日身體數據 <span class="pf-caret" id="mxCaret">▾</span></h2>
   <div class="pf-mini" id="mxMini"></div>
   <div class="weight-box">
     <div class="metric-inputs">
@@ -843,10 +856,10 @@
     {n:"番茄牛肉湯", need:["蕃茄","牛肉片"], kcal:320},
     {n:"陽春麵 + 燙青菜", need:["白麵","青菜"], kcal:400}
   ];
-  let fridgeHave = []; let fridgeCustom = [];
+  let fridgeHave = [];
   async function loadFridge(){
-    fridgeHave=[]; fridgeCustom=[];
-    try{ const r=await window.storage.get(K("fridge"),false); if(r&&r.value){ const o=JSON.parse(r.value)||{}; fridgeHave=o.have||[]; fridgeCustom=o.custom||[]; } }catch(e){}
+    fridgeHave=[];
+    try{ const r=await window.storage.get(K("fridge"),false); if(r&&r.value){ const o=JSON.parse(r.value)||{}; fridgeHave=o.have||[]; } }catch(e){}
     renderFridgeChips();
     const rb=document.getElementById("fridgeResult"); if(rb) rb.innerHTML="";
     const sb=document.getElementById("fridgeStatus"); if(sb) sb.innerHTML="";
@@ -854,35 +867,24 @@
     let stored=null; try{ const c=await window.storage.get(K("frcollapsed"),false); if(c&&c.value!=null&&c.value!=="") stored=c.value; }catch(e){}
     setFridgeCollapsed(stored!=null ? stored==="1" : !fridgeHave.length, false);
   }
-  async function saveFridge(){ try{ await window.storage.set(K("fridge"), JSON.stringify({have:fridgeHave,custom:fridgeCustom}), false); }catch(e){} }
+  async function saveFridge(){ try{ await window.storage.set(K("fridge"), JSON.stringify({have:fridgeHave}), false); }catch(e){} }
+  function addFridge(n){ n=(n||"").trim(); if(!n) return; if(fridgeHave.indexOf(n)<0) fridgeHave.push(n); saveFridge(); renderFridgeChips(); updateFrMini(); }
+  function removeFridge(n){ fridgeHave=fridgeHave.filter(c=>c!==n); saveFridge(); renderFridgeChips(); updateFrMini(); }
   function renderFridgeChips(){
-    const box=document.getElementById("fridgeChips"); if(!box) return;
-    const all = FRIDGE_PRESET.concat(fridgeCustom.filter(c=>FRIDGE_PRESET.indexOf(c)<0));
-    box.innerHTML = all.map(n=>{
-      const on = fridgeHave.indexOf(n)>=0;
-      const custom = FRIDGE_PRESET.indexOf(n)<0;
-      return '<span class="fchip'+(on?' on':'')+'" data-n="'+esc(n)+'">'+esc(n)+(custom?' <i class="fx" data-del="'+esc(n)+'">✕</i>':'')+'</span>';
-    }).join("");
-    box.querySelectorAll(".fchip").forEach(c=>{
-      c.addEventListener("click",(e)=>{ if(e.target.classList.contains("fx")) return;
-        const n=c.dataset.n; const i=fridgeHave.indexOf(n);
-        if(i>=0) fridgeHave.splice(i,1); else fridgeHave.push(n);
-        saveFridge(); renderFridgeChips(); updateFrMini();
-      });
-    });
-    box.querySelectorAll(".fx").forEach(x=>{
-      x.addEventListener("click",(e)=>{ e.stopPropagation(); const n=x.dataset.del;
-        fridgeCustom=fridgeCustom.filter(c=>c!==n); fridgeHave=fridgeHave.filter(c=>c!==n);
-        saveFridge(); renderFridgeChips(); updateFrMini();
-      });
-    });
+    const box=document.getElementById("fridgeChips"); if(box){
+      box.innerHTML = fridgeHave.length
+        ? fridgeHave.map(n=> '<span class="fchip on" data-n="'+esc(n)+'">'+esc(n)+' <i class="fx" data-del="'+esc(n)+'">✕</i></span>').join("")
+        : '<div class="fridge-empty">還沒加食材,點下面「常用」或打字加入你有的</div>';
+      box.querySelectorAll(".fx").forEach(x=> x.addEventListener("click",(e)=>{ e.stopPropagation(); removeFridge(x.dataset.del); }));
+    }
+    const sg=document.getElementById("fridgeSugg"); if(sg){
+      const sugg = FRIDGE_PRESET.filter(n=> fridgeHave.indexOf(n)<0);
+      sg.innerHTML = sugg.map(n=> '<span class="fchip add" data-add="'+esc(n)+'">＋'+esc(n)+'</span>').join("");
+      sg.querySelectorAll(".fchip.add").forEach(c=> c.addEventListener("click",()=> addFridge(c.dataset.add)));
+    }
   }
   function addFridgeCustom(){
-    const el=document.getElementById("fridgeAdd"); const v=(el.value||"").trim();
-    if(!v) return;
-    if(FRIDGE_PRESET.indexOf(v)<0 && fridgeCustom.indexOf(v)<0) fridgeCustom.push(v);
-    if(fridgeHave.indexOf(v)<0) fridgeHave.push(v);
-    el.value=""; saveFridge(); renderFridgeChips(); updateFrMini();
+    const el=document.getElementById("fridgeAdd"); addFridge(el.value); el.value="";
   }
   function localDishes(){
     const have=fridgeHave;
@@ -1599,11 +1601,8 @@
     keySave.addEventListener("click", async ()=>{
       const v=cleanKey(keyInput.value);
       geminiKey=v; keyInput.value=v; try{ await window.storage.set("geminikey", v, false); }catch(e){}
-      updateAIKeyHint();
-      const ok = /^AIza[0-9A-Za-z\-_]{20,}$/.test(v);
-      if(v && ok){ keyRow.classList.remove("show"); status.innerHTML='<span class="ok">金鑰已儲存 ✅ 現在可以上傳照片了</span>'; }
-      else if(v){ status.innerHTML='<span class="err">已存,但這串看起來不像正確金鑰(應以 AIza 開頭、無空格),請確認後重貼</span>'; }
-      else { status.innerHTML=''; }
+      keyRow.classList.remove("show");
+      status.innerHTML = v ? '<span class="ok">金鑰已儲存 ✅ 現在可以上傳照片了</span>' : '';
     });
     btn.addEventListener("click", ()=>{
       if(!geminiKey){ keyRow.classList.add("show"); status.innerHTML='<span class="err">請先貼上免費金鑰(下方 🔑 展開)</span>'; keyInput.focus(); return; }
