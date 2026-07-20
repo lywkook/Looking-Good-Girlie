@@ -213,11 +213,29 @@
     border-radius:14px; padding:10px; margin-top:10px; align-items:flex-start;
   }
   .food-card img{ width:56px; height:56px; object-fit:cover; border-radius:10px; flex-shrink:0; }
+  .food-card .fc-drag{ font-size:var(--fs-body); color:var(--ink-soft); cursor:grab; padding:2px 4px;
+    touch-action:none; align-self:center; user-select:none; }
+  .food-card .fc-main{ flex:1; min-width:0; }
   .food-card .fc-name{ font-size:var(--fs-body); font-weight:700; }
-  .food-card .fc-kcal{ font-size:var(--fs-body); color:var(--pink); font-weight:900; }
+  .food-card .fc-qtyrow{ display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap; }
+  .fc-q{ width:28px; height:28px; border-radius:50%; border:2px solid var(--line); background:#fff;
+    color:var(--ink); font-size:var(--fs-body); font-weight:900; line-height:1; cursor:pointer; font-family:inherit; }
+  .fc-qty{ font-size:var(--fs-label); font-weight:900; color:var(--ink); min-width:26px; text-align:center; }
+  .food-card .fc-kcal{ font-size:var(--fs-label); color:var(--pink); font-weight:900; }
   .food-card .fc-macro{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; }
   .food-card .fc-note{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:3px; }
-  .food-card .fc-del{ margin-left:auto; font-size:var(--fs-label); color:var(--ink-soft); cursor:pointer; padding:2px 6px; }
+  .food-card .fc-del{ align-self:center; font-size:var(--fs-label); color:var(--ink-soft); cursor:pointer; padding:2px 6px; }
+  .food-card.dragging{ opacity:0.4; }
+  .drag-ghost{ position:fixed; transform:translate(-50%,-50%); z-index:999; pointer-events:none;
+    opacity:0.95; box-shadow:0 8px 24px rgba(94,85,76,0.25); margin:0 !important; }
+  .meal-group.drop-hi{ outline:2px dashed var(--pink); outline-offset:3px; border-radius:14px; background:var(--pink-soft); }
+  .mg-empty{ font-size:var(--fs-label); color:var(--ink-soft); padding:8px 4px; }
+  .qty-row{ display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .qty-lbl{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
+  .qbtn{ width:32px; height:32px; border-radius:50%; border:2px solid var(--line); background:#fff;
+    color:var(--ink); font-size:var(--fs-body); font-weight:900; line-height:1; cursor:pointer; font-family:inherit; }
+  .qty-val{ font-size:var(--fs-body); font-weight:900; color:var(--ink); min-width:26px; text-align:center; }
+  .qty-hint{ font-size:var(--fs-hint); color:var(--ink-soft); }
   .kcal-total{
     display:inline-block; background:var(--pink-soft); border-radius:20px; padding:6px 16px;
     font-size:var(--fs-num); font-weight:900; color:var(--ink);
@@ -511,6 +529,12 @@
       <div class="kwrap"><input type="number" step="10" id="inFoodKcal" placeholder="熱量"><span class="unit">kcal</span></div>
     </div>
     <div class="food-suggest" id="foodSuggest"></div>
+    <div class="qty-row"><span class="qty-lbl">數量</span>
+      <button type="button" class="qbtn" id="addQtyMinus">−</button>
+      <span class="qty-val" id="addQty">1</span>
+      <button type="button" class="qbtn" id="addQtyPlus">＋</button>
+      <span class="qty-hint">份 / 顆 / 個(熱量會 ×數量)</span>
+    </div>
     <div class="food-photo-row">
       <input type="file" accept="image/*" id="foodPhotoInput" style="display:none">
       <button type="button" class="mini-btn" id="foodPhotoBtn">📷 加照片(選填)</button>
@@ -1474,36 +1498,105 @@
 
     document.getElementById("foodAdvice").innerHTML = buildAdvice(todays, total);
 
-    const order = ["早餐","午餐","晚餐","點心","其他"];
-    const groups = {};
-    todays.forEach(f=>{ const m = order.includes(f.meal)? f.meal : "其他"; (groups[m]=groups[m]||[]).push(f); });
+    const base = ["早餐","午餐","晚餐","點心"];
+    const groups = {}; base.forEach(m=>groups[m]=[]);
+    todays.forEach(f=>{ const m = base.includes(f.meal)? f.meal : "其他"; (groups[m]=groups[m]||[]).push(f); });
+    const order = base.concat(groups["其他"] && groups["其他"].length ? ["其他"] : []);
     const area = document.getElementById("foodLogArea");
-    if(!todays.length){ area.innerHTML = `<div class="chart-empty">今天還沒紀錄,選一餐、輸入食物就會加進來囉</div>`; return; }
-    area.innerHTML = order.filter(m=>groups[m]).map(m=>{
-      const sub = groups[m].reduce((s,f)=>s+(Number(f.kcal)||0),0);
-      const rows = groups[m].map(f=>`
-        <div class="food-card" data-fid="${f.id}">
+    area.innerHTML = order.map(m=>{
+      const items = groups[m]||[];
+      const sub = items.reduce((s,f)=>s+(Number(f.kcal)||0),0);
+      const rows = items.length ? items.map(f=>{
+        const qty = foodQty(f), unit = foodUnit(f);
+        return `
+        <div class="food-card" data-fid="${f.id}" data-meal="${esc(m)}">
+          <span class="fc-drag" data-fid="${f.id}">⠿</span>
           ${f.thumb?`<img src="${f.thumb}">`:''}
-          <div style="flex:1;">
-            <div class="fc-name">${f.name}</div>
-            <div class="fc-kcal">${f.kcal} kcal</div>
+          <div class="fc-main">
+            <div class="fc-name" data-fid="${f.id}">${esc(f.name)}</div>
+            <div class="fc-qtyrow">
+              <button type="button" class="fc-q" data-fid="${f.id}" data-d="-1">−</button>
+              <span class="fc-qty">×${qty}</span>
+              <button type="button" class="fc-q" data-fid="${f.id}" data-d="1">＋</button>
+              <span class="fc-kcal">${Math.round(unit*qty)} kcal</span>
+            </div>
           </div>
-          <div class="fc-del" data-fid="${f.id}">刪除</div>
-        </div>`).join("");
-      const canAdd = ["早餐","午餐","晚餐","點心"].includes(m);
-      const addBtn = canAdd ? `<span class="mg-add" data-meal="${m}">＋ 補食材</span>` : '';
-      return `<div class="meal-group"><div class="meal-group-title">${m} · ${sub} kcal ${addBtn}</div>${rows}</div>`;
+          <span class="fc-del" data-fid="${f.id}">刪除</span>
+        </div>`;
+      }).join("") : '<div class="mg-empty">拖食物到這裡,或按「＋ 補食材」</div>';
+      const addBtn = base.includes(m) ? `<span class="mg-add" data-meal="${esc(m)}">＋ 補食材</span>` : '';
+      return `<div class="meal-group" data-meal="${esc(m)}"><div class="meal-group-title">${m} · ${sub} kcal ${addBtn}</div>${rows}</div>`;
     }).join("");
+
     area.querySelectorAll(".fc-del").forEach(btn=>{
-      btn.addEventListener("click", async ()=>{
-        foodLog = foodLog.filter(f=>f.id !== btn.dataset.fid);
-        await saveFoodLog();
-        renderFoodLog();
+      btn.addEventListener("click", async (e)=>{ e.stopPropagation();
+        foodLog = foodLog.filter(f=>f.id !== btn.dataset.fid); await saveFoodLog(); renderFoodLog();
       });
     });
     area.querySelectorAll(".mg-add").forEach(btn=>{
       btn.addEventListener("click", ()=> focusMealInput(btn.dataset.meal));
     });
+    area.querySelectorAll(".fc-q").forEach(btn=>{
+      btn.addEventListener("click", async (e)=>{ e.stopPropagation();
+        const f = foodLog.find(x=>x.id===btn.dataset.fid); if(!f) return;
+        const unit = foodUnit(f); let qty = foodQty(f) + parseInt(btn.dataset.d,10);
+        if(qty<1) qty=1;
+        f.qty = qty; f.unit = unit; f.kcal = Math.round(unit*qty);
+        await saveFoodLog(); renderFoodLog();
+      });
+    });
+    area.querySelectorAll(".fc-name").forEach(el=>{
+      el.addEventListener("click", (e)=>{ e.stopPropagation();
+        el.contentEditable="true"; el.focus(); document.getSelection().selectAllChildren(el);
+      });
+      el.addEventListener("blur", async ()=>{
+        el.contentEditable="false";
+        const f = foodLog.find(x=>x.id===el.dataset.fid); if(!f) return;
+        const v = el.textContent.trim(); if(v){ f.name = v; await saveFoodLog(); } else { renderFoodLog(); }
+      });
+    });
+    area.querySelectorAll(".fc-drag").forEach(h=>{
+      h.addEventListener("pointerdown", (e)=> startFoodDrag(e, h.dataset.fid));
+    });
+  }
+  function foodUnit(f){ return f.unit!=null ? Number(f.unit) : (Number(f.kcal)||0); }
+  function foodQty(f){ return f.qty!=null ? Number(f.qty) : 1; }
+  async function moveFoodMeal(fid, meal){
+    const f = foodLog.find(x=>x.id===fid); if(!f || f.meal===meal) return;
+    f.meal = meal; await saveFoodLog(); renderFoodLog();
+  }
+  // 觸控 / 滑鼠都可用的拖曳(把食物項目拖到別的餐別底下)
+  let dragFid=null, dragCard=null, dragGhost=null;
+  function startFoodDrag(e, fid){
+    dragFid=fid; dragCard=e.currentTarget.closest(".food-card"); if(!dragCard) return;
+    dragCard.classList.add("dragging");
+    dragGhost=dragCard.cloneNode(true); dragGhost.classList.add("drag-ghost");
+    dragGhost.style.width=dragCard.offsetWidth+"px"; document.body.appendChild(dragGhost);
+    positionGhost(e);
+    document.addEventListener("pointermove", onFoodDragMove);
+    document.addEventListener("pointerup", onFoodDragEnd, {once:true});
+    e.preventDefault();
+  }
+  function positionGhost(e){ if(dragGhost){ dragGhost.style.left=e.clientX+"px"; dragGhost.style.top=e.clientY+"px"; } }
+  function groupUnder(e){
+    if(dragGhost) dragGhost.style.display="none";
+    const el=document.elementFromPoint(e.clientX, e.clientY);
+    if(dragGhost) dragGhost.style.display="";
+    return el && el.closest ? el.closest(".meal-group") : null;
+  }
+  function onFoodDragMove(e){
+    positionGhost(e);
+    const grp=groupUnder(e);
+    document.querySelectorAll(".meal-group").forEach(g=> g.classList.toggle("drop-hi", g===grp));
+  }
+  function onFoodDragEnd(e){
+    document.removeEventListener("pointermove", onFoodDragMove);
+    const grp=groupUnder(e); const targetMeal=grp?grp.dataset.meal:null;
+    if(dragGhost){ dragGhost.remove(); dragGhost=null; }
+    document.querySelectorAll(".meal-group").forEach(g=> g.classList.remove("drop-hi"));
+    if(dragCard) dragCard.classList.remove("dragging");
+    const fid=dragFid; dragFid=null; dragCard=null;
+    if(targetMeal && fid && targetMeal!=="其他") moveFoodMeal(fid, targetMeal);
   }
   // 把輸入框對準某一餐,方便補打 AI 漏掉的食材
   function focusMealInput(meal){
@@ -1667,23 +1760,28 @@
       }catch(e){}
     });
 
+    const qtyEl = document.getElementById("addQty");
+    const setQty = q=>{ if(q<1)q=1; qtyEl.textContent=q; };
+    document.getElementById("addQtyMinus").addEventListener("click", ()=> setQty((parseInt(qtyEl.textContent,10)||1)-1));
+    document.getElementById("addQtyPlus").addEventListener("click", ()=> setQty((parseInt(qtyEl.textContent,10)||1)+1));
     document.getElementById("addFoodBtn").addEventListener("click", async ()=>{
       const name = nameEl.value.trim();
       if(!name){ nameEl.focus(); return; }
-      let kcal = parseFloat(kcalEl.value);
-      if(isNaN(kcal)) kcal = (FOOD_MAP[name] != null) ? FOOD_MAP[name] : 0;
-      kcal = Math.round(kcal);
+      let unit = parseFloat(kcalEl.value);
+      if(isNaN(unit)) unit = (FOOD_MAP[name] != null) ? FOOD_MAP[name] : 0;
+      unit = Math.round(unit);
+      const qty = parseInt(qtyEl.textContent,10)||1;
       if(!Object.prototype.hasOwnProperty.call(FOOD_MAP, name)){
         customFoods = customFoods.filter(f=>f.n!==name);
-        customFoods.unshift({n:name, k:kcal});
+        customFoods.unshift({n:name, k:unit});
         if(customFoods.length>80) customFoods = customFoods.slice(0,80);
         rebuildFoodMap(); saveCustomFoods();
       }
-      const entry = { id: Date.now().toString(), date: isoDate(today), meal: selectedMeal, name: name, kcal: kcal };
+      const entry = { id: Date.now().toString(), date: isoDate(today), meal: selectedMeal, name: name, unit: unit, qty: qty, kcal: unit*qty };
       if(pendingThumb) entry.thumb = pendingThumb;
       foodLog.push(entry);
       await saveFoodLog();
-      nameEl.value = ""; kcalEl.value = ""; hideSuggest(); clearPhoto();
+      nameEl.value = ""; kcalEl.value = ""; setQty(1); hideSuggest(); clearPhoto();
       renderFoodLog();
     });
     const tgt = document.getElementById("inKcalTarget");
