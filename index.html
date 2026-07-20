@@ -356,6 +356,18 @@
   .home-new{ margin-top:24px; background:var(--card); border-radius:18px; padding:16px; box-shadow:var(--shadow);
     display:flex; flex-direction:column; gap:8px; }
   .home-new-title{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
+  .home-bg{ max-width:560px; margin:16px auto 0; background:var(--card); border-radius:18px; padding:16px; box-shadow:var(--shadow); }
+  .bg-swatches{ display:flex; flex-wrap:wrap; gap:10px; margin:10px 0; }
+  .bg-sw{ width:38px; height:38px; border-radius:50%; border:2px solid var(--line); cursor:pointer; }
+  .bg-sw.on{ outline:3px solid var(--pink); outline-offset:2px; }
+  .bg-actions{ display:flex; gap:8px; }
+  .home-edit{ font-size:var(--fs-label); color:var(--pink); background:var(--pink-soft); border-radius:14px; padding:4px 10px; }
+  .modal{ display:none; position:fixed; inset:0; background:rgba(94,85,76,0.35); z-index:300; padding:20px; overflow:auto; }
+  .modal.show{ display:flex; align-items:flex-start; justify-content:center; }
+  .modal-inner{ background:var(--card); border-radius:20px; padding:18px; max-width:520px; width:100%; margin:auto; box-shadow:var(--shadow); }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .modal-title{ font-size:var(--fs-title); color:var(--ink); }
+  .modal-close{ border:none; background:var(--pink-soft); color:var(--ink); width:36px; height:36px; border-radius:50%; font-size:var(--fs-body); cursor:pointer; font-family:inherit; }
   .home-new input, .home-new select{ padding:11px 13px; border-radius:12px; border:2px solid var(--line);
     font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; -webkit-appearance:none; }
   .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -475,6 +487,15 @@
     <button id="homeAddBtn" class="save-btn cute">＋ 建立新計畫</button>
   </div>
   <div class="settings-row" style="max-width:520px;margin:18px auto 0;"><span>字體</span><button type="button" class="mini-btn js-font-toggle">粗線體</button></div>
+  <div class="home-bg">
+    <div class="home-new-title">背景主題</div>
+    <div class="bg-swatches" id="bgSwatches"></div>
+    <div class="bg-actions">
+      <input type="file" accept="image/*" id="bgUpload" style="display:none">
+      <button type="button" class="mini-btn" id="bgUploadBtn">📷 上傳背景照片</button>
+      <button type="button" class="mini-btn" id="bgClear">清除</button>
+    </div>
+  </div>
 </div>
 
 <div id="appView" style="display:none;">
@@ -558,28 +579,7 @@
   </div>
 </div>
 
-<div class="section" id="profileSection">
-  <h2 class="cute" id="pfToggle"><span class="dot"></span>個人資料 · 減重分析 📊 <span class="pf-caret" id="pfCaret">▾</span></h2>
-  <div class="pf-mini" id="pfMini"></div>
-  <div class="weight-box">
-    <div class="metric-inputs">
-      <div class="field">
-        <label>性別</label>
-        <div class="wrap"><select id="pfSex"><option value="female">女</option><option value="male">男</option></select></div>
-      </div>
-      <div class="field"><label>年齡</label><div class="wrap"><input type="number" id="pfAge" placeholder="30"><span class="unit">歲</span></div></div>
-      <div class="field"><label>身高</label><div class="wrap"><input type="number" id="pfHeight" placeholder="160"><span class="unit">cm</span></div></div>
-      <div class="field"><label>目前體重</label><div class="wrap"><input type="number" step="0.1" id="pfWeight" placeholder="64"><span class="unit">kg</span></div></div>
-      <div class="field"><label>目標體重</label><div class="wrap"><input type="number" step="0.1" id="pfTargetW" placeholder="60"><span class="unit">kg</span></div></div>
-      <div class="field"><label>目標體脂</label><div class="wrap"><input type="number" step="0.1" id="pfTargetBf" placeholder="22"><span class="unit">%</span></div></div>
-    </div>
-    <div class="field" style="margin-bottom:12px;">
-      <label>希望達成日期</label>
-      <div class="wrap"><input type="date" id="pfDate" value="2026-08-28"></div>
-    </div>
-    <div id="profileResult"></div>
-  </div>
-</div>
+<!-- 個人資料改為 modal,移到 appView 外(見下方) -->
 
 <div class="section" id="workoutSection">
   <h2 class="cute" id="woToggle"><span class="dot"></span>運動計畫 🏋️ <span class="pf-caret" id="woCaret">▾</span></h2>
@@ -728,6 +728,30 @@
   <button type="button" class="nav-btn" id="navJump">↕<span>跳到</span></button>
 </nav>
 </div><!-- /appView -->
+
+<div class="modal" id="profileModal">
+  <div class="modal-inner">
+    <div class="modal-head"><span class="modal-title cute">個人資料 · 減重分析 📊</span><button type="button" class="modal-close" id="pfClose">✕</button></div>
+    <div class="weight-box">
+      <div class="metric-inputs">
+        <div class="field">
+          <label>性別</label>
+          <div class="wrap"><select id="pfSex"><option value="female">女</option><option value="male">男</option></select></div>
+        </div>
+        <div class="field"><label>年齡</label><div class="wrap"><input type="number" id="pfAge" placeholder="30"><span class="unit">歲</span></div></div>
+        <div class="field"><label>身高</label><div class="wrap"><input type="number" id="pfHeight" placeholder="160"><span class="unit">cm</span></div></div>
+        <div class="field"><label>目前體重</label><div class="wrap"><input type="number" step="0.1" id="pfWeight" placeholder="64"><span class="unit">kg</span></div></div>
+        <div class="field"><label>目標體重</label><div class="wrap"><input type="number" step="0.1" id="pfTargetW" placeholder="60"><span class="unit">kg</span></div></div>
+        <div class="field"><label>目標體脂</label><div class="wrap"><input type="number" step="0.1" id="pfTargetBf" placeholder="22"><span class="unit">%</span></div></div>
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>希望達成日期</label>
+        <div class="wrap"><input type="date" id="pfDate" value="2026-08-28"></div>
+      </div>
+      <div id="profileResult"></div>
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -2285,9 +2309,17 @@
     const box=document.getElementById("homeList"); if(!box) return;
     box.innerHTML = plans.map(p=>`<div class="home-card" data-id="${p.id}">
         <div class="home-card-name">${esc(p.name)}</div>
-        <div style="display:flex;align-items:center;gap:8px;"><span class="home-card-type">${esc(PLAN_LABEL[p.type]||'')}</span><span class="home-arrow">›</span></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${(p.type==='full'||p.type==='origin')?`<span class="home-edit" data-edit="${p.id}">⚙️ 資料</span>`:''}
+          <span class="home-card-type">${esc(PLAN_LABEL[p.type]||'')}</span><span class="home-arrow">›</span>
+        </div>
       </div>`).join("");
-    box.querySelectorAll(".home-card").forEach(c=> c.addEventListener("click", ()=> enterPlan(c.dataset.id)));
+    box.querySelectorAll(".home-card").forEach(c=> c.addEventListener("click", (e)=>{ if(e.target.classList.contains("home-edit")) return; enterPlan(c.dataset.id); }));
+    box.querySelectorAll(".home-edit").forEach(b=> b.addEventListener("click", (e)=>{ e.stopPropagation(); openProfile(b.dataset.edit); }));
+  }
+  async function openProfile(id){
+    await switchPlan(id);
+    document.getElementById("profileModal").classList.add("show");
   }
   async function enterPlan(id){
     await switchPlan(id);
@@ -2309,12 +2341,16 @@
     const id="pl"+Date.now().toString(36);
     plans.push({id,name,type}); await savePlans();
     nameEl.value="";
-    await enterPlan(id);
+    if(type==='full'){ await switchPlan(id); renderHome(); document.getElementById("profileModal").classList.add("show"); }
+    else { await enterPlan(id); }
   }
   function initHomeModule(){
     renderHome();
     const add=document.getElementById("homeAddBtn"); if(add) add.addEventListener("click", addPlanHome);
     const hb=document.getElementById("homeBtn"); if(hb) hb.addEventListener("click", goHome);
+    const pfC=document.getElementById("pfClose"), pm=document.getElementById("profileModal");
+    if(pfC) pfC.addEventListener("click", ()=> pm.classList.remove("show"));
+    if(pm) pm.addEventListener("click", (e)=>{ if(e.target===pm) pm.classList.remove("show"); });
   }
 
   // ---------- 底部主選單(回主畫面 / 新增 / 跳到某區塊) ----------
@@ -2354,6 +2390,40 @@
   function initFontModule(){
     document.querySelectorAll(".js-font-toggle").forEach(b=>
       b.addEventListener("click", async ()=>{ fontPref = fontPref==="cu" ? "redbean" : "cu"; applyFont(); try{ await window.storage.set("fontpref", fontPref, false); }catch(e){} }));
+  }
+
+  // ---------- 背景主題(顏色 / 自訂照片,自動儲存) ----------
+  const BG_PRESETS = ["#F5F1EB","#EDE6DA","#E6E9E4","#ECE4E6","#E3E9EE","#EAE6EE","#F3E8E2","#DED7CB"];
+  let bgColor="#F5F1EB", bgImage="";
+  function applyTheme(){
+    if(bgImage){
+      document.body.style.backgroundImage="url('"+bgImage+"')";
+      document.body.style.backgroundSize="cover";
+      document.body.style.backgroundAttachment="fixed";
+      document.body.style.backgroundPosition="center";
+    } else {
+      document.body.style.backgroundImage="none";
+      document.documentElement.style.setProperty("--cream", bgColor);
+    }
+    renderSwatches();
+  }
+  function renderSwatches(){
+    const box=document.getElementById("bgSwatches"); if(!box) return;
+    box.innerHTML = BG_PRESETS.map(c=> '<span class="bg-sw'+(!bgImage&&c.toLowerCase()===bgColor.toLowerCase()?' on':'')+'" data-c="'+c+'" style="background:'+c+'"></span>').join("");
+    box.querySelectorAll(".bg-sw").forEach(s=> s.addEventListener("click", async ()=>{ bgColor=s.dataset.c; bgImage=""; applyTheme(); await saveTheme(); }));
+  }
+  async function loadTheme(){
+    try{ const r=await window.storage.get("bgcolor",false); if(r&&r.value) bgColor=r.value; }catch(e){}
+    try{ const r=await window.storage.get("bgimage",false); if(r&&r.value) bgImage=r.value; }catch(e){}
+    applyTheme();
+  }
+  async function saveTheme(){ try{ await window.storage.set("bgcolor", bgColor, false); await window.storage.set("bgimage", bgImage, false); }catch(e){} }
+  function initThemeModule(){
+    const up=document.getElementById("bgUpload"), upBtn=document.getElementById("bgUploadBtn"), clr=document.getElementById("bgClear");
+    if(upBtn) upBtn.addEventListener("click", ()=> up.click());
+    if(up) up.addEventListener("change", async ()=>{ const f=up.files[0]; up.value=""; if(!f) return;
+      try{ bgImage=await resizeImageToBase64(f, 1200); applyTheme(); await saveTheme(); }catch(e){} });
+    if(clr) clr.addEventListener("click", async ()=>{ bgImage=""; bgColor="#F5F1EB"; applyTheme(); await saveTheme(); });
   }
 
   // ---------- 標題可編輯(自動儲存) ----------
@@ -2478,6 +2548,8 @@
     await initSimpleCollapse();
     initHomeModule();
     initBottomNav();
+    initThemeModule();
+    await loadTheme();
     // 一進來先顯示主畫面(計畫清單),點計畫才進入
     document.getElementById("appView").style.display="none";
     document.getElementById("homeScreen").style.display="";
