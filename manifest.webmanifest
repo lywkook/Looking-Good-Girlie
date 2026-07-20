@@ -1,0 +1,16 @@
+{
+  "name": "回台倒數計畫",
+  "short_name": "回台倒數",
+  "description": "回台灣前的飲食・運動・體重追蹤小工具",
+  "start_url": "./回台減重計畫.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF8EF",
+  "theme_color": "#FF9FBB",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
