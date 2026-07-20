@@ -1335,16 +1335,22 @@
 
   // ---------- 拍照估熱量 (AI · Google AI Studio 免費金鑰) ----------
   let geminiKey = "";
+  function cleanKey(v){ return String(v==null?"":v).trim().replace(/\s+/g,"").replace(/^["']+|["']+$/g,""); }
   async function loadGeminiKey(){
     geminiKey = "";
-    try{ const r=await window.storage.get("geminikey",false); if(r&&r.value) geminiKey=r.value; }catch(e){}
+    try{ const r=await window.storage.get("geminikey",false); if(r&&r.value) geminiKey=cleanKey(r.value); }catch(e){}
     const gi=document.getElementById("inGeminiKey"); if(gi) gi.value=geminiKey;
     updateAIKeyHint();
   }
   function updateAIKeyHint(){
     const h=document.getElementById("aiKeyHint"); if(!h) return;
-    if(geminiKey){ h.innerHTML='✅ 金鑰已儲存(只存在這支手機、不會上傳到程式碼)。直接上傳照片就會自動估熱量。'; }
-    else { h.innerHTML='免費申請:到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 用 Google 帳號登入 →「Create API key」→ 複製貼上、按儲存。免費、不需信用卡。'; }
+    if(geminiKey){
+      const ok = /^AIza[0-9A-Za-z\-_]{20,}$/.test(geminiKey);
+      h.innerHTML = ok
+        ? '✅ 金鑰已儲存(只存在這支手機、不會上傳到程式碼)。直接上傳照片就會自動估熱量。'
+        : '⚠️ 這串看起來不像正確的金鑰(正確的通常以 <b>AIza</b> 開頭、整串無空格)。請到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 重新複製後再貼一次。';
+    }
+    else { h.innerHTML='免費申請:到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 用 Google 帳號登入 →「Create API key」→ 複製貼上、按儲存。金鑰通常以 <b>AIza</b> 開頭。免費、不需信用卡。'; }
   }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
   // 依序嘗試目前仍在免費額度內的模型(舊的 gemini-2.0-flash 免費額度已歸零,擺最後備援)
@@ -1352,11 +1358,13 @@
   async function geminiJSON(prompt, extraParts, temp){
     const parts=[{text:prompt}]; if(extraParts) extraParts.forEach(p=>parts.push(p));
     const body = { contents:[{ parts }], generationConfig:{ responseMimeType:"application/json", temperature: temp==null?0.3:temp } };
+    const key = (geminiKey||"").trim().replace(/\s+/g,"");
+    if(!key) throw new Error("尚未設定 API 金鑰");
     let lastMsg="連線失敗", quotaHit=false;
     for(let i=0;i<GEMINI_MODELS.length;i++){
-      const url = "https://generativelanguage.googleapis.com/v1beta/models/"+GEMINI_MODELS[i]+":generateContent?key="+encodeURIComponent(geminiKey);
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/"+GEMINI_MODELS[i]+":generateContent";
       let res;
-      try{ res = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) }); }
+      try{ res = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":key}, body:JSON.stringify(body) }); }
       catch(netErr){ lastMsg="無法連線到 Google,請檢查網路"; continue; }
       if(res.ok){
         const data = await res.json();
@@ -1367,9 +1375,12 @@
       let msg="錯誤 "+res.status; const status=res.status;
       try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
       lastMsg=msg;
-      // 金鑰無效 / 沒開啟 API → 換模型也沒用,直接停
-      if((status===400||status===403) && /API.?key|API_KEY_INVALID|PERMISSION|not valid|SERVICE_DISABLED|has not been used/i.test(msg)){
-        throw new Error("金鑰無效或尚未啟用,請重新確認:"+msg);
+      // 401/400/403 = 金鑰驗證/權限問題 → 換模型也沒用,直接停並給明確指引
+      if(status===401||status===400||status===403){
+        const looksLikeKey = /^AIza[0-9A-Za-z\-_]{20,}$/.test(key);
+        throw new Error("金鑰無法通過 Google 驗證。請到 Google AI Studio 重新複製 API 金鑰(通常以 AIza 開頭、整串沒有空格),再貼一次。"
+          + (looksLikeKey ? "(你這把格式看起來對,可能是還沒啟用或被限制,建議在 AI Studio 重新「Create API key」一把新的)" : "(你目前貼的這串看起來不是有效金鑰)")
+          + " 原始訊息:" + msg);
       }
       if(status===429) quotaHit=true;   // 這個模型免費額度用完/歸零 → 換下一個
     }
@@ -1393,10 +1404,13 @@
 
     keyToggle.addEventListener("click", ()=> keyRow.classList.toggle("show"));
     keySave.addEventListener("click", async ()=>{
-      const v=(keyInput.value||"").trim();
-      geminiKey=v; try{ await window.storage.set("geminikey", v, false); }catch(e){}
-      updateAIKeyHint(); keyRow.classList.remove("show");
-      status.innerHTML = v ? '<span class="ok">金鑰已儲存 ✅ 現在可以上傳照片了</span>' : '';
+      const v=cleanKey(keyInput.value);
+      geminiKey=v; keyInput.value=v; try{ await window.storage.set("geminikey", v, false); }catch(e){}
+      updateAIKeyHint();
+      const ok = /^AIza[0-9A-Za-z\-_]{20,}$/.test(v);
+      if(v && ok){ keyRow.classList.remove("show"); status.innerHTML='<span class="ok">金鑰已儲存 ✅ 現在可以上傳照片了</span>'; }
+      else if(v){ status.innerHTML='<span class="err">已存,但這串看起來不像正確金鑰(應以 AIza 開頭、無空格),請確認後重貼</span>'; }
+      else { status.innerHTML=''; }
     });
     btn.addEventListener("click", ()=>{
       if(!geminiKey){ keyRow.classList.add("show"); status.innerHTML='<span class="err">請先貼上免費金鑰(下方 🔑 展開)</span>'; keyInput.focus(); return; }
