@@ -329,6 +329,19 @@
   .ai-key-row input{ flex:1; min-width:0; border:1.5px solid var(--line); border-radius:12px; padding:9px 12px; font-size:var(--fs-label); font-family:inherit; background:#fff; color:var(--ink); }
   .ai-key-hint{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:8px; line-height:1.5; }
   .ai-key-hint a{ color:var(--mint); font-weight:900; }
+  .fridge-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .fchip{ display:inline-flex; align-items:center; gap:5px; padding:8px 14px; border-radius:20px;
+    background:#FFFDFA; border:2px solid var(--line); color:var(--ink-soft);
+    font-size:var(--fs-label); cursor:pointer; user-select:none; }
+  .fchip.on{ background:var(--mint); border-color:var(--mint); color:#fff; font-weight:700; }
+  .fchip .fx{ font-style:normal; opacity:.7; font-size:var(--fs-hint); }
+  .fridge-add-row{ display:flex; gap:8px; }
+  .fridge-add-row input{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
+    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
+  .dish{ display:flex; justify-content:space-between; gap:10px; align-items:center;
+    background:#FFFBF6; border:2px solid var(--line); border-radius:14px; padding:11px 14px; margin-top:8px; }
+  .dish .d-name{ font-size:var(--fs-body); color:var(--ink); }
+  .dish .d-kcal{ font-size:var(--fs-label); color:var(--pink); font-weight:900; white-space:nowrap; }
   .menu-regen-box{ display:none; margin-top:12px; padding:14px; background:var(--mint-soft); border-radius:16px; }
   .menu-regen-box.show{ display:block; }
   .menu-regen-box input{ width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px;
@@ -415,6 +428,21 @@
     <input id="menuWish" placeholder="想吃什麼?例:牛肉麵、清淡的、日式(可留空)" autocomplete="off">
     <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">換這一餐 ✨</button>
     <div class="ai-photo-status" id="menuRegenStatus"></div>
+  </div>
+</div>
+
+<div class="section" id="fridgeSection">
+  <h2 class="cute" id="frToggle"><span class="dot"></span>冰箱有什麼 · 煮什麼 🧊 <span class="pf-caret" id="frCaret">▾</span></h2>
+  <div class="pf-mini" id="frMini"></div>
+  <div class="weight-box">
+    <div class="fridge-chips" id="fridgeChips"></div>
+    <div class="fridge-add-row">
+      <input id="fridgeAdd" placeholder="還有別的?打字加入" autocomplete="off">
+      <button type="button" class="mini-btn" id="fridgeAddBtn">加入</button>
+    </div>
+    <button type="button" class="ai-photo-btn" id="fridgeGenBtn" style="margin-top:12px;">推薦可以煮的菜 🍳</button>
+    <div class="ai-photo-status" id="fridgeStatus"></div>
+    <div id="fridgeResult"></div>
   </div>
 </div>
 
@@ -766,7 +794,7 @@
       const prompt = '你是營養師,幫正在減重的人重新設計今天的「'+label+'」。'
         + '每日總熱量目標約 '+target+' 大卡,這一餐抓合理比例,以原型食物、好準備為主。'
         + '使用者想吃的:'+(wish || '沒特別指定,給清爽好準備的')+'。'
-        + '冰箱可能有:牛排、雞肉、鱸魚、牛肉片、蝦仁、豆腐、白飯、白麵、蔬菜、蕃茄橘子蘋果玉米(不一定要全用,想吃外食也可以)。'
+        + (fridgeHave.length ? ('我冰箱有:'+fridgeHave.join("、")+'(優先用這些,想吃外食也可以)。') : '冰箱可能有:牛排、雞肉、鱸魚、牛肉片、蝦仁、豆腐、白飯、白麵、蔬菜、蕃茄橘子蘋果玉米(不一定要全用,想吃外食也可以)。')
         + '只回傳 JSON,「只寫吃什麼」不要說明或理由、不超過 25 字,格式:{"text":"..."}。';
       const m = await geminiJSON(prompt, null, 0.6);
       const text = (m && (m.text || m[field])) || "";
@@ -791,6 +819,124 @@
     });
     const gen = document.getElementById("menuGenBtn");
     if(gen) gen.addEventListener("click", regenMenu);
+  }
+
+  // ---------- 冰箱食材 → 推薦可煮的菜 ----------
+  const FRIDGE_PRESET = ["雞肉","鱸魚","牛肉片","牛排","蝦仁","豆腐","蛋","白飯","白麵","小黃瓜","蔥","蕃茄","玉米","洋蔥","蒜","青菜"];
+  const RECIPES = [
+    {n:"雞胸肉煎 + 炒青菜 + 白飯", need:["雞肉"], kcal:550},
+    {n:"蔥油雞 + 白飯", need:["雞肉","蔥"], kcal:600},
+    {n:"清蒸鱸魚 + 燙青菜", need:["鱸魚"], kcal:350},
+    {n:"香煎鱸魚 + 白飯", need:["鱸魚","白飯"], kcal:480},
+    {n:"燙牛肉片 + 白飯", need:["牛肉片"], kcal:500},
+    {n:"洋蔥炒牛肉 + 白飯", need:["牛肉片","洋蔥"], kcal:560},
+    {n:"煎牛排 + 大量蔬菜", need:["牛排"], kcal:600},
+    {n:"蒜炒蝦仁 + 青菜", need:["蝦仁"], kcal:300},
+    {n:"蝦仁炒蛋", need:["蝦仁","蛋"], kcal:320},
+    {n:"韓式嫩豆腐鍋", need:["豆腐"], kcal:400},
+    {n:"番茄炒蛋 + 白飯", need:["蕃茄","蛋"], kcal:450},
+    {n:"蔥花蛋", need:["蛋","蔥"], kcal:200},
+    {n:"水煮蛋", need:["蛋"], kcal:80},
+    {n:"小黃瓜涼拌", need:["小黃瓜"], kcal:60},
+    {n:"玉米蛋花湯", need:["玉米","蛋"], kcal:180},
+    {n:"青菜豆腐湯", need:["豆腐","青菜"], kcal:150},
+    {n:"番茄牛肉湯", need:["蕃茄","牛肉片"], kcal:320},
+    {n:"陽春麵 + 燙青菜", need:["白麵","青菜"], kcal:400}
+  ];
+  let fridgeHave = []; let fridgeCustom = [];
+  async function loadFridge(){
+    fridgeHave=[]; fridgeCustom=[];
+    try{ const r=await window.storage.get(K("fridge"),false); if(r&&r.value){ const o=JSON.parse(r.value)||{}; fridgeHave=o.have||[]; fridgeCustom=o.custom||[]; } }catch(e){}
+    renderFridgeChips();
+    const rb=document.getElementById("fridgeResult"); if(rb) rb.innerHTML="";
+    const sb=document.getElementById("fridgeStatus"); if(sb) sb.innerHTML="";
+    updateFrMini();
+    let stored=null; try{ const c=await window.storage.get(K("frcollapsed"),false); if(c&&c.value!=null&&c.value!=="") stored=c.value; }catch(e){}
+    setFridgeCollapsed(stored!=null ? stored==="1" : !fridgeHave.length, false);
+  }
+  async function saveFridge(){ try{ await window.storage.set(K("fridge"), JSON.stringify({have:fridgeHave,custom:fridgeCustom}), false); }catch(e){} }
+  function renderFridgeChips(){
+    const box=document.getElementById("fridgeChips"); if(!box) return;
+    const all = FRIDGE_PRESET.concat(fridgeCustom.filter(c=>FRIDGE_PRESET.indexOf(c)<0));
+    box.innerHTML = all.map(n=>{
+      const on = fridgeHave.indexOf(n)>=0;
+      const custom = FRIDGE_PRESET.indexOf(n)<0;
+      return '<span class="fchip'+(on?' on':'')+'" data-n="'+esc(n)+'">'+esc(n)+(custom?' <i class="fx" data-del="'+esc(n)+'">✕</i>':'')+'</span>';
+    }).join("");
+    box.querySelectorAll(".fchip").forEach(c=>{
+      c.addEventListener("click",(e)=>{ if(e.target.classList.contains("fx")) return;
+        const n=c.dataset.n; const i=fridgeHave.indexOf(n);
+        if(i>=0) fridgeHave.splice(i,1); else fridgeHave.push(n);
+        saveFridge(); renderFridgeChips(); updateFrMini();
+      });
+    });
+    box.querySelectorAll(".fx").forEach(x=>{
+      x.addEventListener("click",(e)=>{ e.stopPropagation(); const n=x.dataset.del;
+        fridgeCustom=fridgeCustom.filter(c=>c!==n); fridgeHave=fridgeHave.filter(c=>c!==n);
+        saveFridge(); renderFridgeChips(); updateFrMini();
+      });
+    });
+  }
+  function addFridgeCustom(){
+    const el=document.getElementById("fridgeAdd"); const v=(el.value||"").trim();
+    if(!v) return;
+    if(FRIDGE_PRESET.indexOf(v)<0 && fridgeCustom.indexOf(v)<0) fridgeCustom.push(v);
+    if(fridgeHave.indexOf(v)<0) fridgeHave.push(v);
+    el.value=""; saveFridge(); renderFridgeChips(); updateFrMini();
+  }
+  function localDishes(){
+    const have=fridgeHave;
+    const list = RECIPES.filter(r=> r.need.every(ing=> have.indexOf(ing)>=0));
+    if(list.length<3){ RECIPES.forEach(r=>{ if(have.indexOf(r.need[0])>=0 && list.indexOf(r)<0) list.push(r); }); }
+    return list.slice(0,8);
+  }
+  function renderDishes(dishes, note){
+    const box=document.getElementById("fridgeResult"); if(!box) return;
+    if(!dishes||!dishes.length){ box.innerHTML='<div class="chart-empty">先點你冰箱有的食材,再按推薦 🍳</div>'; return; }
+    let h = note? '<div class="advice">'+esc(note)+'</div>':'';
+    h += dishes.map(d=> '<div class="dish"><span class="d-name">'+esc(d.n||d.name||"")+'</span><span class="d-kcal">'+(d.kcal?('約 '+Math.round(d.kcal)+' kcal'):'')+'</span></div>').join("");
+    box.innerHTML=h;
+  }
+  async function suggestDishes(){
+    const status=document.getElementById("fridgeStatus");
+    if(!fridgeHave.length){ status.innerHTML='<span class="err">先點一下你冰箱有的食材</span>'; return; }
+    if(!geminiKey){ renderDishes(localDishes()); status.innerHTML=''; return; }
+    const btn=document.getElementById("fridgeGenBtn"); const old=btn.textContent; btn.disabled=true; btn.textContent="想菜中…";
+    status.innerHTML='<span class="ai-spin"></span>依你的食材想菜中…';
+    try{
+      const target=parseInt(document.getElementById("inKcalTarget").value,10)||kcalTarget||1500;
+      const prompt='你是營養師兼家常菜廚師。我冰箱有這些食材:'+fridgeHave.join("、")+'。'
+        +'請推薦 5-6 道「用這些食材就能煮」、適合減重(每日約 '+target+' 大卡)的家常菜,盡量原型食物、好準備。'
+        +'只回傳 JSON,不要多餘文字,格式:{"dishes":[{"n":"菜名(含主要搭配,不超過15字)","kcal":整份估計熱量整數}]}。';
+      const m=await geminiJSON(prompt,null,0.5);
+      const dishes=(m&&m.dishes)||[];
+      if(!dishes.length) throw new Error("回傳格式看不懂");
+      renderDishes(dishes); status.innerHTML='<span class="ok">依你的食材推薦好了 ✅</span>';
+    }catch(e){
+      renderDishes(localDishes()); status.innerHTML='<span class="err">AI 失敗('+esc(e.message||e)+'),先給你內建推薦。</span>';
+    }
+    btn.disabled=false; btn.textContent=old;
+  }
+  function updateFrMini(){
+    const mini=document.getElementById("frMini"); if(!mini) return;
+    if(fridgeHave.length) mini.innerHTML='冰箱有 <b>'+fridgeHave.length+'</b> 樣食材 <span class="pf-hint">(點這裡展開看能煮什麼)</span>';
+    else mini.innerHTML='<span class="pf-hint">點這裡展開,選冰箱有的食材</span>';
+  }
+  function setFridgeCollapsed(collapsed, persist){
+    const sec=document.getElementById("fridgeSection"); if(!sec) return;
+    sec.classList.toggle("collapsed", collapsed);
+    const c=document.getElementById("frCaret"); if(c) c.textContent=collapsed?"▸":"▾";
+    updateFrMini();
+    if(persist){ try{ window.storage.set(K("frcollapsed"), collapsed?"1":"0", false); }catch(e){} }
+  }
+  function initFridgeModule(){
+    const add=document.getElementById("fridgeAddBtn"); if(add) add.addEventListener("click", addFridgeCustom);
+    const inp=document.getElementById("fridgeAdd"); if(inp) inp.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); addFridgeCustom(); } });
+    const gen=document.getElementById("fridgeGenBtn"); if(gen) gen.addEventListener("click", suggestDishes);
+    const tog=document.getElementById("frToggle");
+    if(tog) tog.addEventListener("click", ()=>{ const sec=document.getElementById("fridgeSection"); setFridgeCollapsed(!sec.classList.contains("collapsed"), true); });
+    const mini=document.getElementById("frMini");
+    if(mini) mini.addEventListener("click", ()=> setFridgeCollapsed(false, true));
   }
 
   const listEl = document.getElementById("dayList");
@@ -1852,6 +1998,7 @@
     show('heroSection', t==='origin');
     show('menuSection', t==='origin');
     show('checkinSection', t==='origin');
+    show('fridgeSection', t==='origin'||t==='full');
     show('profileSection', t==='origin'||t==='full');
     show('workoutSection', t==='origin'||t==='full');
     show('foodSection', t==='origin'||t==='full'||t==='track');
@@ -1883,7 +2030,7 @@
       d.addEventListener("click", async (e)=>{ e.stopPropagation();
         if(!confirm("刪除這個計畫?裡面的紀錄也會一起清掉")) return;
         const id=d.dataset.del;
-        ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed","waterlog","watergoal","workout","wocollapsed"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
+        ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed","waterlog","watergoal","workout","wocollapsed","fridge","frcollapsed"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
         plans=plans.filter(p=>p.id!==id); await savePlans();
         if(PLAN.id===id){ await switchPlan("default"); } else { renderPlanList(); }
       });
@@ -1893,7 +2040,7 @@
     const pl=plans.find(p=>p.id===id); if(!pl) return;
     PLAN=pl; try{ await window.storage.set("currentplan", id, false); }catch(e){}
     updatePlanBar(); renderPlanList(); applyPlanView();
-    await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile(); await loadWorkout();
+    await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile(); await loadWorkout(); await loadFridge();
   }
   async function addPlan(){
     const nameEl=document.getElementById("newPlanName");
@@ -1919,6 +2066,8 @@
     await loadOverrides();
     renderTodayMenu();
     initMenuModule();
+    initFridgeModule();
+    await loadFridge();
     await loadDoneState();
     await loadLog();
     initMetricsCollapse();
