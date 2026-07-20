@@ -376,6 +376,12 @@
     padding:11px 13px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); line-height:1.5; resize:vertical; }
   .wo-hint{ font-size:var(--fs-hint); color:var(--ink-soft); margin:10px 0; line-height:1.5; }
   .wo-hint.err{ color:#B5766F; }
+  #checkinBlock{ margin-top:16px; border-top:1px dashed var(--line); padding-top:14px; }
+  .wo-sub{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:10px; }
+  .wo-datepick{ display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:var(--fs-label); color:var(--ink-soft); }
+  .wo-datepick input{ padding:8px 10px; border-radius:12px; border:2px solid var(--line);
+    font-size:var(--fs-label); background:#FFFDFA; color:var(--ink); font-family:inherit; }
+  .day-card.flash{ box-shadow:0 0 0 3px var(--pink); }
   .wo-week{ margin-top:12px; }
   .wo-day{ background:#FFFBF6; border:2px solid var(--line); border-radius:14px; padding:11px 13px; margin-bottom:9px; }
   .wo-day-h{ font-size:var(--fs-body); margin-bottom:5px; }
@@ -499,7 +505,7 @@
 </div>
 
 <div class="section" id="workoutSection">
-  <h2 class="cute" id="woToggle"><span class="dot"></span>運動計畫 · 客製化 🏋️ <span class="pf-caret" id="woCaret">▾</span></h2>
+  <h2 class="cute" id="woToggle"><span class="dot"></span>運動計畫 🏋️ <span class="pf-caret" id="woCaret">▾</span></h2>
   <div class="pf-mini" id="woMini"></div>
   <div class="weight-box">
     <div class="metric-inputs">
@@ -510,8 +516,14 @@
       <label>器材 · 想加強的部位 · 偏好(自由填,越詳細越準)</label>
       <textarea id="woNote" class="wo-textarea" placeholder="例:家裡有 5-8 磅啞鈴 + 跑步機,想練直角肩、大腿內側、手臂拜拜肉,不想跳太吵的動作,膝蓋不好"></textarea>
     </div>
-    <button class="save-btn cute" id="woGenBtn">產生我的客製化運動計畫 ✨</button>
+    <button class="save-btn cute" id="woGenBtn">產生 / 重新調整運動計畫 ✨</button>
     <div id="woResult"></div>
+
+    <div id="checkinBlock">
+      <div class="wo-sub">每日打卡</div>
+      <div class="wo-datepick"><span>跳到日期</span><input type="date" id="woDate" min="2026-07-20" max="2026-08-28" value="2026-07-20"></div>
+      <div id="dayList"></div>
+    </div>
   </div>
 </div>
 
@@ -612,12 +624,6 @@
     <div class="history" id="historyArea"></div>
   </div>
 </div>
-
-<div class="section" id="checkinSection">
-  <h2 class="cute"><span class="dot"></span>每日打卡計畫</h2>
-  <div id="dayList"></div>
-</div>
-
 
 <script>
 (function(){
@@ -980,6 +986,7 @@
     days.forEach(day=>{
       const card = document.createElement("div");
       card.className = "day-card" + (doneState[day.iso] ? " done" : "");
+      card.dataset.iso = day.iso;
       const isToday = isoDate(today) === day.iso;
       const exRows = day.workout.exercises.map((ex,exi)=>{
         const exKey = "ex:"+day.iso+":"+exi;
@@ -1984,7 +1991,7 @@
       set("woDays",p.days); set("woCardio",p.cardio); set("woNote",p.note); workoutPlan=p.plan||null; } }catch(e){}
     renderWorkout(workoutPlan); updateWoMini();
     let stored=null; try{ const c=await window.storage.get(K("wocollapsed"),false); if(c&&c.value!=null&&c.value!=="") stored=c.value; }catch(e){}
-    setWorkoutCollapsed(stored!=null ? stored==="1" : !workoutPlan, false);
+    setWorkoutCollapsed(stored!=null ? stored==="1" : false, false);
   }
   async function saveWorkout(){
     const g=id=>{ const el=document.getElementById(id); return el?el.value:""; };
@@ -2040,6 +2047,17 @@
     if(tog) tog.addEventListener("click", ()=>{ const sec=document.getElementById("workoutSection"); setWorkoutCollapsed(!sec.classList.contains("collapsed"), true); });
     const mini=document.getElementById("woMini");
     if(mini) mini.addEventListener("click", ()=> setWorkoutCollapsed(false, true));
+    const wd=document.getElementById("woDate");
+    if(wd) wd.addEventListener("change", ()=> jumpToDay(wd.value));
+  }
+  function jumpToDay(iso){
+    const card=document.querySelector('.day-card[data-iso="'+iso+'"]');
+    if(!card){ return; }
+    card.classList.add("open");
+    document.querySelectorAll(".day-card.flash").forEach(c=>c.classList.remove("flash"));
+    card.classList.add("flash");
+    try{ card.scrollIntoView({behavior:"smooth", block:"center"}); }catch(_){}
+    setTimeout(()=>card.classList.remove("flash"), 1600);
   }
 
   // ---------- 喝水紀錄 ----------
@@ -2094,7 +2112,7 @@
     const show=(id,v)=>{ const el=document.getElementById(id); if(el) el.style.display = v?"":"none"; };
     show('heroSection', t==='origin');
     show('menuSection', t==='origin');
-    show('checkinSection', t==='origin');
+    show('checkinBlock', t==='origin');
     show('fridgeSection', t==='origin'||t==='full');
     show('profileSection', t==='origin'||t==='full');
     show('workoutSection', t==='origin'||t==='full');
