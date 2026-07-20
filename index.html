@@ -292,6 +292,25 @@
   #foodPhotoPreview{ display:inline-flex; align-items:center; gap:6px; }
   .food-thumb-prev{ width:44px; height:44px; object-fit:cover; border-radius:8px; }
   .pp-x{ color:var(--ink-soft); cursor:pointer; font-size:20.7px; padding:0 4px; }
+  .ai-photo-box{ background:var(--mint-soft); border-radius:16px; padding:14px; margin:14px 0; }
+  .ai-photo-title{ font-size:19px; font-weight:900; color:var(--ink); margin-bottom:10px; }
+  .ai-badge{ background:var(--mint); color:#fff; font-size:12.5px; font-weight:900; padding:2px 8px; border-radius:10px; vertical-align:middle; margin-left:4px; }
+  .ai-photo-btn{ width:100%; background:var(--mint); color:#fff; border:none; border-radius:14px;
+    padding:13px; font-size:18.5px; font-weight:900; font-family:inherit; cursor:pointer; box-shadow:0 4px 0 #A7B4A4; }
+  .ai-photo-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #A7B4A4; }
+  .ai-photo-btn:disabled{ opacity:.6; cursor:default; }
+  .ai-photo-status{ font-size:17px; color:var(--ink); margin-top:10px; text-align:center; min-height:1px; }
+  .ai-photo-status .ok{ color:var(--ink); font-weight:900; }
+  .ai-photo-status .err{ color:#B5766F; }
+  .ai-spin{ display:inline-block; width:16px; height:16px; border:3px solid var(--mint); border-top-color:transparent;
+    border-radius:50%; animation:aispin .8s linear infinite; vertical-align:-3px; margin-right:6px; }
+  @keyframes aispin{ to{ transform:rotate(360deg); } }
+  .ai-key-toggle{ display:inline-block; margin-top:10px; font-size:15.5px; color:var(--ink-soft); cursor:pointer; text-decoration:underline; }
+  .ai-key-row{ display:none; gap:8px; margin-top:10px; }
+  .ai-key-row.show{ display:flex; }
+  .ai-key-row input{ flex:1; min-width:0; border:1.5px solid var(--line); border-radius:12px; padding:9px 12px; font-size:16px; font-family:inherit; background:#fff; color:var(--ink); }
+  .ai-key-hint{ font-size:14.5px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
+  .ai-key-hint a{ color:var(--mint); font-weight:900; }
   .water-row{ display:flex; align-items:center; justify-content:center; gap:20px; }
   .water-btn{ width:56px; height:56px; border-radius:50%; border:none; background:var(--lav-soft);
     color:var(--ink); font-size:30px; font-weight:900; cursor:pointer; font-family:inherit; line-height:1; }
@@ -396,6 +415,19 @@
       <span id="foodPhotoPreview"></span>
     </div>
     <button class="save-btn cute" id="addFoodBtn" style="background:var(--peach); box-shadow:0 4px 0 #C0A98F;">加入這一餐 🍽️</button>
+
+    <div class="ai-photo-box" id="aiPhotoBox">
+      <div class="ai-photo-title">📷 拍照估熱量 <span class="ai-badge">AI</span></div>
+      <input type="file" accept="image/*" id="aiPhotoInput" style="display:none">
+      <button type="button" class="ai-photo-btn" id="aiPhotoBtn">上傳食物照片,自動估熱量加入<span id="aiMealName">早餐</span></button>
+      <div class="ai-photo-status" id="aiPhotoStatus"></div>
+      <div class="ai-key-toggle" id="aiKeyToggle">🔑 AI 金鑰設定</div>
+      <div class="ai-key-row" id="aiKeyRow">
+        <input type="password" id="inGeminiKey" placeholder="貼上免費的 Google AI 金鑰" autocomplete="off">
+        <button type="button" class="mini-btn" id="saveGeminiKey">儲存</button>
+      </div>
+      <div class="ai-key-hint" id="aiKeyHint"></div>
+    </div>
 
     <div class="target-row">
       <span>今日目標</span>
@@ -1205,11 +1237,80 @@
     });
   }
 
+  // ---------- 拍照估熱量 (AI · Google AI Studio 免費金鑰) ----------
+  let geminiKey = "";
+  async function loadGeminiKey(){
+    geminiKey = "";
+    try{ const r=await window.storage.get("geminikey",false); if(r&&r.value) geminiKey=r.value; }catch(e){}
+    const gi=document.getElementById("inGeminiKey"); if(gi) gi.value=geminiKey;
+    updateAIKeyHint();
+  }
+  function updateAIKeyHint(){
+    const h=document.getElementById("aiKeyHint"); if(!h) return;
+    if(geminiKey){ h.innerHTML='✅ 金鑰已儲存(只存在這支手機、不會上傳到程式碼)。直接上傳照片就會自動估熱量。'; }
+    else { h.innerHTML='免費申請:到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 用 Google 帳號登入 →「Create API key」→ 複製貼上、按儲存。免費、不需信用卡。'; }
+  }
+  async function analyzeFoodPhoto(b64){
+    const prompt = '你是營養師。看這張食物照片,用繁體中文判斷主要是什麼食物或餐點,並估計「整份」的總熱量(大卡)。只回傳 JSON,不要多餘文字。格式:{"name":"簡短餐點名稱(繁體中文,不超過12字)","kcal":整數總熱量,"note":"一句話說明估算依據"}。若照片看不出是食物,name 請回空字串。';
+    const body = { contents:[{ parts:[ {text:prompt}, {inline_data:{mime_type:"image/jpeg", data:b64}} ]}], generationConfig:{ responseMimeType:"application/json", temperature:0.2 } };
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+encodeURIComponent(geminiKey);
+    const res = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
+    if(!res.ok){ let msg="連線失敗 ("+res.status+")"; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){} throw new Error(msg); }
+    const data = await res.json();
+    const parts = ((((data.candidates||[])[0]||{}).content||{}).parts)||[];
+    const txt = (parts[0]||{}).text || "";
+    let obj; try{ obj=JSON.parse(txt); }catch(e){ throw new Error("AI 回傳格式看不懂,請再試一次"); }
+    return obj;
+  }
+  function initAIPhotoModule(){
+    const box=document.getElementById("aiPhotoBox"); if(!box) return;
+    const input=document.getElementById("aiPhotoInput");
+    const btn=document.getElementById("aiPhotoBtn");
+    const status=document.getElementById("aiPhotoStatus");
+    const keyToggle=document.getElementById("aiKeyToggle");
+    const keyRow=document.getElementById("aiKeyRow");
+    const keyInput=document.getElementById("inGeminiKey");
+    const keySave=document.getElementById("saveGeminiKey");
+    const mn=document.getElementById("aiMealName"); if(mn) mn.textContent=selectedMeal;
+
+    keyToggle.addEventListener("click", ()=> keyRow.classList.toggle("show"));
+    keySave.addEventListener("click", async ()=>{
+      const v=(keyInput.value||"").trim();
+      geminiKey=v; try{ await window.storage.set("geminikey", v, false); }catch(e){}
+      updateAIKeyHint(); keyRow.classList.remove("show");
+      status.innerHTML = v ? '<span class="ok">金鑰已儲存 ✅ 現在可以上傳照片了</span>' : '';
+    });
+    btn.addEventListener("click", ()=>{
+      if(!geminiKey){ keyRow.classList.add("show"); status.innerHTML='<span class="err">請先貼上免費金鑰(下方 🔑 展開)</span>'; keyInput.focus(); return; }
+      input.click();
+    });
+    input.addEventListener("change", async ()=>{
+      const file=input.files[0]; input.value=""; if(!file) return;
+      btn.disabled=true;
+      status.innerHTML='<span class="ai-spin"></span>分析中…(約幾秒)';
+      try{
+        const big=await resizeImageToBase64(file,640);
+        const thumb=await resizeImageToBase64(file,220);
+        const obj=await analyzeFoodPhoto(big.split(",")[1]);
+        const name=(obj.name||"").trim();
+        const kcal=Math.round(Number(obj.kcal)||0);
+        if(!name || !kcal){ status.innerHTML='<span class="err">看不太出來是什麼食物,換個角度拍清楚一點再試 🙏</span>'; btn.disabled=false; return; }
+        const entry={ id:Date.now().toString(), date:isoDate(today), meal:selectedMeal, name:name, kcal:kcal, thumb:thumb };
+        foodLog.push(entry); await saveFoodLog(); renderFoodLog();
+        status.innerHTML='<span class="ok">已加入'+selectedMeal+':'+name+' 約 '+kcal+' kcal</span><br><span style="color:var(--ink-soft);font-size:14.5px">這是估計值,可在下方紀錄裡刪改'+(obj.note?(' · '+obj.note):'')+'</span>';
+      }catch(e){
+        status.innerHTML='<span class="err">分析失敗:'+(e.message||e)+'</span>';
+      }
+      btn.disabled=false;
+    });
+  }
+
   function initFoodModule(){
     let pendingThumb = null;
     document.querySelectorAll(".meal-tab").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         selectedMeal = btn.dataset.meal;
+        const mn=document.getElementById("aiMealName"); if(mn) mn.textContent=selectedMeal;
         document.querySelectorAll(".meal-tab").forEach(b=>b.classList.toggle("active", b===btn));
       });
     });
@@ -1530,6 +1631,8 @@
     initMetricsCollapse();
     initFoodModule();
     await loadFoodLog();
+    initAIPhotoModule();
+    await loadGeminiKey();
     initWaterModule();
     await loadWater();
     initProfileModule();
