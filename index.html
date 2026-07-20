@@ -313,6 +313,15 @@
   .food-suggest .fs-item:last-child{ border-bottom:none; }
   .food-suggest .fs-item:active{ background:var(--pink-soft); }
   .food-suggest .fs-k{ color:var(--ink-soft); white-space:nowrap; }
+  .rm-check{ display:flex; align-items:center; gap:8px; font-size:var(--fs-body); font-weight:700; color:var(--ink); margin-bottom:12px; }
+  .rm-check input, .rm-item input{ width:20px; height:20px; accent-color:var(--pink); }
+  .rm-row{ display:flex; align-items:center; flex-wrap:wrap; gap:10px; font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:12px; }
+  .rm-row input[type=time]{ padding:8px 10px; border-radius:12px; border:2px solid var(--line); font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
+  .rm-item{ display:inline-flex; align-items:center; gap:6px; color:var(--ink); }
+  .rm-preview-label{ font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:6px; }
+  .rm-preview{ background:var(--pink-soft); border-radius:14px; padding:12px 14px; font-size:var(--fs-body);
+    line-height:1.7; color:var(--ink); white-space:pre-wrap; margin-bottom:10px; }
+  .rm-note{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:10px; line-height:1.55; }
   .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:10px;
     padding:6px 4px 12px; border-bottom:1px dashed var(--line); margin-bottom:8px; font-size:var(--fs-label); color:var(--ink-soft); }
   .plan-bar{ display:flex; justify-content:center; padding:12px 20px 2px; }
@@ -636,6 +645,24 @@
   </div>
 </div>
 
+<div class="section" id="reminderSection">
+  <h2 class="cute" id="rmToggle"><span class="dot"></span>提醒 🔔 <span class="pf-caret" id="rmCaret">▾</span></h2>
+  <div class="pf-mini" id="rmMini"></div>
+  <div class="weight-box">
+    <label class="rm-check"><input type="checkbox" id="rmOn"> 開啟提醒</label>
+    <div class="rm-row">提醒時間 <input type="time" id="rmTime" value="16:20"></div>
+    <div class="rm-row">提醒內容:
+      <label class="rm-item"><input type="checkbox" id="rmDinner" checked> 今晚晚餐</label>
+      <label class="rm-item"><input type="checkbox" id="rmLunch" checked> 明日午餐</label>
+      <label class="rm-item"><input type="checkbox" id="rmWorkout" checked> 今日運動</label>
+    </div>
+    <div class="rm-preview-label">內容預覽(會即時反映你在 App 裡的更動)</div>
+    <div class="rm-preview" id="rmPreview"></div>
+    <button type="button" class="mini-btn" id="rmCopy">📋 複製內容</button>
+    <div class="rm-note" id="rmNote"></div>
+  </div>
+</div>
+
 <script>
 (function(){
   // 若執行環境沒有提供 window.storage(例如直接用手機/瀏覽器打開這個檔案),
@@ -801,8 +828,10 @@
         todayEntry.diet[field] = val;
         try{ await window.storage.set("dietover:"+iso+":"+field, val, false); }catch(e){}
         renderDays(); // 同步更新下方每日清單裡的文字
+        if(typeof renderReminder==="function") renderReminder();
       });
     });
+    if(typeof renderReminder==="function") renderReminder();
   }
 
   // ---------- 換今日菜單(選一餐、輸入想吃的,重新給那一餐) ----------
@@ -2130,6 +2159,7 @@
     show('foodSection', t==='origin'||t==='full'||t==='track');
     show('waterSection', t==='origin'||t==='full'||t==='track');
     show('metricsSection', true);
+    show('reminderSection', t==='origin');
     const ph=document.getElementById("planHeader");
     if(ph){ if(t==='origin'){ ph.style.display="none"; } else { ph.style.display=""; ph.textContent=PLAN.name; } }
   }
@@ -2156,7 +2186,7 @@
       d.addEventListener("click", async (e)=>{ e.stopPropagation();
         if(!confirm("刪除這個計畫?裡面的紀錄也會一起清掉")) return;
         const id=d.dataset.del;
-        ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed","waterlog","watergoal","workout","wocollapsed","fridge","frcollapsed"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
+        ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed","waterlog","watergoal","workout","wocollapsed","fridge","frcollapsed","reminder","rmcollapsed","herotitle"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
         plans=plans.filter(p=>p.id!==id); await savePlans();
         if(PLAN.id===id){ await switchPlan("default"); } else { renderPlanList(); }
       });
@@ -2166,7 +2196,7 @@
     const pl=plans.find(p=>p.id===id); if(!pl) return;
     PLAN=pl; try{ await window.storage.set("currentplan", id, false); }catch(e){}
     updatePlanBar(); renderPlanList(); applyPlanView();
-    await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile(); await loadWorkout(); await loadFridge();
+    await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile(); await loadWorkout(); await loadFridge(); await loadReminder();
   }
   async function addPlan(){
     const nameEl=document.getElementById("newPlanName");
@@ -2214,6 +2244,66 @@
       if(v){ try{ await window.storage.set(K("herotitle"), v, false); }catch(e){} } });
   }
 
+  // ---------- 提醒(內容即時反映 App 內的更動;可設定時間/內容) ----------
+  let reminderCfg = { on:false, time:"16:20", dinner:true, lunch:true, workout:true };
+  function reminderLines(){
+    const iso=isoDate(today); const te=days.find(d=>d.iso===iso)||days[0];
+    const tmr=new Date(today.getTime()+86400000); const tm=days.find(d=>d.iso===isoDate(tmr));
+    const lines=[];
+    if(reminderCfg.dinner && te) lines.push("🍽 今晚晚餐:"+te.diet.dinner);
+    if(reminderCfg.lunch) lines.push("🥗 明日午餐:"+(tm?tm.diet.lunch:"(超出計畫範圍)"));
+    if(reminderCfg.workout && te) lines.push("🏋 今日運動:"+te.workout.title);
+    return lines;
+  }
+  function renderReminder(){
+    const prev=document.getElementById("rmPreview"); if(!prev) return;
+    const lines=reminderLines();
+    prev.textContent = lines.length ? lines.join("\n") : "(還沒選要提醒的內容)";
+    const note=document.getElementById("rmNote");
+    if(note) note.innerHTML = reminderCfg.on
+      ? '已開啟。⚠️ 這是網頁 App,無法在關閉時自動跳 iPhone 通知;請按「複製內容」貼到 iPhone「提醒事項 / 捷徑」,設在每天 '+reminderCfg.time+'。菜單或運動改了,回來再複製一次即可(上面內容會即時更新)。'
+      : '打開後可設定時間與內容;預覽內容會即時反映你在 App 裡改的菜單/運動。';
+    updateRmMini();
+  }
+  function updateRmMini(){ const m=document.getElementById("rmMini"); if(!m) return;
+    m.innerHTML = reminderCfg.on ? ('提醒 '+reminderCfg.time+' 已開 <span class="pf-hint">(點開設定)</span>') : '<span class="pf-hint">點這裡展開,設定提醒</span>';
+  }
+  function setReminderCollapsed(c,persist){ const s=document.getElementById("reminderSection"); if(!s) return;
+    s.classList.toggle("collapsed",c); const el=document.getElementById("rmCaret"); if(el) el.textContent=c?"▸":"▾"; updateRmMini();
+    if(persist){ try{ window.storage.set(K("rmcollapsed"), c?"1":"0", false); }catch(e){} }
+  }
+  async function loadReminder(){
+    reminderCfg={ on:false, time:"16:20", dinner:true, lunch:true, workout:true };
+    try{ const r=await window.storage.get(K("reminder"),false); if(r&&r.value){ reminderCfg=Object.assign(reminderCfg, JSON.parse(r.value)||{}); } }catch(e){}
+    const on=document.getElementById("rmOn"); if(on) on.checked=reminderCfg.on;
+    const tm=document.getElementById("rmTime"); if(tm) tm.value=reminderCfg.time||"16:20";
+    const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.checked=v; };
+    set("rmDinner",reminderCfg.dinner); set("rmLunch",reminderCfg.lunch); set("rmWorkout",reminderCfg.workout);
+    renderReminder();
+    let stored=null; try{ const c=await window.storage.get(K("rmcollapsed"),false); if(c&&c.value!=null&&c.value!=="") stored=c.value; }catch(e){}
+    setReminderCollapsed(stored!=null? stored==="1" : true, false);
+  }
+  async function saveReminder(){ try{ await window.storage.set(K("reminder"), JSON.stringify(reminderCfg), false); }catch(e){} }
+  function initReminderModule(){
+    ["rmOn","rmTime","rmDinner","rmLunch","rmWorkout"].forEach(id=>{ const el=document.getElementById(id);
+      if(el) el.addEventListener("change", ()=>{
+        reminderCfg.on=document.getElementById("rmOn").checked;
+        reminderCfg.time=document.getElementById("rmTime").value||"16:20";
+        reminderCfg.dinner=document.getElementById("rmDinner").checked;
+        reminderCfg.lunch=document.getElementById("rmLunch").checked;
+        reminderCfg.workout=document.getElementById("rmWorkout").checked;
+        saveReminder(); renderReminder();
+      });
+    });
+    const cp=document.getElementById("rmCopy");
+    if(cp) cp.addEventListener("click", async ()=>{ const txt=reminderLines().join("\n");
+      try{ await navigator.clipboard.writeText(txt); cp.textContent="已複製 ✅"; setTimeout(()=>cp.textContent="📋 複製內容",1500); }
+      catch(e){ cp.textContent="請長按上面預覽複製"; setTimeout(()=>cp.textContent="📋 複製內容",1800); } });
+    const tog=document.getElementById("rmToggle");
+    if(tog) tog.addEventListener("click", ()=>{ const s=document.getElementById("reminderSection"); setReminderCollapsed(!s.classList.contains("collapsed"), true); });
+    const mini=document.getElementById("rmMini"); if(mini) mini.addEventListener("click", ()=> setReminderCollapsed(false,true));
+  }
+
   async function init(){
     await loadPlans();
     initPlanModule();
@@ -2240,6 +2330,8 @@
     await loadProfile();
     initWorkoutModule();
     await loadWorkout();
+    initReminderModule();
+    await loadReminder();
   }
   init();
 })();
