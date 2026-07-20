@@ -5,31 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>回台倒數計畫</title>
 <!-- 加到手機主畫面後,像 App 一樣有圖示、全螢幕開啟 -->
-<meta name="theme-color" content="#FF9FBB">
+<meta name="theme-color" content="#C39BA0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="回台倒數">
-<link rel="apple-touch-icon" href="assets/icon-180.png">
-<link rel="icon" type="image/png" href="assets/icon-192.png">
+<link rel="apple-touch-icon" href="assets/icon-180-2.png">
+<link rel="icon" type="image/png" href="assets/icon-192-2.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --cream:#FFF8EF;
-    --card:#FFFFFF;
-    --pink:#FF9FBB;
-    --pink-soft:#FFE1EA;
-    --peach:#FFC9A0;
-    --mint:#9FD8BC;
-    --mint-soft:#E4F6EC;
-    --lav:#C9BCF0;
-    --lav-soft:#EFEAFC;
-    --ink:#5B4636;
-    --ink-soft:#9C8676;
-    --line:#F0E4D6;
-    --shadow: 0 2px 6px rgba(91,70,54,0.06), 0 8px 20px rgba(255,159,187,0.12);
+    --cream:#EDE7DD;
+    --card:#FBF8F3;
+    --pink:#C39BA0;
+    --pink-soft:#E6D8D7;
+    --peach:#CBAE95;
+    --mint:#A7B7A6;
+    --mint-soft:#DDE4DC;
+    --lav:#ADA5B7;
+    --lav-soft:#E2DDE6;
+    --ink:#5B5249;
+    --ink-soft:#9A9083;
+    --line:#E4DCD0;
+    --shadow: 0 2px 6px rgba(91,82,73,0.06), 0 8px 20px rgba(173,165,183,0.10);
   }
   @font-face {
     font-family: 'RedBeanCream';
@@ -41,10 +41,7 @@
   *{box-sizing:border-box;}
   body{
     margin:0;
-    background:
-      radial-gradient(circle at 10% 0%, var(--pink-soft) 0%, transparent 45%),
-      radial-gradient(circle at 90% 15%, var(--lav-soft) 0%, transparent 40%),
-      var(--cream);
+    background: var(--cream);
     color:var(--ink);
     font-family:"RedBeanCream", "Noto Sans TC", -apple-system, sans-serif;
     padding-bottom:60px;
@@ -67,7 +64,7 @@
   header.hero{ padding:8px 20px 20px; position:relative; }
   .washi{
     position:absolute; top:-6px; left:24px; width:70px; height:20px;
-    background:repeating-linear-gradient(45deg, var(--peach), var(--peach) 6px, #ffd9b8 6px, #ffd9b8 12px);
+    background:repeating-linear-gradient(45deg, var(--peach), var(--peach) 6px, #DFD2C2 6px, #DFD2C2 12px);
     opacity:0.85; transform:rotate(-4deg); border-radius:3px;
   }
   .hero h1{
@@ -114,9 +111,9 @@
   .save-btn{
     width:100%; background:var(--pink); color:#fff; border:none; border-radius:14px;
     padding:12px; font-size:24.4px; font-weight:700; letter-spacing:0.02em;
-    box-shadow:0 4px 0 #e77e9c;
+    box-shadow:0 4px 0 #A67F84;
   }
-  .save-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #e77e9c; }
+  .save-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #A67F84; }
 
   svg.chart{ width:100%; height:130px; display:block; margin-top:14px; }
   .chart-empty{ font-size:20.5px; color:var(--ink-soft); padding:14px 0 2px; text-align:center; }
@@ -242,10 +239,10 @@
   .kcal-head .sub{ font-size:17px; color:var(--ink-soft); }
   .kcal-bar{ height:14px; border-radius:10px; background:var(--pink-soft); overflow:hidden; margin:8px 0 2px; }
   .kcal-bar > span{ display:block; height:100%; border-radius:10px; background:var(--pink); }
-  .kcal-bar.over > span{ background:#F08A8A; }
+  .kcal-bar.over > span{ background:#BE8E86; }
   .advice{ background:var(--mint-soft); border-radius:16px; padding:12px 14px; margin:12px 0 2px;
     font-size:18px; line-height:1.65; color:var(--ink); }
-  .advice.over{ background:#FFE7E1; }
+  .advice.over{ background:#E7DAD5; }
   .advice.warn{ background:var(--lav-soft); }
   .meal-group{ margin-top:14px; }
   .meal-group-title{ font-size:17px; font-weight:900; color:var(--pink); margin-bottom:2px; }
@@ -299,7 +296,7 @@
       <div class="kwrap"><input type="number" step="10" id="inFoodKcal" placeholder="熱量"><span class="unit">kcal</span></div>
     </div>
     <datalist id="foodDB"></datalist>
-    <button class="save-btn cute" id="addFoodBtn" style="background:var(--peach); box-shadow:0 4px 0 #c9a66f;">加入這一餐 🍽️</button>
+    <button class="save-btn cute" id="addFoodBtn" style="background:var(--peach); box-shadow:0 4px 0 #A98F72;">加入這一餐 🍽️</button>
 
     <div class="target-row">
       <span>今日目標</span>
@@ -736,13 +733,13 @@
     function x(idx){ return n===1? w/2 : padX + (idx/(n-1))*(w-padX*2); }
     function y(v){ return h-padY - ((v-minV)/(maxV-minV))*(h-padY*2); }
     let path = sorted.map((p,idx)=>(idx===0?"M":"L")+x(idx).toFixed(1)+","+y(p.weight).toFixed(1)).join(" ");
-    let dots = sorted.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.weight).toFixed(1)}" r="4" fill="#FF9FBB" stroke="#fff" stroke-width="1.5"/>`).join("");
+    let dots = sorted.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.weight).toFixed(1)}" r="4" fill="#C39BA0" stroke="#fff" stroke-width="1.5"/>`).join("");
     const goalY = y(goal).toFixed(1);
     area.innerHTML = `
       <svg class="chart" viewBox="0 0 ${w} ${h}">
-        <line x1="0" y1="${goalY}" x2="${w}" y2="${goalY}" stroke="#C9BCF0" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <text x="4" y="${goalY-4}" font-size="14.6" fill="#9C8676">目標 60kg</text>
-        <path d="${path}" fill="none" stroke="#FF9FBB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="0" y1="${goalY}" x2="${w}" y2="${goalY}" stroke="#ADA5B7" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="4" y="${goalY-4}" font-size="14.6" fill="#9A9083">目標 60kg</text>
+        <path d="${path}" fill="none" stroke="#C39BA0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         ${dots}
       </svg>`;
   }
