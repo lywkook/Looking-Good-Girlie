@@ -322,6 +322,22 @@
   .rm-preview{ background:var(--pink-soft); border-radius:14px; padding:12px 14px; font-size:var(--fs-body);
     line-height:1.7; color:var(--ink); white-space:pre-wrap; margin-bottom:10px; }
   .rm-note{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:10px; line-height:1.55; }
+  #homeScreen{ max-width:560px; margin:0 auto; padding:30px 20px 40px; }
+  .home-head{ text-align:center; margin-bottom:22px; }
+  .home-title{ font-size:32px; font-weight:400; color:var(--ink); }
+  .home-sub{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:4px; }
+  .home-list{ display:flex; flex-direction:column; gap:12px; }
+  .home-card{ background:var(--card); border-radius:20px; padding:20px 22px; box-shadow:var(--shadow);
+    border:2px solid var(--pink-soft); cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .home-card:active{ transform:scale(0.99); }
+  .home-card-name{ font-size:var(--fs-title); font-weight:900; color:var(--ink); }
+  .home-card-type{ font-size:var(--fs-label); color:#fff; background:var(--pink); border-radius:20px; padding:3px 12px; white-space:nowrap; }
+  .home-card .home-arrow{ color:var(--pink); font-size:var(--fs-title); }
+  .home-new{ margin-top:24px; background:var(--card); border-radius:18px; padding:16px; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; gap:8px; }
+  .home-new-title{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
+  .home-new input, .home-new select{ padding:11px 13px; border-radius:12px; border:2px solid var(--line);
+    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; -webkit-appearance:none; }
   .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:10px;
     padding:6px 4px 12px; border-bottom:1px dashed var(--line); margin-bottom:8px; font-size:var(--fs-label); color:var(--ink-soft); }
   .plan-bar{ display:flex; justify-content:center; padding:12px 20px 2px; }
@@ -423,11 +439,31 @@
 </head>
 <body>
 
+<div id="homeScreen">
+  <div class="home-head">
+    <div class="home-title cute">🍑 我的計畫</div>
+    <div class="home-sub">點一個計畫進入</div>
+  </div>
+  <div id="homeList" class="home-list"></div>
+  <div class="home-new">
+    <div class="home-new-title">新增計畫</div>
+    <input id="homeNewName" placeholder="計畫名稱(例:長期體重紀錄)" autocomplete="off">
+    <select id="homeNewType">
+      <option value="track">紀錄飲食 + 喝水 + 體重</option>
+      <option value="full">幫我規劃減重減脂</option>
+    </select>
+    <button id="homeAddBtn" class="save-btn cute">＋ 建立新計畫</button>
+  </div>
+  <div class="settings-row" style="max-width:520px;margin:18px auto 0;"><span>字體</span><button type="button" class="mini-btn js-font-toggle">粗線體</button></div>
+</div>
+
+<div id="appView" style="display:none;">
 <div class="plan-bar">
+  <button id="homeBtn" class="plan-current cute" style="margin-right:8px;">🏠</button>
   <button id="planCurrent" class="plan-current cute">減重計畫 ▾</button>
 </div>
 <div class="plan-panel" id="planPanel">
-  <div class="settings-row"><span>字體</span><button type="button" class="mini-btn" id="fontToggle">粗線體</button></div>
+  <div class="settings-row"><span>字體</span><button type="button" class="mini-btn js-font-toggle">粗線體</button></div>
   <div class="plan-list" id="planList"></div>
   <div class="plan-new">
     <div style="font-size:18.4px;color:var(--ink-soft);font-weight:700;">新增計畫</div>
@@ -599,7 +635,6 @@
     <div id="foodLogArea"></div>
   </div>
 </div>
-</div>
 
 <div class="section" id="waterSection">
   <h2 class="cute"><span class="dot"></span>今日喝水 💧</h2>
@@ -662,6 +697,7 @@
     <div class="rm-note" id="rmNote"></div>
   </div>
 </div>
+</div><!-- /appView -->
 
 <script>
 (function(){
@@ -2215,20 +2251,57 @@
     document.getElementById("addPlanBtn").addEventListener("click", addPlan);
   }
 
+  // ---------- 主畫面(顯示所有計畫,點選進入) ----------
+  function renderHome(){
+    const box=document.getElementById("homeList"); if(!box) return;
+    box.innerHTML = plans.map(p=>`<div class="home-card" data-id="${p.id}">
+        <div class="home-card-name">${esc(p.name)}</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span class="home-card-type">${esc(PLAN_LABEL[p.type]||'')}</span><span class="home-arrow">›</span></div>
+      </div>`).join("");
+    box.querySelectorAll(".home-card").forEach(c=> c.addEventListener("click", ()=> enterPlan(c.dataset.id)));
+  }
+  async function enterPlan(id){
+    await switchPlan(id);
+    document.getElementById("homeScreen").style.display="none";
+    document.getElementById("appView").style.display="";
+    window.scrollTo(0,0);
+  }
+  function goHome(){
+    renderHome();
+    document.getElementById("appView").style.display="none";
+    document.getElementById("homeScreen").style.display="";
+    const pp=document.getElementById("planPanel"); if(pp) pp.classList.remove("show");
+    window.scrollTo(0,0);
+  }
+  async function addPlanHome(){
+    const nameEl=document.getElementById("homeNewName"); const name=(nameEl.value||"").trim();
+    const type=document.getElementById("homeNewType").value;
+    if(!name){ nameEl.focus(); return; }
+    const id="pl"+Date.now().toString(36);
+    plans.push({id,name,type}); await savePlans();
+    nameEl.value="";
+    await enterPlan(id);
+  }
+  function initHomeModule(){
+    renderHome();
+    const add=document.getElementById("homeAddBtn"); if(add) add.addEventListener("click", addPlanHome);
+    const hb=document.getElementById("homeBtn"); if(hb) hb.addEventListener("click", goHome);
+  }
+
   // ---------- 字體切換(粗線體 / 紅豆奶霜體,可比較) ----------
   let fontPref = "cu";   // 全域設定(不分計畫)
   function applyFont(){
     document.documentElement.style.setProperty("--font-main", fontPref==="cu" ? '"CuHsianTi"' : '"RedBeanCream"');
-    const b=document.getElementById("fontToggle");
-    if(b) b.textContent = fontPref==="cu" ? "粗線體(點我換紅豆奶霜體)" : "紅豆奶霜體(點我換粗線體)";
+    const txt = fontPref==="cu" ? "粗線體(點我換紅豆奶霜體)" : "紅豆奶霜體(點我換粗線體)";
+    document.querySelectorAll(".js-font-toggle").forEach(b=> b.textContent=txt);
   }
   async function loadFontPref(){
     try{ const r=await window.storage.get("fontpref",false); if(r&&r.value) fontPref=r.value; }catch(e){}
     applyFont();
   }
   function initFontModule(){
-    const b=document.getElementById("fontToggle");
-    if(b) b.addEventListener("click", async ()=>{ fontPref = fontPref==="cu" ? "redbean" : "cu"; applyFont(); try{ await window.storage.set("fontpref", fontPref, false); }catch(e){} });
+    document.querySelectorAll(".js-font-toggle").forEach(b=>
+      b.addEventListener("click", async ()=>{ fontPref = fontPref==="cu" ? "redbean" : "cu"; applyFont(); try{ await window.storage.set("fontpref", fontPref, false); }catch(e){} }));
   }
 
   // ---------- 標題可編輯(自動儲存) ----------
@@ -2332,6 +2405,10 @@
     await loadWorkout();
     initReminderModule();
     await loadReminder();
+    initHomeModule();
+    // 一進來先顯示主畫面(計畫清單),點計畫才進入
+    document.getElementById("appView").style.display="none";
+    document.getElementById("homeScreen").style.display="";
   }
   init();
 })();
