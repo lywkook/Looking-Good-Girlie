@@ -174,6 +174,11 @@
   .day-body .blk-title{
     font-size:16.7px; color:var(--ink-soft); margin-bottom:3px; font-weight:700;
   }
+  /* 今日菜單:餐別粗體、字放大 */
+  #todayMenuBox .blk{ margin-bottom:14px; }
+  #todayMenuBox .blk-title{ font-size:19px; color:var(--ink-soft); margin-bottom:4px; }
+  #todayMenuBox .blk-title b{ font-weight:900; color:var(--ink); font-size:23px; }
+  #todayMenuBox .editable-content{ font-size:23.5px; line-height:1.6; color:var(--ink); }
 
   .today-marker{
     font-size:15.1px; color:#fff; background:var(--pink); border-radius:20px;
@@ -311,6 +316,18 @@
   .ai-key-row input{ flex:1; min-width:0; border:1.5px solid var(--line); border-radius:12px; padding:9px 12px; font-size:16px; font-family:inherit; background:#fff; color:var(--ink); }
   .ai-key-hint{ font-size:14.5px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
   .ai-key-hint a{ color:var(--mint); font-weight:900; }
+  .wo-field{ margin:12px 0; }
+  .wo-field label{ display:block; font-size:16.5px; color:var(--ink-soft); margin-bottom:6px; }
+  .wo-textarea{ width:100%; box-sizing:border-box; min-height:78px; border:1.5px solid var(--line); border-radius:14px;
+    padding:11px 13px; font-size:18px; font-family:inherit; background:#fff; color:var(--ink); line-height:1.5; resize:vertical; }
+  .wo-hint{ font-size:15px; color:var(--ink-soft); margin:10px 0; line-height:1.5; }
+  .wo-hint.err{ color:#B5766F; }
+  .wo-week{ margin-top:12px; }
+  .wo-day{ background:#FFFBF6; border:2px solid var(--line); border-radius:14px; padding:11px 13px; margin-bottom:9px; }
+  .wo-day-h{ font-size:20px; margin-bottom:5px; }
+  .wo-day-h b{ font-weight:900; color:var(--ink); }
+  .wo-items{ margin:0; padding-left:20px; }
+  .wo-items li{ font-size:18.5px; color:var(--ink); line-height:1.55; margin-bottom:2px; }
   .water-row{ display:flex; align-items:center; justify-content:center; gap:20px; }
   .water-btn{ width:56px; height:56px; border-radius:50%; border:none; background:var(--lav-soft);
     color:var(--ink); font-size:30px; font-weight:900; cursor:pointer; font-family:inherit; line-height:1; }
@@ -392,6 +409,23 @@
       <div class="wrap"><input type="date" id="pfDate" value="2026-08-28"></div>
     </div>
     <div id="profileResult"></div>
+  </div>
+</div>
+
+<div class="section" id="workoutSection">
+  <h2 class="cute" id="woToggle"><span class="dot"></span>運動計畫 · 客製化 🏋️ <span class="pf-caret" id="woCaret">▾</span></h2>
+  <div class="pf-mini" id="woMini"></div>
+  <div class="weight-box">
+    <div class="metric-inputs">
+      <div class="field"><label>一週想練幾天</label><div class="wrap"><input type="number" id="woDays" placeholder="4" min="1" max="7"><span class="unit">天</span></div></div>
+      <div class="field"><label>每次有氧</label><div class="wrap"><input type="number" id="woCardio" placeholder="20"><span class="unit">分鐘</span></div></div>
+    </div>
+    <div class="wo-field">
+      <label>器材 · 想加強的部位 · 偏好(自由填,越詳細越準)</label>
+      <textarea id="woNote" class="wo-textarea" placeholder="例:家裡有 5-8 磅啞鈴 + 跑步機,想練直角肩、大腿內側、手臂拜拜肉,不想跳太吵的動作,膝蓋不好"></textarea>
+    </div>
+    <button class="save-btn cute" id="woGenBtn" style="background:var(--mint); box-shadow:0 4px 0 #A7B4A4;">產生我的客製化運動計畫 ✨</button>
+    <div id="woResult"></div>
   </div>
 </div>
 
@@ -640,7 +674,7 @@
     const fields = [["breakfast","早餐"],["lunch","午餐"],["dinner","晚餐"],["fruit","水果點心"]];
     box.innerHTML = fields.map(([f,label],i)=>`
       <div class="blk" style="${i===fields.length-1?'margin-bottom:0;':''}">
-        <div class="blk-title"><b style="font-weight:700;">${label}</b> <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}">✏️</span></div>
+        <div class="blk-title"><b style="font-weight:900;">${label}</b> <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}">✏️</span></div>
         <div class="editable-content" data-field="${f}" data-iso="${todayEntry.iso}">${todayEntry.diet[f]}</div>
       </div>`).join("");
     box.querySelectorAll(".edit-pencil").forEach(p=>{
@@ -1250,17 +1284,21 @@
     if(geminiKey){ h.innerHTML='✅ 金鑰已儲存(只存在這支手機、不會上傳到程式碼)。直接上傳照片就會自動估熱量。'; }
     else { h.innerHTML='免費申請:到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 用 Google 帳號登入 →「Create API key」→ 複製貼上、按儲存。免費、不需信用卡。'; }
   }
-  async function analyzeFoodPhoto(b64){
-    const prompt = '你是營養師。看這張食物照片,用繁體中文判斷主要是什麼食物或餐點,並估計「整份」的總熱量(大卡)。只回傳 JSON,不要多餘文字。格式:{"name":"簡短餐點名稱(繁體中文,不超過12字)","kcal":整數總熱量,"note":"一句話說明估算依據"}。若照片看不出是食物,name 請回空字串。';
-    const body = { contents:[{ parts:[ {text:prompt}, {inline_data:{mime_type:"image/jpeg", data:b64}} ]}], generationConfig:{ responseMimeType:"application/json", temperature:0.2 } };
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+  async function geminiJSON(prompt, extraParts, temp){
+    const parts=[{text:prompt}]; if(extraParts) extraParts.forEach(p=>parts.push(p));
+    const body = { contents:[{ parts }], generationConfig:{ responseMimeType:"application/json", temperature: temp==null?0.3:temp } };
     const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+encodeURIComponent(geminiKey);
     const res = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
     if(!res.ok){ let msg="連線失敗 ("+res.status+")"; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){} throw new Error(msg); }
     const data = await res.json();
-    const parts = ((((data.candidates||[])[0]||{}).content||{}).parts)||[];
-    const txt = (parts[0]||{}).text || "";
-    let obj; try{ obj=JSON.parse(txt); }catch(e){ throw new Error("AI 回傳格式看不懂,請再試一次"); }
-    return obj;
+    const rparts = ((((data.candidates||[])[0]||{}).content||{}).parts)||[];
+    const txt = (rparts[0]||{}).text || "";
+    try{ return JSON.parse(txt); }catch(e){ throw new Error("AI 回傳格式看不懂,請再試一次"); }
+  }
+  async function analyzeFoodPhoto(b64){
+    const prompt = '你是營養師。看這張食物照片,用繁體中文判斷主要是什麼食物或餐點,並估計「整份」的總熱量(大卡)。只回傳 JSON,不要多餘文字。格式:{"name":"簡短餐點名稱(繁體中文,不超過12字)","kcal":整數總熱量,"note":"一句話說明估算依據"}。若照片看不出是食物,name 請回空字串。';
+    return await geminiJSON(prompt, [{inline_data:{mime_type:"image/jpeg", data:b64}}], 0.2);
   }
   function initAIPhotoModule(){
     const box=document.getElementById("aiPhotoBox"); if(!box) return;
@@ -1508,6 +1546,113 @@
     if(mini) mini.addEventListener("click", ()=> setProfileCollapsed(false, true));
   }
 
+  // ---------- 運動計畫 · 客製化 ----------
+  let workoutPlan = null;
+  function spreadDays(n){ const out=[]; for(let i=0;i<n;i++) out.push(Math.min(6, Math.round(i*7/n))); return out; }
+  function localWorkoutPlan(days, cardioMin, note){
+    days = Math.min(7, Math.max(1, days||4)); cardioMin = cardioMin||20;
+    const parts = ["肩 · 直角肩","大腿內側 · 翹臀","手臂 · 拜拜肉","背 · 核心"];
+    const dayNames = ["週一","週二","週三","週四","週五","週六","週日"];
+    const trainDays = spreadDays(days); let li=0;
+    const week=[];
+    for(let i=0;i<7;i++){
+      const ti = trainDays.indexOf(i);
+      if(ti>=0){
+        if(ti%2===0){
+          const focus = parts[li%parts.length]; li++;
+          week.push({ day:dayNames[i], type:"重訓", focus,
+            items:["暖身 5 分鐘","主項:針對「"+focus+"」啞鈴動作 3-4 組 × 12-15 下","輔助動作 2-3 組","收操伸展 5 分鐘"] });
+        } else {
+          week.push({ day:dayNames[i], type:"有氧", focus:"燃脂",
+            items:["跑步機間歇 / 快走 "+cardioMin+" 分鐘","全身燃脂:開合跳 / 高抬腿 / 深蹲跳 各 40 秒 × 3 輪"] });
+        }
+      } else {
+        week.push({ day:dayNames[i], type:"休息", focus:"", items:["休息 / 輕鬆散步 / 伸展放鬆"] });
+      }
+    }
+    const tips=["重訓後 30 分鐘內補充蛋白質","動作會痠是正常,關節會痛就停下","一週至少 2 天完全休息,肌肉才會長"];
+    if(note) tips.unshift("你的偏好:"+note+"(內建版已盡量納入;貼上免費 AI 金鑰可產生更貼身的計畫)");
+    return { summary:"依你選的每週 "+days+" 天、每次有氧約 "+cardioMin+" 分鐘:重訓與有氧交替、其餘休息。", week, tips };
+  }
+  function renderWorkout(plan){
+    const box=document.getElementById("woResult"); if(!box) return;
+    if(!plan){ box.innerHTML=""; return; }
+    let h='<div class="advice">'+esc(plan.summary||"")+'</div><div class="wo-week">';
+    (plan.week||[]).forEach(d=>{
+      const t=d.type||""; const tag = /重訓|肌力/.test(t)?"tag-lift":(/有氧|燃脂|跑/.test(t)?"tag-cardio":"tag-rest");
+      h+='<div class="wo-day"><div class="wo-day-h"><b>'+esc(d.day||"")+'</b> <span class="day-tag '+tag+'">'+esc(t)+(d.focus?" · "+esc(d.focus):"")+'</span></div>';
+      h+='<ul class="wo-items">'+((d.items||[]).map(it=>"<li>"+esc(it)+"</li>").join(""))+'</ul></div>';
+    });
+    h+='</div>';
+    if(plan.tips&&plan.tips.length) h+='<div class="advice"><b>提醒</b><br>'+plan.tips.map(t=>"· "+esc(t)).join("<br>")+'</div>';
+    box.innerHTML=h;
+  }
+  async function loadWorkout(){
+    workoutPlan=null;
+    const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=(v==null?"":v); };
+    set("woDays",""); set("woCardio",""); set("woNote","");
+    try{ const r=await window.storage.get(K("workout"),false); if(r&&r.value){ const p=JSON.parse(r.value);
+      set("woDays",p.days); set("woCardio",p.cardio); set("woNote",p.note); workoutPlan=p.plan||null; } }catch(e){}
+    renderWorkout(workoutPlan); updateWoMini();
+    let stored=null; try{ const c=await window.storage.get(K("wocollapsed"),false); if(c&&c.value!=null&&c.value!=="") stored=c.value; }catch(e){}
+    setWorkoutCollapsed(stored!=null ? stored==="1" : !workoutPlan, false);
+  }
+  async function saveWorkout(){
+    const g=id=>{ const el=document.getElementById(id); return el?el.value:""; };
+    const p={ days:g("woDays"), cardio:g("woCardio"), note:g("woNote"), plan:workoutPlan };
+    try{ await window.storage.set(K("workout"), JSON.stringify(p), false); }catch(e){}
+  }
+  async function generateWorkoutPlan(){
+    const box=document.getElementById("woResult");
+    const days=parseInt(document.getElementById("woDays").value,10)||4;
+    const cardio=parseInt(document.getElementById("woCardio").value,10)||20;
+    const note=(document.getElementById("woNote").value||"").trim();
+    await saveWorkout();
+    if(!geminiKey){
+      workoutPlan=localWorkoutPlan(days,cardio,note); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini();
+      box.insertAdjacentHTML("afterbegin",'<div class="wo-hint">目前用內建規則產生。想要更貼你需求的計畫,可到下方「飲食紀錄」貼上免費 AI 金鑰,再回來按一次 ✨</div>');
+      return;
+    }
+    const sex=document.getElementById("pfSex").value==="male"?"男":"女";
+    const w=document.getElementById("pfWeight").value, tw=document.getElementById("pfTargetW").value, dateStr=document.getElementById("pfDate").value;
+    const btn=document.getElementById("woGenBtn"); const oldT=btn.textContent; btn.disabled=true; btn.textContent="產生中…";
+    box.innerHTML='<div class="advice"><span class="ai-spin"></span>正在依你的需求規劃…</div>';
+    try{
+      const prompt='你是專業健身教練。根據以下資訊,用繁體中文設計「一週 7 天」的客製化運動計畫,兼顧減重減脂與保留肌肉,務必尊重使用者的器材與偏好、不要安排他做不到或不想做的動作。'
+        +'使用者:'+sex+'性,目前 '+(w||"?")+' kg,目標 '+(tw||"?")+' kg,希望 '+(dateStr||"")+' 前達成。'
+        +'每週可運動 '+days+' 天,每次有氧約 '+cardio+' 分鐘。器材與偏好:'+(note||"一般居家,小啞鈴 + 跑步機")+'。'
+        +'只回傳 JSON,不要多餘文字。格式:{"summary":"一句話總結","week":[{"day":"週一","type":"重訓 或 有氧 或 休息","focus":"部位或重點","items":["動作 組數×次數", "..."]}](剛好7天,週一到週日),"tips":["提醒", "..."]}。';
+      const obj=await geminiJSON(prompt, null, 0.3);
+      if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
+      workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini();
+    }catch(e){
+      workoutPlan=localWorkoutPlan(days,cardio,note); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini();
+      box.insertAdjacentHTML("afterbegin",'<div class="wo-hint err">AI 連線失敗('+esc(e.message||e)+'),先給你內建規則版。</div>');
+    }
+    btn.disabled=false; btn.textContent=oldT;
+  }
+  function updateWoMini(){
+    const mini=document.getElementById("woMini"); if(!mini) return;
+    const d=document.getElementById("woDays").value;
+    if(workoutPlan && d) mini.innerHTML='運動計畫:每週 <b>'+esc(d)+'</b> 天已排好 <span class="pf-hint">(點這裡展開)</span>';
+    else mini.innerHTML='<span class="pf-hint">點這裡展開,填你的運動需求</span>';
+  }
+  function setWorkoutCollapsed(collapsed, persist){
+    const sec=document.getElementById("workoutSection"); if(!sec) return;
+    sec.classList.toggle("collapsed", collapsed);
+    const c=document.getElementById("woCaret"); if(c) c.textContent=collapsed?"▸":"▾";
+    updateWoMini();
+    if(persist){ try{ window.storage.set(K("wocollapsed"), collapsed?"1":"0", false); }catch(e){} }
+  }
+  function initWorkoutModule(){
+    const gen=document.getElementById("woGenBtn"); if(gen) gen.addEventListener("click", generateWorkoutPlan);
+    ["woDays","woCardio","woNote"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
+    const tog=document.getElementById("woToggle");
+    if(tog) tog.addEventListener("click", ()=>{ const sec=document.getElementById("workoutSection"); setWorkoutCollapsed(!sec.classList.contains("collapsed"), true); });
+    const mini=document.getElementById("woMini");
+    if(mini) mini.addEventListener("click", ()=> setWorkoutCollapsed(false, true));
+  }
+
   // ---------- 喝水紀錄 ----------
   let waterLog = {}; let waterGoal = 8;
   async function loadWater(){
@@ -1562,6 +1707,7 @@
     show('menuSection', t==='origin');
     show('checkinSection', t==='origin');
     show('profileSection', t==='origin'||t==='full');
+    show('workoutSection', t==='origin'||t==='full');
     show('foodSection', t==='origin'||t==='full'||t==='track');
     show('waterSection', t==='origin'||t==='full'||t==='track');
     show('metricsSection', true);
@@ -1591,7 +1737,7 @@
       d.addEventListener("click", async (e)=>{ e.stopPropagation();
         if(!confirm("刪除這個計畫?裡面的紀錄也會一起清掉")) return;
         const id=d.dataset.del;
-        ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed","waterlog","watergoal"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
+        ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed","waterlog","watergoal","workout","wocollapsed"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
         plans=plans.filter(p=>p.id!==id); await savePlans();
         if(PLAN.id===id){ await switchPlan("default"); } else { renderPlanList(); }
       });
@@ -1601,7 +1747,7 @@
     const pl=plans.find(p=>p.id===id); if(!pl) return;
     PLAN=pl; try{ await window.storage.set("currentplan", id, false); }catch(e){}
     updatePlanBar(); renderPlanList(); applyPlanView();
-    await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile();
+    await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile(); await loadWorkout();
   }
   async function addPlan(){
     const nameEl=document.getElementById("newPlanName");
@@ -1637,6 +1783,8 @@
     await loadWater();
     initProfileModule();
     await loadProfile();
+    initWorkoutModule();
+    await loadWorkout();
   }
   init();
 })();
