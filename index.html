@@ -61,9 +61,20 @@
     background: var(--cream);
     color:var(--ink);
     font-family:var(--font-main), "Noto Sans TC", -apple-system, sans-serif;
-    padding-bottom:60px;
+    padding-bottom:82px;
     -webkit-font-smoothing:antialiased;
   }
+  #bottomNav{ position:fixed; left:0; right:0; bottom:0; height:64px; background:var(--card);
+    border-top:1px solid var(--line); display:flex; z-index:200; box-shadow:0 -2px 10px rgba(94,85,76,0.06); }
+  .nav-btn{ flex:1; border:none; background:none; font-family:inherit; cursor:pointer; color:var(--ink);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:23px; }
+  .nav-btn span{ font-size:var(--fs-hint); color:var(--ink-soft); }
+  .nav-btn:active{ opacity:0.6; }
+  .nav-jump-menu{ position:fixed; right:12px; bottom:74px; background:var(--card); border-radius:16px;
+    box-shadow:var(--shadow); border:2px solid var(--pink-soft); padding:8px; display:none; z-index:201; max-height:62vh; overflow:auto; }
+  .nav-jump-menu.show{ display:block; }
+  .nav-jump-item{ padding:11px 20px; border-radius:10px; font-size:var(--fs-body); color:var(--ink); cursor:pointer; white-space:nowrap; }
+  .nav-jump-item:active{ background:var(--pink-soft); }
   .cute{ font-family:var(--font-main), "ZCOOL KuaiLe", "Noto Sans TC", sans-serif; }
 
   .stamp-row{
@@ -709,6 +720,13 @@
     <div class="rm-note" id="rmNote"></div>
   </div>
 </div>
+
+<div class="nav-jump-menu" id="navJumpMenu"></div>
+<nav id="bottomNav">
+  <button type="button" class="nav-btn" id="navHome">🏠<span>主畫面</span></button>
+  <button type="button" class="nav-btn" id="navNew">＋<span>新增計畫</span></button>
+  <button type="button" class="nav-btn" id="navJump">↕<span>跳到</span></button>
+</nav>
 </div><!-- /appView -->
 
 <script>
@@ -2299,6 +2317,29 @@
     const hb=document.getElementById("homeBtn"); if(hb) hb.addEventListener("click", goHome);
   }
 
+  // ---------- 底部主選單(回主畫面 / 新增 / 跳到某區塊) ----------
+  const SECTION_LABELS = { menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", reminderSection:"提醒", profileSection:"個人資料", workoutSection:"運動計畫" };
+  function buildJumpMenu(){
+    const box=document.getElementById("navJumpMenu"); if(!box) return;
+    const ids=["menuSection","foodSection","waterSection","metricsSection","fridgeSection","reminderSection","profileSection","workoutSection"];
+    box.innerHTML = ids.filter(id=>{ const el=document.getElementById(id); return el && el.style.display!=="none"; })
+      .map(id=>`<div class="nav-jump-item" data-sec="${id}">${SECTION_LABELS[id]}</div>`).join("");
+    box.querySelectorAll(".nav-jump-item").forEach(it=> it.addEventListener("click", ()=> jumpToSection(it.dataset.sec)));
+  }
+  function jumpToSection(id){
+    const el=document.getElementById(id); if(!el) return;
+    el.classList.remove("collapsed");
+    const caret=el.querySelector(".pf-caret"); if(caret) caret.textContent="▾";
+    document.getElementById("navJumpMenu").classList.remove("show");
+    try{ el.scrollIntoView({behavior:"smooth", block:"start"}); }catch(_){}
+  }
+  function initBottomNav(){
+    const h=document.getElementById("navHome"); if(h) h.addEventListener("click", goHome);
+    const n=document.getElementById("navNew"); if(n) n.addEventListener("click", ()=>{ goHome(); const el=document.getElementById("homeNewName"); if(el){ try{el.scrollIntoView({block:"center"});}catch(_){} el.focus(); } });
+    const j=document.getElementById("navJump"); if(j) j.addEventListener("click", (e)=>{ e.stopPropagation(); buildJumpMenu(); document.getElementById("navJumpMenu").classList.toggle("show"); });
+    document.addEventListener("click", (e)=>{ const menu=document.getElementById("navJumpMenu"); if(menu && menu.classList.contains("show") && !menu.contains(e.target) && e.target.id!=="navJump") menu.classList.remove("show"); });
+  }
+
   // ---------- 字體切換(粗線體 / 紅豆奶霜體,可比較) ----------
   let fontPref = "cu";   // 全域設定(不分計畫)
   function applyFont(){
@@ -2436,6 +2477,7 @@
     await loadReminder();
     await initSimpleCollapse();
     initHomeModule();
+    initBottomNav();
     // 一進來先顯示主畫面(計畫清單),點計畫才進入
     document.getElementById("appView").style.display="none";
     document.getElementById("homeScreen").style.display="";
