@@ -97,6 +97,15 @@
   .metric .num{ font-size:var(--fs-num); font-weight:900; color:var(--ink); }
   .metric .lbl{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; }
 
+  #appView{ display:flex; flex-direction:column; }
+  #menuSection{ order:1; }
+  #foodSection{ order:2; }
+  #waterSection{ order:3; }
+  #metricsSection{ order:4; }
+  #fridgeSection{ order:5; }
+  #reminderSection{ order:6; }
+  #profileSection{ order:7; }
+  #workoutSection{ order:8; }
   .section{ padding:22px 20px 0; }
   .section h2{
     font-size:var(--fs-title); margin:0 0 12px; font-weight:400;
@@ -299,7 +308,7 @@
   #pfToggle, #mxToggle{ cursor:pointer; user-select:none; }
   .pf-caret{ margin-left:auto; font-size:0.8em; color:var(--ink-soft); }
   .pf-mini{ display:none; }
-  .section.collapsed .weight-box{ display:none; }
+  .section.collapsed > :not(h2):not(.pf-mini){ display:none; }
   .section.collapsed .pf-mini{
     display:block; background:var(--card); border-radius:16px; padding:12px 16px;
     box-shadow:var(--shadow); font-size:var(--fs-body); color:var(--ink); cursor:pointer;
@@ -502,7 +511,8 @@
 </header>
 
 <div class="section" id="menuSection">
-  <h2 class="cute"><span class="dot"></span>今日菜單 🍽️</h2>
+  <h2 class="cute" id="menuToggle"><span class="dot"></span>今日菜單 🍽️ <span class="pf-caret" id="menuCaret">▾</span></h2>
+  <div class="pf-mini" id="menuMini"></div>
   <div class="weight-box" id="todayMenuBox" style="border-style:solid;">
     <!-- filled by JS -->
   </div>
@@ -584,7 +594,8 @@
 </div>
 
 <div class="section" id="foodSection">
-  <h2 class="cute"><span class="dot"></span>飲食紀錄 · 熱量 🍱</h2>
+  <h2 class="cute" id="foodToggle"><span class="dot"></span>飲食紀錄 🍱 <span class="pf-caret" id="foodCaret">▾</span></h2>
+  <div class="pf-mini" id="foodMini"></div>
   <div class="weight-box">
     <div class="meal-tabs" id="mealTabs">
       <button class="meal-tab active" data-meal="早餐">早餐</button>
@@ -637,7 +648,8 @@
 </div>
 
 <div class="section" id="waterSection">
-  <h2 class="cute"><span class="dot"></span>今日喝水 💧</h2>
+  <h2 class="cute" id="waterToggle"><span class="dot"></span>今日喝水 💧 <span class="pf-caret" id="waterCaret">▾</span></h2>
+  <div class="pf-mini" id="waterMini"></div>
   <div class="weight-box">
     <div class="water-row">
       <button class="water-btn" id="waterMinus">－</button>
@@ -1019,9 +1031,9 @@
       const m=await geminiJSON(prompt,null,0.5);
       const dishes=(m&&m.dishes)||[];
       if(!dishes.length) throw new Error("回傳格式看不懂");
-      renderDishes(dishes); status.innerHTML='<span class="ok">依你的食材推薦好了 ✅</span>';
+      renderDishes(dishes); status.innerHTML='';
     }catch(e){
-      renderDishes(localDishes()); status.innerHTML='<span class="err">AI 失敗('+esc(e.message||e)+'),先給你內建推薦。</span>';
+      renderDishes(localDishes()); status.innerHTML='<span class="err">AI 連線失敗,先給你內建推薦</span>';
     }
     btn.disabled=false; btn.textContent=old;
   }
@@ -1608,7 +1620,7 @@
         </div>`;
       }).join("") : '<div class="mg-empty">拖食物到這裡,或按「＋ 補食材」</div>';
       const addBtn = base.includes(m) ? `<span class="mg-add" data-meal="${esc(m)}">＋ 補食材</span>` : '';
-      return `<div class="meal-group" data-meal="${esc(m)}"><div class="meal-group-title">${m} · ${sub} kcal ${addBtn}</div>${rows}</div>`;
+      return `<div class="meal-group" data-meal="${esc(m)}"><div class="meal-group-title">${m} ${addBtn}</div>${rows}</div>`;
     }).join("");
 
     area.querySelectorAll(".fc-del").forEach(btn=>{
@@ -1798,9 +1810,8 @@
         const addedMeal=selectedMeal;
         const entry={ id:Date.now().toString(), date:isoDate(today), meal:addedMeal, name:name, kcal:kcal, thumb:thumb };
         foodLog.push(entry); await saveFoodLog(); renderFoodLog();
-        status.innerHTML='<span class="ok">已加入'+addedMeal+':'+name+' 約 '+kcal+' kcal</span><br>'
-          +'<span style="color:var(--ink-soft);font-size:var(--fs-hint)">這是估計值,可在下方紀錄裡刪改'+(obj.note?(' · '+esc(obj.note)):'')+'</span><br>'
-          +'<span class="ai-add-more" id="aiAddMore">有漏東西?＋ 補食材到'+addedMeal+'</span>';
+        status.innerHTML='<span class="ok">已加入'+addedMeal+':'+name+' '+kcal+' kcal</span><br>'
+          +'<span class="ai-add-more" id="aiAddMore">＋ 補食材</span>';
         const more=document.getElementById("aiAddMore");
         if(more) more.addEventListener("click", ()=> focusMealInput(addedMeal));
       }catch(e){
@@ -2377,6 +2388,24 @@
     const mini=document.getElementById("rmMini"); if(mini) mini.addEventListener("click", ()=> setReminderCollapsed(false,true));
   }
 
+  // ---------- 通用收合(菜單/飲食/喝水) ----------
+  async function initSimpleCollapse(){
+    const defs=[
+      ["menuSection","menuToggle","menuCaret","menuMini","menucollapse","今日菜單"],
+      ["foodSection","foodToggle","foodCaret","foodMini","foodcollapse","飲食紀錄"],
+      ["waterSection","waterToggle","waterCaret","waterMini","watercollapse","今日喝水"]
+    ];
+    for(const [sec,tog,caret,mini,key,label] of defs){
+      const s=document.getElementById(sec); if(!s) continue;
+      const setC=(c)=>{ s.classList.toggle("collapsed",c); const cc=document.getElementById(caret); if(cc) cc.textContent=c?"▸":"▾";
+        const mm=document.getElementById(mini); if(mm) mm.innerHTML='<span class="pf-hint">'+label+'(點開)</span>'; };
+      const tg=document.getElementById(tog); if(tg) tg.addEventListener("click", async ()=>{ const c=!s.classList.contains("collapsed"); setC(c); try{ await window.storage.set(key, c?"1":"0", false);}catch(e){} });
+      const mn=document.getElementById(mini); if(mn) mn.addEventListener("click", async ()=>{ setC(false); try{ await window.storage.set(key,"0",false);}catch(e){} });
+      let st=null; try{ const r=await window.storage.get(key,false); if(r&&r.value!=null&&r.value!=="") st=r.value; }catch(e){}
+      setC(st==="1");
+    }
+  }
+
   async function init(){
     await loadPlans();
     initPlanModule();
@@ -2405,6 +2434,7 @@
     await loadWorkout();
     initReminderModule();
     await loadReminder();
+    await initSimpleCollapse();
     initHomeModule();
     // 一進來先顯示主畫面(計畫清單),點計畫才進入
     document.getElementById("appView").style.display="none";
