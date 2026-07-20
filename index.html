@@ -252,7 +252,7 @@
     -webkit-appearance:none; appearance:none;
   }
   .field select:focus{ outline:none; border-color:var(--pink); }
-  #pfToggle{ cursor:pointer; user-select:none; }
+  #pfToggle, #mxToggle{ cursor:pointer; user-select:none; }
   .pf-caret{ margin-left:auto; font-size:0.8em; color:var(--ink-soft); }
   .pf-mini{ display:none; }
   .section.collapsed .weight-box{ display:none; }
@@ -347,8 +347,9 @@
 </div>
 </div>
 
-<div class="section">
-  <h2 class="cute"><span class="dot"></span>今日量測紀錄</h2>
+<div class="section" id="metricsSection">
+  <h2 class="cute" id="mxToggle"><span class="dot"></span>今日量測紀錄 <span class="pf-caret" id="mxCaret">▾</span></h2>
+  <div class="pf-mini" id="mxMini"></div>
   <div class="weight-box">
     <div class="metric-inputs">
       <div class="field">
@@ -744,6 +745,40 @@
     drawChart();
     drawSnapshot();
     drawHistory();
+    updateMxMini();
+  }
+  function updateMxMini(){
+    const mini = document.getElementById("mxMini");
+    if(!mini) return;
+    if(log && log.length){
+      const sorted = [...log].sort((a,b)=>a.date.localeCompare(b.date));
+      const l = sorted[sorted.length-1];
+      let s = `最新 <b>${l.weight}</b>kg`;
+      if(l.fat) s += ` · 體脂 ${l.fat}%`;
+      if(l.muscle) s += ` · 肌肉 ${l.muscle}kg`;
+      mini.innerHTML = s + ` <span class="pf-hint">(點這裡展開)</span>`;
+    } else {
+      mini.innerHTML = `<span class="pf-hint">點這裡展開,紀錄今天的體重</span>`;
+    }
+  }
+  function setMetricsCollapsed(collapsed, persist){
+    const sec = document.getElementById("metricsSection");
+    if(!sec) return;
+    sec.classList.toggle("collapsed", collapsed);
+    const c = document.getElementById("mxCaret"); if(c) c.textContent = collapsed ? "▸" : "▾";
+    updateMxMini();
+    if(persist){ try{ window.storage.set("mxcollapsed", collapsed?"1":"0", false); }catch(e){} }
+  }
+  function initMetricsCollapse(){
+    const t = document.getElementById("mxToggle");
+    if(t) t.addEventListener("click", ()=>{ const s=document.getElementById("metricsSection"); setMetricsCollapsed(!s.classList.contains("collapsed"), true); });
+    const m = document.getElementById("mxMini");
+    if(m) m.addEventListener("click", ()=> setMetricsCollapsed(false, true));
+    (async()=>{
+      let stored=null;
+      try{ const c=await window.storage.get("mxcollapsed",false); if(c && c.value!=null && c.value!=='') stored=c.value; }catch(e){}
+      setMetricsCollapsed(stored==="1", false);
+    })();
   }
 
   function drawChart(){
@@ -1149,6 +1184,7 @@
     renderTodayMenu();
     await loadDoneState();
     await loadLog();
+    initMetricsCollapse();
     initFoodModule();
     await loadFoodLog();
     initProfileModule();
