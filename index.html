@@ -257,7 +257,11 @@
   .advice.over{ background:#EFE6E1; }
   .advice.warn{ background:var(--lav-soft); }
   .meal-group{ margin-top:14px; }
-  .meal-group-title{ font-size:var(--fs-label); font-weight:900; color:var(--pink); margin-bottom:2px; }
+  .meal-group-title{ font-size:var(--fs-label); font-weight:900; color:var(--pink); margin-bottom:2px;
+    display:flex; align-items:center; gap:8px; }
+  .mg-add{ margin-left:auto; font-weight:700; color:var(--ink); background:var(--mint-soft);
+    border-radius:12px; padding:4px 12px; cursor:pointer; font-size:var(--fs-label); }
+  .mg-add:active{ transform:scale(0.96); }
   .field select{
     width:100%; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
     font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit;
@@ -313,6 +317,9 @@
   .ai-photo-status{ font-size:var(--fs-label); color:var(--ink); margin-top:10px; text-align:center; min-height:1px; }
   .ai-photo-status .ok{ color:var(--ink); font-weight:900; }
   .ai-photo-status .err{ color:#B5766F; }
+  .ai-add-more{ display:inline-block; margin-top:8px; background:#fff; border:1.5px solid var(--mint);
+    color:var(--ink); border-radius:12px; padding:6px 14px; cursor:pointer; font-weight:700; font-size:var(--fs-label); }
+  .ai-add-more:active{ transform:scale(0.96); }
   .ai-spin{ display:inline-block; width:16px; height:16px; border:3px solid var(--mint); border-top-color:transparent;
     border-radius:50%; animation:aispin .8s linear infinite; vertical-align:-3px; margin-right:6px; }
   @keyframes aispin{ to{ transform:rotate(360deg); } }
@@ -1335,7 +1342,9 @@
           </div>
           <div class="fc-del" data-fid="${f.id}">刪除</div>
         </div>`).join("");
-      return `<div class="meal-group"><div class="meal-group-title">${m} · ${sub} kcal</div>${rows}</div>`;
+      const canAdd = ["早餐","午餐","晚餐","點心"].includes(m);
+      const addBtn = canAdd ? `<span class="mg-add" data-meal="${m}">＋ 補食材</span>` : '';
+      return `<div class="meal-group"><div class="meal-group-title">${m} · ${sub} kcal ${addBtn}</div>${rows}</div>`;
     }).join("");
     area.querySelectorAll(".fc-del").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
@@ -1344,6 +1353,16 @@
         renderFoodLog();
       });
     });
+    area.querySelectorAll(".mg-add").forEach(btn=>{
+      btn.addEventListener("click", ()=> focusMealInput(btn.dataset.meal));
+    });
+  }
+  // 把輸入框對準某一餐,方便補打 AI 漏掉的食材
+  function focusMealInput(meal){
+    selectedMeal = meal;
+    document.querySelectorAll("#mealTabs .meal-tab").forEach(b=> b.classList.toggle("active", b.dataset.meal===meal));
+    const el = document.getElementById("inFoodName");
+    if(el){ try{ el.scrollIntoView({behavior:"smooth", block:"center"}); }catch(_){} el.focus(); }
   }
 
   function resizeImageToBase64(file, maxSize){
@@ -1455,9 +1474,14 @@
         const name=(obj.name||"").trim();
         const kcal=Math.round(Number(obj.kcal)||0);
         if(!name || !kcal){ status.innerHTML='<span class="err">看不太出來是什麼食物,換個角度拍清楚一點再試 🙏</span>'; btn.disabled=false; return; }
-        const entry={ id:Date.now().toString(), date:isoDate(today), meal:selectedMeal, name:name, kcal:kcal, thumb:thumb };
+        const addedMeal=selectedMeal;
+        const entry={ id:Date.now().toString(), date:isoDate(today), meal:addedMeal, name:name, kcal:kcal, thumb:thumb };
         foodLog.push(entry); await saveFoodLog(); renderFoodLog();
-        status.innerHTML='<span class="ok">已加入'+selectedMeal+':'+name+' 約 '+kcal+' kcal</span><br><span style="color:var(--ink-soft);font-size:14.5px">這是估計值,可在下方紀錄裡刪改'+(obj.note?(' · '+obj.note):'')+'</span>';
+        status.innerHTML='<span class="ok">已加入'+addedMeal+':'+name+' 約 '+kcal+' kcal</span><br>'
+          +'<span style="color:var(--ink-soft);font-size:var(--fs-hint)">這是估計值,可在下方紀錄裡刪改'+(obj.note?(' · '+esc(obj.note)):'')+'</span><br>'
+          +'<span class="ai-add-more" id="aiAddMore">有漏東西?＋ 補食材到'+addedMeal+'</span>';
+        const more=document.getElementById("aiAddMore");
+        if(more) more.addEventListener("click", ()=> focusMealInput(addedMeal));
       }catch(e){
         status.innerHTML='<span class="err">分析失敗:'+(e.message||e)+'</span>';
       }
