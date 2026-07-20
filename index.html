@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>回台倒數計畫</title>
+<title>減重計畫</title>
 <!-- 加到手機主畫面後,像 App 一樣有圖示、全螢幕開啟 -->
 <meta name="theme-color" content="#D2B4B7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="回台倒數">
+<meta name="apple-mobile-web-app-title" content="減重計畫">
 <link rel="apple-touch-icon" href="assets/icon-180-2.png">
 <link rel="icon" type="image/png" href="assets/icon-192-2.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -55,10 +55,10 @@
     padding:24px 20px 6px;
   }
   .stamp-row .brand{
-    font-size:15.2px; letter-spacing:0.14em; color:var(--ink-soft);
+    font-size:17.5px; letter-spacing:0.14em; color:var(--ink-soft);
   }
   .stamp-row .badge{
-    font-size:15.2px; background:var(--pink); color:#fff; padding:3px 10px;
+    font-size:17.5px; background:var(--pink); color:#fff; padding:3px 10px;
     border-radius:20px; font-weight:700;
   }
 
@@ -69,21 +69,21 @@
     opacity:0.85; transform:rotate(-4deg); border-radius:3px;
   }
   .hero h1{
-    font-size:36.0px; line-height:1.35; margin:14px 0 6px; font-weight:400;
+    font-size:41.4px; line-height:1.35; margin:14px 0 6px; font-weight:400;
   }
-  .hero .sub{ font-size:18.7px; color:var(--ink-soft); margin-bottom:16px; }
+  .hero .sub{ font-size:21.5px; color:var(--ink-soft); margin-bottom:16px; }
 
   .countdown-strip{ display:flex; gap:10px; }
   .metric{
     flex:1; background:var(--card); border-radius:18px; padding:12px 10px;
     box-shadow:var(--shadow); text-align:center; border:2px solid var(--pink-soft);
   }
-  .metric .num{ font-size:27.6px; font-weight:900; color:var(--ink); }
-  .metric .lbl{ font-size:14.5px; color:var(--ink-soft); margin-top:2px; }
+  .metric .num{ font-size:31.7px; font-weight:900; color:var(--ink); }
+  .metric .lbl{ font-size:16.7px; color:var(--ink-soft); margin-top:2px; }
 
   .section{ padding:22px 20px 0; }
   .section h2{
-    font-size:22.2px; margin:0 0 12px; font-weight:400;
+    font-size:25.5px; margin:0 0 12px; font-weight:400;
     display:flex; align-items:center; gap:6px;
   }
   .section h2 .dot{
@@ -98,26 +98,26 @@
     display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;
   }
   .field{ display:flex; flex-direction:column; gap:4px; }
-  .field label{ font-size:15.2px; color:var(--ink-soft); font-weight:700; padding-left:2px; }
+  .field label{ font-size:17.5px; color:var(--ink-soft); font-weight:700; padding-left:2px; }
   .field .wrap{ position:relative; }
   .field input{
     width:100%; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:20.1px; background:#FFFDFA; color:var(--ink);
+    font-size:23.1px; background:#FFFDFA; color:var(--ink);
   }
   .field input:focus{ outline:none; border-color:var(--pink); }
   .field .unit{
     position:absolute; right:10px; top:50%; transform:translateY(-50%);
-    font-size:15.2px; color:var(--ink-soft);
+    font-size:17.5px; color:var(--ink-soft);
   }
   .save-btn{
     width:100%; background:var(--pink); color:#fff; border:none; border-radius:14px;
-    padding:12px; font-size:20.7px; font-weight:700; letter-spacing:0.02em;
+    padding:12px; font-size:23.8px; font-weight:700; letter-spacing:0.02em;
     box-shadow:0 4px 0 #B49599;
   }
   .save-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #B49599; }
 
   svg.chart{ width:100%; height:130px; display:block; margin-top:14px; }
-  .chart-empty{ font-size:17.4px; color:var(--ink-soft); padding:14px 0 2px; text-align:center; }
+  .chart-empty{ font-size:20.0px; color:var(--ink-soft); padding:14px 0 2px; text-align:center; }
 
   .snapshot-row{
     display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;
@@ -128,13 +128,13 @@
   }
   .chip.pink{ background:var(--pink-soft); }
   .chip.lav{ background:var(--lav-soft); }
-  .chip .v{ font-size:20.7px; font-weight:900; color:var(--ink); }
-  .chip .k{ font-size:13.9px; color:var(--ink-soft); margin-top:1px; }
+  .chip .v{ font-size:23.8px; font-weight:900; color:var(--ink); }
+  .chip .k{ font-size:16.0px; color:var(--ink-soft); margin-top:1px; }
 
   .history{ margin-top:14px; }
   .history-row{
     display:flex; justify-content:space-between; align-items:center;
-    font-size:17.4px; padding:7px 0; border-bottom:1px dashed var(--line);
+    font-size:20.0px; padding:7px 0; border-bottom:1px dashed var(--line);
     color:var(--ink-soft);
   }
   .history-row:last-child{ border-bottom:none; }
@@ -151,11 +151,11 @@
     padding:13px 15px; cursor:pointer;
   }
   .day-head .left{ display:flex; align-items:center; gap:9px; }
-  .day-emoji{ font-size:26.3px; }
-  .day-date{ font-size:20.1px; font-weight:700; }
-  .day-idx{ font-size:14.5px; color:var(--ink-soft); }
+  .day-emoji{ font-size:30.2px; }
+  .day-date{ font-size:23.1px; font-weight:700; }
+  .day-idx{ font-size:16.7px; color:var(--ink-soft); }
   .day-tag{
-    font-size:14.5px; font-weight:700; padding:3px 9px; border-radius:20px; color:#fff;
+    font-size:16.7px; font-weight:700; padding:3px 9px; border-radius:20px; color:#fff;
   }
   .tag-lift{ background:var(--pink); }
   .tag-cardio{ background:var(--peach); }
@@ -164,19 +164,19 @@
   .check{
     width:26px; height:26px; border-radius:50%; border:2px solid var(--line);
     display:flex; align-items:center; justify-content:center; flex-shrink:0;
-    font-size:18.0px; color:transparent;
+    font-size:20.7px; color:transparent;
   }
   .day-card.done .check{ background:var(--mint); border-color:var(--mint); color:#fff; }
 
-  .day-body{ display:none; padding:0 15px 15px; font-size:18.7px; line-height:1.65; }
+  .day-body{ display:none; padding:0 15px 15px; font-size:21.5px; line-height:1.65; }
   .day-card.open .day-body{ display:block; }
   .day-body .blk{ margin-bottom:10px; }
   .day-body .blk-title{
-    font-size:14.5px; color:var(--ink-soft); margin-bottom:3px; font-weight:700;
+    font-size:16.7px; color:var(--ink-soft); margin-bottom:3px; font-weight:700;
   }
 
   .today-marker{
-    font-size:13.1px; color:#fff; background:var(--pink); border-radius:20px;
+    font-size:15.1px; color:#fff; background:var(--pink); border-radius:20px;
     padding:2px 8px; margin-left:2px; font-weight:700;
   }
 
@@ -188,68 +188,68 @@
   .ex-row.done{ background:var(--mint-soft); border-color:var(--mint); }
   .ex-check{
     width:22px; height:22px; min-width:22px; border-radius:50%; border:2px solid var(--line);
-    display:flex; align-items:center; justify-content:center; font-size:16.6px; color:transparent;
+    display:flex; align-items:center; justify-content:center; font-size:19.1px; color:transparent;
     background:#fff; margin-top:1px;
   }
   .ex-row.done .ex-check{ background:var(--mint); border-color:var(--mint); color:#fff; }
-  .ex-text b{ font-size:18.7px; }
-  .ex-detail{ font-size:17.4px; color:var(--ink-soft); margin-top:2px; line-height:1.5; }
+  .ex-text b{ font-size:21.5px; }
+  .ex-detail{ font-size:20.0px; color:var(--ink-soft); margin-top:2px; line-height:1.5; }
 
   .food-card{
     display:flex; gap:10px; background:#FFFBF6; border:2px solid var(--line);
     border-radius:14px; padding:10px; margin-top:10px; align-items:flex-start;
   }
   .food-card img{ width:56px; height:56px; object-fit:cover; border-radius:10px; flex-shrink:0; }
-  .food-card .fc-name{ font-size:19.4px; font-weight:700; }
-  .food-card .fc-kcal{ font-size:18.0px; color:var(--pink); font-weight:900; }
-  .food-card .fc-macro{ font-size:15.9px; color:var(--ink-soft); margin-top:2px; }
-  .food-card .fc-note{ font-size:15.9px; color:var(--ink-soft); margin-top:3px; }
-  .food-card .fc-del{ margin-left:auto; font-size:15.2px; color:var(--ink-soft); cursor:pointer; padding:2px 6px; }
+  .food-card .fc-name{ font-size:22.3px; font-weight:700; }
+  .food-card .fc-kcal{ font-size:20.7px; color:var(--pink); font-weight:900; }
+  .food-card .fc-macro{ font-size:18.3px; color:var(--ink-soft); margin-top:2px; }
+  .food-card .fc-note{ font-size:18.3px; color:var(--ink-soft); margin-top:3px; }
+  .food-card .fc-del{ margin-left:auto; font-size:17.5px; color:var(--ink-soft); cursor:pointer; padding:2px 6px; }
   .kcal-total{
     display:inline-block; background:var(--pink-soft); border-radius:20px; padding:6px 16px;
-    font-size:19.4px; font-weight:900; color:var(--ink);
+    font-size:22.3px; font-weight:900; color:var(--ink);
   }
   .editable-wrap{ position:relative; }
   .edit-pencil{
-    font-size:15.2px; color:var(--ink-soft); cursor:pointer; margin-left:6px; user-select:none;
+    font-size:17.5px; color:var(--ink-soft); cursor:pointer; margin-left:6px; user-select:none;
   }
   [contenteditable="true"]{
     outline:2px dashed var(--pink); border-radius:8px; padding:3px 5px; background:#FFFDF8;
   }
 
   .footnote{
-    padding:26px 20px 10px; font-size:16.6px; color:var(--ink-soft); line-height:1.75;
+    padding:26px 20px 10px; font-size:19.1px; color:var(--ink-soft); line-height:1.75;
   }
   /* 飲食紀錄 · 熱量 */
   .meal-tabs{ display:flex; gap:6px; margin-bottom:12px; }
   .meal-tab{ flex:1; padding:9px 0; border:none; border-radius:12px; background:var(--pink-soft);
-    color:var(--ink-soft); font-weight:700; font-size:15.3px; font-family:inherit; cursor:pointer; }
+    color:var(--ink-soft); font-weight:700; font-size:17.6px; font-family:inherit; cursor:pointer; }
   .meal-tab.active{ background:var(--pink); color:#fff; }
   .food-input-row{ display:flex; gap:8px; margin-bottom:10px; }
   .food-input-row .fname{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:17.0px; background:#FFFDFA; color:var(--ink); font-family:inherit; }
+    font-size:19.5px; background:#FFFDFA; color:var(--ink); font-family:inherit; }
   .kwrap{ position:relative; flex:none; }
   .kwrap input{ width:120px; padding:10px 44px 10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:17.0px; background:#FFFDFA; color:var(--ink); font-family:inherit; text-align:right; }
+    font-size:19.5px; background:#FFFDFA; color:var(--ink); font-family:inherit; text-align:right; }
   .food-input-row .fname:focus, .kwrap input:focus, .target-row input:focus{ outline:none; border-color:var(--pink); }
-  .kwrap .unit{ position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:12.8px; color:var(--ink-soft); }
+  .kwrap .unit{ position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:14.7px; color:var(--ink-soft); }
   .target-row{ display:flex; align-items:center; justify-content:space-between; margin:16px 0 6px;
-    font-size:16.1px; color:var(--ink-soft); font-weight:700; }
+    font-size:18.5px; color:var(--ink-soft); font-weight:700; }
   .kcal-head{ display:flex; justify-content:space-between; align-items:baseline; margin-top:6px; gap:8px; }
-  .kcal-head .big{ font-size:25.5px; font-weight:900; color:var(--ink); }
-  .kcal-head .sub{ font-size:14.4px; color:var(--ink-soft); }
+  .kcal-head .big{ font-size:29.3px; font-weight:900; color:var(--ink); }
+  .kcal-head .sub{ font-size:16.6px; color:var(--ink-soft); }
   .kcal-bar{ height:14px; border-radius:10px; background:var(--pink-soft); overflow:hidden; margin:8px 0 2px; }
   .kcal-bar > span{ display:block; height:100%; border-radius:10px; background:var(--pink); }
   .kcal-bar.over > span{ background:#CDA9A2; }
   .advice{ background:var(--mint-soft); border-radius:16px; padding:12px 14px; margin:12px 0 2px;
-    font-size:15.3px; line-height:1.65; color:var(--ink); }
+    font-size:17.6px; line-height:1.65; color:var(--ink); }
   .advice.over{ background:#EFE6E1; }
   .advice.warn{ background:var(--lav-soft); }
   .meal-group{ margin-top:14px; }
-  .meal-group-title{ font-size:14.4px; font-weight:900; color:var(--pink); margin-bottom:2px; }
+  .meal-group-title{ font-size:16.6px; font-weight:900; color:var(--pink); margin-bottom:2px; }
   .field select{
     width:100%; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:20.1px; background:#FFFDFA; color:var(--ink); font-family:inherit;
+    font-size:23.1px; background:#FFFDFA; color:var(--ink); font-family:inherit;
     -webkit-appearance:none; appearance:none;
   }
   .field select:focus{ outline:none; border-color:var(--pink); }
@@ -259,49 +259,50 @@
   .section.collapsed .weight-box{ display:none; }
   .section.collapsed .pf-mini{
     display:block; background:var(--card); border-radius:16px; padding:12px 16px;
-    box-shadow:var(--shadow); font-size:18px; color:var(--ink); cursor:pointer;
+    box-shadow:var(--shadow); font-size:20.7px; color:var(--ink); cursor:pointer;
   }
   .pf-hint{ color:var(--ink-soft); }
   .food-suggest{ display:none; margin:-4px 0 10px; border:2px solid var(--line);
     border-radius:12px; overflow:hidden; background:var(--card); box-shadow:var(--shadow); }
   .food-suggest.show{ display:block; }
   .food-suggest .fs-item{ display:flex; justify-content:space-between; gap:10px;
-    padding:11px 14px; border-bottom:1px solid var(--line); cursor:pointer; font-size:18px; color:var(--ink); }
+    padding:11px 14px; border-bottom:1px solid var(--line); cursor:pointer; font-size:20.7px; color:var(--ink); }
   .food-suggest .fs-item:last-child{ border-bottom:none; }
   .food-suggest .fs-item:active{ background:var(--pink-soft); }
   .food-suggest .fs-k{ color:var(--ink-soft); white-space:nowrap; }
   .plan-bar{ display:flex; justify-content:center; padding:12px 20px 2px; }
   .plan-current{ background:var(--pink-soft); color:var(--ink); border:none; border-radius:20px;
-    padding:8px 20px; font-size:18px; font-weight:700; cursor:pointer; font-family:inherit; }
+    padding:8px 20px; font-size:20.7px; font-weight:700; cursor:pointer; font-family:inherit; }
   .plan-panel{ display:none; margin:8px 20px 0; background:var(--card); border-radius:18px;
     box-shadow:var(--shadow); padding:14px; }
   .plan-panel.show{ display:block; }
   .plan-item{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; cursor:pointer; }
   .plan-item.active{ background:var(--pink-soft); }
-  .plan-item .pi-name{ flex:1; font-weight:700; font-size:18px; color:var(--ink); }
-  .plan-item .pi-type{ font-size:14px; color:var(--ink-soft); }
-  .plan-item .pi-del{ font-size:14px; color:var(--ink-soft); padding:2px 8px; }
+  .plan-item .pi-name{ flex:1; font-weight:700; font-size:20.7px; color:var(--ink); }
+  .plan-item .pi-type{ font-size:16.1px; color:var(--ink-soft); }
+  .plan-item .pi-edit{ font-size:16.1px; color:var(--pink); padding:2px 8px; }
+  .plan-item .pi-del{ font-size:16.1px; color:var(--ink-soft); padding:2px 8px; }
   .plan-new{ margin-top:10px; border-top:1px dashed var(--line); padding-top:12px; display:flex; flex-direction:column; gap:8px; }
   .plan-new input, .plan-new select{ padding:10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:18px; background:#FFFDFA; color:var(--ink); font-family:inherit; }
-  #planHeader{ padding:14px 20px 0; margin:0; font-size:24px; }
+    font-size:20.7px; background:#FFFDFA; color:var(--ink); font-family:inherit; }
+  #planHeader{ padding:14px 20px 0; margin:0; font-size:27.6px; }
   .mini-btn{ background:var(--mint-soft); color:var(--ink); border:none; border-radius:12px;
-    padding:8px 14px; font-size:16px; font-family:inherit; cursor:pointer; }
+    padding:8px 14px; font-size:18.4px; font-family:inherit; cursor:pointer; }
   .food-photo-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   #foodPhotoPreview{ display:inline-flex; align-items:center; gap:6px; }
   .food-thumb-prev{ width:44px; height:44px; object-fit:cover; border-radius:8px; }
-  .pp-x{ color:var(--ink-soft); cursor:pointer; font-size:18px; padding:0 4px; }
+  .pp-x{ color:var(--ink-soft); cursor:pointer; font-size:20.7px; padding:0 4px; }
 </style>
 </head>
 <body>
 
 <div class="plan-bar">
-  <button id="planCurrent" class="plan-current cute">回台減重計畫 ▾</button>
+  <button id="planCurrent" class="plan-current cute">減重計畫 ▾</button>
 </div>
 <div class="plan-panel" id="planPanel">
   <div class="plan-list" id="planList"></div>
   <div class="plan-new">
-    <div style="font-size:16px;color:var(--ink-soft);font-weight:700;">新增計畫</div>
+    <div style="font-size:18.4px;color:var(--ink-soft);font-weight:700;">新增計畫</div>
     <input id="newPlanName" placeholder="計畫名稱(例:長期體重紀錄)" autocomplete="off">
     <select id="newPlanType">
       <option value="weight">純紀錄體重</option>
@@ -863,7 +864,7 @@
     area.innerHTML = `
       <svg class="chart" viewBox="0 0 ${w} ${h}">
         <line x1="0" y1="${goalY}" x2="${w}" y2="${goalY}" stroke="#C3BDCB" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <text x="4" y="${goalY-4}" font-size="12.4" fill="#A69C90">目標 60kg</text>
+        <text x="4" y="${goalY-4}" font-size="14.3" fill="#A69C90">目標 60kg</text>
         <path d="${path}" fill="none" stroke="#D2B4B7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         ${dots}
       </svg>`;
@@ -1388,7 +1389,8 @@
   const PLAN_LABEL = { weight:"純體重紀錄", calorie:"熱量紀錄", full:"減重規劃", origin:"完整計畫" };
   async function loadPlans(){
     try{ const r=await window.storage.get("plans",false); if(r&&r.value) plans=JSON.parse(r.value)||[]; }catch(e){ plans=[]; }
-    if(!plans.length) plans=[{id:"default",name:"回台減重計畫",type:"origin"}];
+    if(!plans.length) plans=[{id:"default",name:"減重計畫",type:"origin"}];
+    const _d=plans.find(p=>p.id==="default"); if(_d && _d.name==="回台減重計畫"){ _d.name="減重計畫"; savePlans(); }
     let cur="default";
     try{ const c=await window.storage.get("currentplan",false); if(c&&c.value) cur=c.value; }catch(e){}
     PLAN = plans.find(p=>p.id===cur) || plans[0];
@@ -1412,11 +1414,19 @@
     box.innerHTML = plans.map(p=>`<div class="plan-item ${p.id===PLAN.id?'active':''}" data-id="${p.id}">
         <span class="pi-name">${p.name}</span>
         <span class="pi-type">${PLAN_LABEL[p.type]||''}</span>
+        <span class="pi-edit" data-edit="${p.id}">改名</span>
         ${p.id!=="default"?`<span class="pi-del" data-del="${p.id}">刪除</span>`:''}
       </div>`).join("");
     box.querySelectorAll(".plan-item").forEach(it=>{
-      it.addEventListener("click",(e)=>{ if(e.target.classList.contains("pi-del")) return;
+      it.addEventListener("click",(e)=>{ if(e.target.classList.contains("pi-del")||e.target.classList.contains("pi-edit")) return;
         switchPlan(it.dataset.id); document.getElementById("planPanel").classList.remove("show"); });
+    });
+    box.querySelectorAll(".pi-edit").forEach(ed=>{
+      ed.addEventListener("click", async (e)=>{ e.stopPropagation();
+        const pl=plans.find(p=>p.id===ed.dataset.edit); if(!pl) return;
+        const nn=prompt("計畫名稱:", pl.name);
+        if(nn && nn.trim()){ pl.name=nn.trim(); await savePlans(); renderPlanList(); updatePlanBar(); applyPlanView(); }
+      });
     });
     box.querySelectorAll(".pi-del").forEach(d=>{
       d.addEventListener("click", async (e)=>{ e.stopPropagation();
