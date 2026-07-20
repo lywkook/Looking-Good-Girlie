@@ -2,7 +2,7 @@
   "name": "回台倒數計畫",
   "short_name": "回台倒數",
   "description": "回台灣前的飲食・運動・體重追蹤小工具",
-  "start_url": "./回台減重計畫.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",

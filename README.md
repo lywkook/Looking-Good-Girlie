@@ -1,6 +1,6 @@
 # 回台減重計畫 App
 
-單一 HTML 檔案(`回台減重計畫.html`),純前端、無後端,給使用者在 7/20 - 8/28(回台灣前)倒數期間追蹤飲食、運動、體重的小工具。資料持久化優先用執行環境提供的 `window.storage`(key-value,分 personal/shared);若環境沒有(例如直接用手機/瀏覽器打開檔案),會自動退回瀏覽器內建的 `localStorage`,資料一樣存得住。
+單一 HTML 檔案(`index.html`),純前端、無後端,給使用者在 7/20 - 8/28(回台灣前)倒數期間追蹤飲食、運動、體重的小工具。資料持久化優先用執行環境提供的 `window.storage`(key-value,分 personal/shared);若環境沒有(例如直接用手機/瀏覽器打開檔案),會自動退回瀏覽器內建的 `localStorage`,資料一樣存得住。
 
 ## 使用者背景 / 目標
 - 目標:64kg → 60kg(或更低),8/28 回台灣前
@@ -43,7 +43,7 @@
 ```bash
 python3 -c "
 import re
-html = open('回台減重計畫.html', encoding='utf-8').read()
+html = open('index.html', encoding='utf-8').read()
 chars = ''.join(sorted(set(html)))
 open('chars.txt','w',encoding='utf-8').write(chars)
 "
