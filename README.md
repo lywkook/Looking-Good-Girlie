@@ -32,27 +32,13 @@
 | `foodlog`             | JSON array `{id,date,meal,name,kcal}`,手動三餐飲食紀錄 | false |
 | `kcaltarget`          | 每日熱量目標(kcal,分析後自動帶入、可自訂) | false  |
 | `profile`             | JSON,個人資料(性別/年齡/身高/體重/目標) | false  |
+| `customfoods`         | JSON array `{n,k}`,使用者自訂食材(名稱+熱量) | false |
 
 ## 字型
-- **全站文字**(`body` 與 `.cute` 標題/按鈕/標籤)都用內嵌 base64 的 **RedBeanCream**(使用者提供的紅豆奶霜體 ttf,已用 fontTools 做過**字元子集化 + 轉 woff** 縮小體積,收錄目前 HTML 裡實際出現的所有字元)
-- 字型內沒有的字(少數 emoji、簡體字等)會 fallback 到 Noto Sans TC / 系統字
-- `assets/紅豆奶霜體.ttf`:使用者上傳的原始字型檔(完整版,4.3MB)
-- `assets/redbean-subset.woff`:目前實際內嵌進 HTML 的子集化版本(約 216KB,涵蓋全站字元)
-- ⚠️ **重要**:因為現在是全站套用,之後如果在 HTML 裡新增任何新的中文字,現有的 subset woff 可能沒收錄,需要重新跑子集化(見下方指令),否則新字會 fallback 成 Noto Sans TC。
-
-重新產生 subset 字型的指令(需要 `fonttools`,不需要 brotli,因為輸出 `.woff` 不是 `.woff2`):
-```bash
-python3 -c "
-import re
-html = open('index.html', encoding='utf-8').read()
-chars = ''.join(sorted(set(html)))
-open('chars.txt','w',encoding='utf-8').write(chars)
-"
-fonttools subset assets/紅豆奶霜體.ttf --text-file=chars.txt --flavor=woff \
-  --output-file=assets/redbean-subset.woff --no-layout-closure --ignore-missing-glyphs
-base64 -w0 assets/redbean-subset.woff > assets/redbean-subset.b64
-# 再把 assets/redbean-subset.b64 的內容貼回 HTML 裡 @font-face 的 base64 字串
-```
+- 全站文字都用 **RedBeanCream(紅豆奶霜體)**,改以**外部字型檔**載入(涵蓋完整 6208 字元、5689 個中文,幾乎所有常用中文都有,使用者**手動輸入**的字也能正確顯示為此字體)
+- `assets/redbean-full.woff2`(約 2.2MB,主要)/ `assets/redbean-full.woff`(約 2.6MB,備援):由原始 ttf 全字元轉檔
+- `assets/紅豆奶霜體.ttf`:原始字型檔(完整版,4.3MB)
+- 註:改用完整外部字型後,之後 HTML 新增任何中文字都**不用再重跑子集化**了(舊的 `redbean-subset.woff` 已移除)
 
 ## 已知限制 / 待改進方向
 - 無法直接串接 RENPHO Health App 拉體重資料(無公開 API),仍須手動輸入
