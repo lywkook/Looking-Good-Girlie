@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>回台倒數計畫</title>
 <!-- 加到手機主畫面後,像 App 一樣有圖示、全螢幕開啟 -->
-<meta name="theme-color" content="#C39BA0">
+<meta name="theme-color" content="#D2B4B7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -17,19 +17,19 @@
 <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --cream:#EDE7DD;
-    --card:#FBF8F3;
-    --pink:#C39BA0;
-    --pink-soft:#E6D8D7;
-    --peach:#CBAE95;
-    --mint:#A7B7A6;
-    --mint-soft:#DDE4DC;
-    --lav:#ADA5B7;
-    --lav-soft:#E2DDE6;
-    --ink:#5B5249;
-    --ink-soft:#9A9083;
-    --line:#E4DCD0;
-    --shadow: 0 2px 6px rgba(91,82,73,0.06), 0 8px 20px rgba(173,165,183,0.10);
+    --cream:#EFEAE2;
+    --card:#FCFAF6;
+    --pink:#D2B4B7;
+    --pink-soft:#EEE4E3;
+    --peach:#DAC6B2;
+    --mint:#BEC9BC;
+    --mint-soft:#E9EDE7;
+    --lav:#C3BDCB;
+    --lav-soft:#EDE9F0;
+    --ink:#5E554C;
+    --ink-soft:#A69C90;
+    --line:#EAE3D8;
+    --shadow: 0 2px 6px rgba(94,85,76,0.05), 0 8px 18px rgba(195,189,203,0.08);
   }
   @font-face {
     font-family: 'RedBeanCream';
@@ -54,35 +54,35 @@
     padding:24px 20px 6px;
   }
   .stamp-row .brand{
-    font-size:17.9px; letter-spacing:0.14em; color:var(--ink-soft);
+    font-size:15.2px; letter-spacing:0.14em; color:var(--ink-soft);
   }
   .stamp-row .badge{
-    font-size:17.9px; background:var(--pink); color:#fff; padding:3px 10px;
+    font-size:15.2px; background:var(--pink); color:#fff; padding:3px 10px;
     border-radius:20px; font-weight:700;
   }
 
   header.hero{ padding:8px 20px 20px; position:relative; }
   .washi{
     position:absolute; top:-6px; left:24px; width:70px; height:20px;
-    background:repeating-linear-gradient(45deg, var(--peach), var(--peach) 6px, #DFD2C2 6px, #DFD2C2 12px);
+    background:repeating-linear-gradient(45deg, var(--peach), var(--peach) 6px, #E7DDCE 6px, #E7DDCE 12px);
     opacity:0.85; transform:rotate(-4deg); border-radius:3px;
   }
   .hero h1{
-    font-size:42.3px; line-height:1.35; margin:14px 0 6px; font-weight:400;
+    font-size:36.0px; line-height:1.35; margin:14px 0 6px; font-weight:400;
   }
-  .hero .sub{ font-size:22.0px; color:var(--ink-soft); margin-bottom:16px; }
+  .hero .sub{ font-size:18.7px; color:var(--ink-soft); margin-bottom:16px; }
 
   .countdown-strip{ display:flex; gap:10px; }
   .metric{
     flex:1; background:var(--card); border-radius:18px; padding:12px 10px;
     box-shadow:var(--shadow); text-align:center; border:2px solid var(--pink-soft);
   }
-  .metric .num{ font-size:32.5px; font-weight:900; color:var(--ink); }
-  .metric .lbl{ font-size:17.1px; color:var(--ink-soft); margin-top:2px; }
+  .metric .num{ font-size:27.6px; font-weight:900; color:var(--ink); }
+  .metric .lbl{ font-size:14.5px; color:var(--ink-soft); margin-top:2px; }
 
   .section{ padding:22px 20px 0; }
   .section h2{
-    font-size:26.1px; margin:0 0 12px; font-weight:400;
+    font-size:22.2px; margin:0 0 12px; font-weight:400;
     display:flex; align-items:center; gap:6px;
   }
   .section h2 .dot{
@@ -97,26 +97,26 @@
     display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;
   }
   .field{ display:flex; flex-direction:column; gap:4px; }
-  .field label{ font-size:17.9px; color:var(--ink-soft); font-weight:700; padding-left:2px; }
+  .field label{ font-size:15.2px; color:var(--ink-soft); font-weight:700; padding-left:2px; }
   .field .wrap{ position:relative; }
   .field input{
     width:100%; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:23.6px; background:#FFFDFA; color:var(--ink);
+    font-size:20.1px; background:#FFFDFA; color:var(--ink);
   }
   .field input:focus{ outline:none; border-color:var(--pink); }
   .field .unit{
     position:absolute; right:10px; top:50%; transform:translateY(-50%);
-    font-size:17.9px; color:var(--ink-soft);
+    font-size:15.2px; color:var(--ink-soft);
   }
   .save-btn{
     width:100%; background:var(--pink); color:#fff; border:none; border-radius:14px;
-    padding:12px; font-size:24.4px; font-weight:700; letter-spacing:0.02em;
-    box-shadow:0 4px 0 #A67F84;
+    padding:12px; font-size:20.7px; font-weight:700; letter-spacing:0.02em;
+    box-shadow:0 4px 0 #B49599;
   }
-  .save-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #A67F84; }
+  .save-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #B49599; }
 
   svg.chart{ width:100%; height:130px; display:block; margin-top:14px; }
-  .chart-empty{ font-size:20.5px; color:var(--ink-soft); padding:14px 0 2px; text-align:center; }
+  .chart-empty{ font-size:17.4px; color:var(--ink-soft); padding:14px 0 2px; text-align:center; }
 
   .snapshot-row{
     display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;
@@ -127,13 +127,13 @@
   }
   .chip.pink{ background:var(--pink-soft); }
   .chip.lav{ background:var(--lav-soft); }
-  .chip .v{ font-size:24.4px; font-weight:900; color:var(--ink); }
-  .chip .k{ font-size:16.3px; color:var(--ink-soft); margin-top:1px; }
+  .chip .v{ font-size:20.7px; font-weight:900; color:var(--ink); }
+  .chip .k{ font-size:13.9px; color:var(--ink-soft); margin-top:1px; }
 
   .history{ margin-top:14px; }
   .history-row{
     display:flex; justify-content:space-between; align-items:center;
-    font-size:20.5px; padding:7px 0; border-bottom:1px dashed var(--line);
+    font-size:17.4px; padding:7px 0; border-bottom:1px dashed var(--line);
     color:var(--ink-soft);
   }
   .history-row:last-child{ border-bottom:none; }
@@ -150,11 +150,11 @@
     padding:13px 15px; cursor:pointer;
   }
   .day-head .left{ display:flex; align-items:center; gap:9px; }
-  .day-emoji{ font-size:30.9px; }
-  .day-date{ font-size:23.6px; font-weight:700; }
-  .day-idx{ font-size:17.1px; color:var(--ink-soft); }
+  .day-emoji{ font-size:26.3px; }
+  .day-date{ font-size:20.1px; font-weight:700; }
+  .day-idx{ font-size:14.5px; color:var(--ink-soft); }
   .day-tag{
-    font-size:17.1px; font-weight:700; padding:3px 9px; border-radius:20px; color:#fff;
+    font-size:14.5px; font-weight:700; padding:3px 9px; border-radius:20px; color:#fff;
   }
   .tag-lift{ background:var(--pink); }
   .tag-cardio{ background:var(--peach); }
@@ -163,19 +163,19 @@
   .check{
     width:26px; height:26px; border-radius:50%; border:2px solid var(--line);
     display:flex; align-items:center; justify-content:center; flex-shrink:0;
-    font-size:21.2px; color:transparent;
+    font-size:18.0px; color:transparent;
   }
   .day-card.done .check{ background:var(--mint); border-color:var(--mint); color:#fff; }
 
-  .day-body{ display:none; padding:0 15px 15px; font-size:22.0px; line-height:1.65; }
+  .day-body{ display:none; padding:0 15px 15px; font-size:18.7px; line-height:1.65; }
   .day-card.open .day-body{ display:block; }
   .day-body .blk{ margin-bottom:10px; }
   .day-body .blk-title{
-    font-size:17.1px; color:var(--ink-soft); margin-bottom:3px; font-weight:700;
+    font-size:14.5px; color:var(--ink-soft); margin-bottom:3px; font-weight:700;
   }
 
   .today-marker{
-    font-size:15.4px; color:#fff; background:var(--pink); border-radius:20px;
+    font-size:13.1px; color:#fff; background:var(--pink); border-radius:20px;
     padding:2px 8px; margin-left:2px; font-weight:700;
   }
 
@@ -187,65 +187,65 @@
   .ex-row.done{ background:var(--mint-soft); border-color:var(--mint); }
   .ex-check{
     width:22px; height:22px; min-width:22px; border-radius:50%; border:2px solid var(--line);
-    display:flex; align-items:center; justify-content:center; font-size:19.5px; color:transparent;
+    display:flex; align-items:center; justify-content:center; font-size:16.6px; color:transparent;
     background:#fff; margin-top:1px;
   }
   .ex-row.done .ex-check{ background:var(--mint); border-color:var(--mint); color:#fff; }
-  .ex-text b{ font-size:22.0px; }
-  .ex-detail{ font-size:20.5px; color:var(--ink-soft); margin-top:2px; line-height:1.5; }
+  .ex-text b{ font-size:18.7px; }
+  .ex-detail{ font-size:17.4px; color:var(--ink-soft); margin-top:2px; line-height:1.5; }
 
   .food-card{
     display:flex; gap:10px; background:#FFFBF6; border:2px solid var(--line);
     border-radius:14px; padding:10px; margin-top:10px; align-items:flex-start;
   }
   .food-card img{ width:56px; height:56px; object-fit:cover; border-radius:10px; flex-shrink:0; }
-  .food-card .fc-name{ font-size:22.8px; font-weight:700; }
-  .food-card .fc-kcal{ font-size:21.2px; color:var(--pink); font-weight:900; }
-  .food-card .fc-macro{ font-size:18.7px; color:var(--ink-soft); margin-top:2px; }
-  .food-card .fc-note{ font-size:18.7px; color:var(--ink-soft); margin-top:3px; }
-  .food-card .fc-del{ margin-left:auto; font-size:17.9px; color:var(--ink-soft); cursor:pointer; padding:2px 6px; }
+  .food-card .fc-name{ font-size:19.4px; font-weight:700; }
+  .food-card .fc-kcal{ font-size:18.0px; color:var(--pink); font-weight:900; }
+  .food-card .fc-macro{ font-size:15.9px; color:var(--ink-soft); margin-top:2px; }
+  .food-card .fc-note{ font-size:15.9px; color:var(--ink-soft); margin-top:3px; }
+  .food-card .fc-del{ margin-left:auto; font-size:15.2px; color:var(--ink-soft); cursor:pointer; padding:2px 6px; }
   .kcal-total{
     display:inline-block; background:var(--pink-soft); border-radius:20px; padding:6px 16px;
-    font-size:22.8px; font-weight:900; color:var(--ink);
+    font-size:19.4px; font-weight:900; color:var(--ink);
   }
   .editable-wrap{ position:relative; }
   .edit-pencil{
-    font-size:17.9px; color:var(--ink-soft); cursor:pointer; margin-left:6px; user-select:none;
+    font-size:15.2px; color:var(--ink-soft); cursor:pointer; margin-left:6px; user-select:none;
   }
   [contenteditable="true"]{
     outline:2px dashed var(--pink); border-radius:8px; padding:3px 5px; background:#FFFDF8;
   }
 
   .footnote{
-    padding:26px 20px 10px; font-size:19.5px; color:var(--ink-soft); line-height:1.75;
+    padding:26px 20px 10px; font-size:16.6px; color:var(--ink-soft); line-height:1.75;
   }
   /* 飲食紀錄 · 熱量 */
   .meal-tabs{ display:flex; gap:6px; margin-bottom:12px; }
   .meal-tab{ flex:1; padding:9px 0; border:none; border-radius:12px; background:var(--pink-soft);
-    color:var(--ink-soft); font-weight:700; font-size:18px; font-family:inherit; cursor:pointer; }
+    color:var(--ink-soft); font-weight:700; font-size:15.3px; font-family:inherit; cursor:pointer; }
   .meal-tab.active{ background:var(--pink); color:#fff; }
   .food-input-row{ display:flex; gap:8px; margin-bottom:10px; }
   .food-input-row .fname{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:20px; background:#FFFDFA; color:var(--ink); font-family:inherit; }
+    font-size:17.0px; background:#FFFDFA; color:var(--ink); font-family:inherit; }
   .kwrap{ position:relative; flex:none; }
   .kwrap input{ width:120px; padding:10px 44px 10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:20px; background:#FFFDFA; color:var(--ink); font-family:inherit; text-align:right; }
+    font-size:17.0px; background:#FFFDFA; color:var(--ink); font-family:inherit; text-align:right; }
   .food-input-row .fname:focus, .kwrap input:focus, .target-row input:focus{ outline:none; border-color:var(--pink); }
-  .kwrap .unit{ position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:15px; color:var(--ink-soft); }
+  .kwrap .unit{ position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:12.8px; color:var(--ink-soft); }
   .target-row{ display:flex; align-items:center; justify-content:space-between; margin:16px 0 6px;
-    font-size:19px; color:var(--ink-soft); font-weight:700; }
+    font-size:16.1px; color:var(--ink-soft); font-weight:700; }
   .kcal-head{ display:flex; justify-content:space-between; align-items:baseline; margin-top:6px; gap:8px; }
-  .kcal-head .big{ font-size:30px; font-weight:900; color:var(--ink); }
-  .kcal-head .sub{ font-size:17px; color:var(--ink-soft); }
+  .kcal-head .big{ font-size:25.5px; font-weight:900; color:var(--ink); }
+  .kcal-head .sub{ font-size:14.4px; color:var(--ink-soft); }
   .kcal-bar{ height:14px; border-radius:10px; background:var(--pink-soft); overflow:hidden; margin:8px 0 2px; }
   .kcal-bar > span{ display:block; height:100%; border-radius:10px; background:var(--pink); }
-  .kcal-bar.over > span{ background:#BE8E86; }
+  .kcal-bar.over > span{ background:#CDA9A2; }
   .advice{ background:var(--mint-soft); border-radius:16px; padding:12px 14px; margin:12px 0 2px;
-    font-size:18px; line-height:1.65; color:var(--ink); }
-  .advice.over{ background:#E7DAD5; }
+    font-size:15.3px; line-height:1.65; color:var(--ink); }
+  .advice.over{ background:#EFE6E1; }
   .advice.warn{ background:var(--lav-soft); }
   .meal-group{ margin-top:14px; }
-  .meal-group-title{ font-size:17px; font-weight:900; color:var(--pink); margin-bottom:2px; }
+  .meal-group-title{ font-size:14.4px; font-weight:900; color:var(--pink); margin-bottom:2px; }
 </style>
 </head>
 <body>
@@ -258,7 +258,6 @@
 <header class="hero">
   <div class="washi"></div>
   <h1 class="cute">64kg → 60kg 大作戰 🎀</h1>
-  <div class="sub">飲食維持你熟悉的食材,運動強度往上加一點,身體的水腫期撐過去就會看到數字往下走。</div>
   <div class="countdown-strip">
     <div class="metric">
       <div class="num" id="daysLeft">--</div>
@@ -296,7 +295,7 @@
       <div class="kwrap"><input type="number" step="10" id="inFoodKcal" placeholder="熱量"><span class="unit">kcal</span></div>
     </div>
     <datalist id="foodDB"></datalist>
-    <button class="save-btn cute" id="addFoodBtn" style="background:var(--peach); box-shadow:0 4px 0 #A98F72;">加入這一餐 🍽️</button>
+    <button class="save-btn cute" id="addFoodBtn" style="background:var(--peach); box-shadow:0 4px 0 #C0A98F;">加入這一餐 🍽️</button>
 
     <div class="target-row">
       <span>今日目標</span>
@@ -344,10 +343,6 @@
   <div id="dayList"></div>
 </div>
 
-<div class="footnote">
-  提示:啞鈴以你現有的 3 / 5 / 8 磅為主,重訓日盡量做到「最後兩下有點吃力」再換動作或加磅數。跑步機間歇建議快走 2 分鐘、慢跑或加速走 1 分鐘輪流。體脂與肌肉重量每天會有 0.5% 上下的正常波動,看一週的走勢比單日數字更準。<br><br>
-  另外:上面的份量刻意抓得比較足夠,就是不想讓你餓過頭才想吃零食冰淇淋。如果照著吃還是覺得餓,先加菜(蔬菜、蛋白質)不要餓肚子。也可以每週固定安排 1 次「计画内點心時間」,吃一小份自己想吃的東西(例如一小球冰淇淋),吃完就繼續照計畫走,比完全禁止更容易撐到 8/28。
-</div>
 
 <script>
 (function(){
@@ -495,7 +490,7 @@
     const fields = [["breakfast","🍳 早餐"],["lunch","🍚 午餐"],["dinner","🍲 晚餐"],["fruit","🍎 水果點心"]];
     box.innerHTML = fields.map(([f,label],i)=>`
       <div class="blk" style="${i===fields.length-1?'margin-bottom:0;':''}">
-        <div class="blk-title">${label} <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}">✏️編輯</span></div>
+        <div class="blk-title">${label} <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}">✏️</span></div>
         <div class="editable-content" data-field="${f}" data-iso="${todayEntry.iso}">${todayEntry.diet[f]}</div>
       </div>`).join("");
     box.querySelectorAll(".edit-pencil").forEach(p=>{
@@ -733,13 +728,13 @@
     function x(idx){ return n===1? w/2 : padX + (idx/(n-1))*(w-padX*2); }
     function y(v){ return h-padY - ((v-minV)/(maxV-minV))*(h-padY*2); }
     let path = sorted.map((p,idx)=>(idx===0?"M":"L")+x(idx).toFixed(1)+","+y(p.weight).toFixed(1)).join(" ");
-    let dots = sorted.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.weight).toFixed(1)}" r="4" fill="#C39BA0" stroke="#fff" stroke-width="1.5"/>`).join("");
+    let dots = sorted.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.weight).toFixed(1)}" r="4" fill="#D2B4B7" stroke="#fff" stroke-width="1.5"/>`).join("");
     const goalY = y(goal).toFixed(1);
     area.innerHTML = `
       <svg class="chart" viewBox="0 0 ${w} ${h}">
-        <line x1="0" y1="${goalY}" x2="${w}" y2="${goalY}" stroke="#ADA5B7" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <text x="4" y="${goalY-4}" font-size="14.6" fill="#9A9083">目標 60kg</text>
-        <path d="${path}" fill="none" stroke="#C39BA0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="0" y1="${goalY}" x2="${w}" y2="${goalY}" stroke="#C3BDCB" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="4" y="${goalY-4}" font-size="12.4" fill="#A69C90">目標 60kg</text>
+        <path d="${path}" fill="none" stroke="#D2B4B7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         ${dots}
       </svg>`;
   }
