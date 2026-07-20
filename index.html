@@ -292,6 +292,15 @@
   #foodPhotoPreview{ display:inline-flex; align-items:center; gap:6px; }
   .food-thumb-prev{ width:44px; height:44px; object-fit:cover; border-radius:8px; }
   .pp-x{ color:var(--ink-soft); cursor:pointer; font-size:20.7px; padding:0 4px; }
+  .water-row{ display:flex; align-items:center; justify-content:center; gap:20px; }
+  .water-btn{ width:56px; height:56px; border-radius:50%; border:none; background:var(--lav-soft);
+    color:var(--ink); font-size:30px; font-weight:900; cursor:pointer; font-family:inherit; line-height:1; }
+  .water-btn:active{ transform:scale(0.94); }
+  .water-count{ font-size:26px; font-weight:900; color:var(--ink); min-width:130px; text-align:center; }
+  .water-cups{ display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin:14px 0 4px; }
+  .water-cups .cup{ width:24px; height:30px; border-radius:5px 5px 10px 10px; border:2px solid var(--lav); background:transparent; }
+  .water-cups .cup.full{ background:var(--lav); }
+  .water-ml{ text-align:center; color:var(--ink-soft); font-size:18px; }
 </style>
 </head>
 <body>
@@ -305,8 +314,7 @@
     <div style="font-size:18.4px;color:var(--ink-soft);font-weight:700;">新增計畫</div>
     <input id="newPlanName" placeholder="計畫名稱(例:長期體重紀錄)" autocomplete="off">
     <select id="newPlanType">
-      <option value="weight">純紀錄體重</option>
-      <option value="calorie">紀錄吃的熱量</option>
+      <option value="track">紀錄飲食 + 喝水 + 體重</option>
       <option value="full">幫我規劃減重減脂</option>
     </select>
     <button id="addPlanBtn" class="save-btn cute">＋ 建立新計畫</button>
@@ -399,6 +407,20 @@
     <div id="foodLogArea"></div>
   </div>
 </div>
+</div>
+
+<div class="section" id="waterSection">
+  <h2 class="cute"><span class="dot"></span>今日喝水 💧</h2>
+  <div class="weight-box">
+    <div class="water-row">
+      <button class="water-btn" id="waterMinus">－</button>
+      <div class="water-count"><span id="waterCups">0</span> / <span id="waterGoalNum">8</span> 杯</div>
+      <button class="water-btn" id="waterPlus">＋</button>
+    </div>
+    <div class="water-cups" id="waterCupsRow"></div>
+    <div class="water-ml" id="waterMl"></div>
+    <div class="target-row"><span>每日目標(1 杯 250ml)</span><div class="kwrap"><input type="number" id="inWaterGoal" value="8"><span class="unit">杯</span></div></div>
+  </div>
 </div>
 
 <div class="section" id="metricsSection">
@@ -1385,12 +1407,47 @@
     if(mini) mini.addEventListener("click", ()=> setProfileCollapsed(false, true));
   }
 
+  // ---------- 喝水紀錄 ----------
+  let waterLog = {}; let waterGoal = 8;
+  async function loadWater(){
+    waterLog = {}; waterGoal = 8;
+    try{ const r=await window.storage.get(K("waterlog"),false); if(r&&r.value) waterLog=JSON.parse(r.value)||{}; }catch(e){}
+    try{ const g=await window.storage.get(K("watergoal"),false); if(g&&g.value){ const v=parseInt(g.value,10); if(v>0) waterGoal=v; } }catch(e){}
+    const gi=document.getElementById("inWaterGoal"); if(gi) gi.value=waterGoal;
+    renderWater();
+  }
+  async function saveWater(){ try{ await window.storage.set(K("waterlog"), JSON.stringify(waterLog), false); }catch(e){} }
+  async function saveWaterGoal(){ try{ await window.storage.set(K("watergoal"), String(waterGoal), false); }catch(e){} }
+  function renderWater(){
+    const cEl=document.getElementById("waterCups"); if(!cEl) return;
+    const cups = waterLog[isoDate(today)]||0;
+    cEl.textContent = cups;
+    document.getElementById("waterGoalNum").textContent = waterGoal;
+    document.getElementById("waterMl").innerHTML = (cups*250) + " ml" + (cups>=waterGoal ? ' <b>✅ 達標!</b>' : '');
+    const row=document.getElementById("waterCupsRow");
+    const n=Math.max(waterGoal, cups); let h="";
+    for(let i=0;i<n;i++) h+=`<span class="cup${i<cups?' full':''}"></span>`;
+    row.innerHTML=h;
+  }
+  function changeWater(d){
+    const iso=isoDate(today); let c=(waterLog[iso]||0)+d; if(c<0) c=0;
+    waterLog[iso]=c; saveWater(); renderWater();
+  }
+  function initWaterModule(){
+    const plus=document.getElementById("waterPlus"), minus=document.getElementById("waterMinus");
+    if(plus) plus.addEventListener("click", ()=>changeWater(1));
+    if(minus) minus.addEventListener("click", ()=>changeWater(-1));
+    const gi=document.getElementById("inWaterGoal");
+    if(gi) gi.addEventListener("change", async ()=>{ const v=parseInt(gi.value,10); if(v>0){ waterGoal=v; await saveWaterGoal(); renderWater(); } });
+  }
+
   // ---------- 多計畫管理 ----------
-  const PLAN_LABEL = { weight:"純體重紀錄", calorie:"熱量紀錄", full:"減重規劃", origin:"完整計畫" };
+  const PLAN_LABEL = { track:"飲食+喝水+體重", full:"減重規劃", origin:"完整計畫", weight:"飲食+喝水+體重", calorie:"飲食+喝水+體重" };
   async function loadPlans(){
     try{ const r=await window.storage.get("plans",false); if(r&&r.value) plans=JSON.parse(r.value)||[]; }catch(e){ plans=[]; }
     if(!plans.length) plans=[{id:"default",name:"減重計畫",type:"origin"}];
     const _d=plans.find(p=>p.id==="default"); if(_d && _d.name==="回台減重計畫"){ _d.name="減重計畫"; savePlans(); }
+    let _mig=false; plans.forEach(p=>{ if(p.type==="weight"||p.type==="calorie"){ p.type="track"; _mig=true; } }); if(_mig) savePlans();
     let cur="default";
     try{ const c=await window.storage.get("currentplan",false); if(c&&c.value) cur=c.value; }catch(e){}
     PLAN = plans.find(p=>p.id===cur) || plans[0];
@@ -1404,7 +1461,8 @@
     show('menuSection', t==='origin');
     show('checkinSection', t==='origin');
     show('profileSection', t==='origin'||t==='full');
-    show('foodSection', t==='origin'||t==='full'||t==='calorie');
+    show('foodSection', t==='origin'||t==='full'||t==='track');
+    show('waterSection', t==='origin'||t==='full'||t==='track');
     show('metricsSection', true);
     const ph=document.getElementById("planHeader");
     if(ph){ if(t==='origin'){ ph.style.display="none"; } else { ph.style.display=""; ph.textContent=PLAN.name; } }
@@ -1432,7 +1490,7 @@
       d.addEventListener("click", async (e)=>{ e.stopPropagation();
         if(!confirm("刪除這個計畫?裡面的紀錄也會一起清掉")) return;
         const id=d.dataset.del;
-        ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
+        ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed","waterlog","watergoal"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
         plans=plans.filter(p=>p.id!==id); await savePlans();
         if(PLAN.id===id){ await switchPlan("default"); } else { renderPlanList(); }
       });
@@ -1442,7 +1500,7 @@
     const pl=plans.find(p=>p.id===id); if(!pl) return;
     PLAN=pl; try{ await window.storage.set("currentplan", id, false); }catch(e){}
     updatePlanBar(); renderPlanList(); applyPlanView();
-    await loadLog(); await loadFoodLog(); await loadProfile();
+    await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile();
   }
   async function addPlan(){
     const nameEl=document.getElementById("newPlanName");
@@ -1472,6 +1530,8 @@
     initMetricsCollapse();
     initFoodModule();
     await loadFoodLog();
+    initWaterModule();
+    await loadWater();
     initProfileModule();
     await loadProfile();
   }
