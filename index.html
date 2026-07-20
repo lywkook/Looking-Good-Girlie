@@ -30,6 +30,12 @@
     --ink-soft:#A69C90;
     --line:#EAE3D8;
     --shadow: 0 2px 6px rgba(94,85,76,0.05), 0 8px 18px rgba(195,189,203,0.08);
+    /* 統一字級(整個 app 共用,避免大小不一) */
+    --fs-title:22px;   /* 區塊標題 */
+    --fs-num:24px;     /* 強調數字 */
+    --fs-body:19px;    /* 主要內容、輸入框 */
+    --fs-label:16px;   /* 次要標籤/說明 */
+    --fs-hint:14.5px;  /* 極小提示 */
   }
   @font-face {
     font-family: 'RedBeanCream';
@@ -55,10 +61,10 @@
     padding:24px 20px 6px;
   }
   .stamp-row .brand{
-    font-size:17.5px; letter-spacing:0.14em; color:var(--ink-soft);
+    font-size:var(--fs-label); letter-spacing:0.14em; color:var(--ink-soft);
   }
   .stamp-row .badge{
-    font-size:17.5px; background:var(--pink); color:#fff; padding:3px 10px;
+    font-size:var(--fs-label); background:var(--pink); color:#fff; padding:3px 10px;
     border-radius:20px; font-weight:700;
   }
 
@@ -71,19 +77,19 @@
   .hero h1{
     font-size:29px; line-height:1.3; margin:10px 0 6px; font-weight:400;
   }
-  .hero .sub{ font-size:19px; color:var(--ink-soft); margin-bottom:16px; }
+  .hero .sub{ font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:16px; }
 
   .countdown-strip{ display:flex; gap:10px; }
   .metric{
     flex:1; background:var(--card); border-radius:18px; padding:10px 8px;
     box-shadow:var(--shadow); text-align:center; border:2px solid var(--pink-soft);
   }
-  .metric .num{ font-size:24.5px; font-weight:900; color:var(--ink); }
-  .metric .lbl{ font-size:15px; color:var(--ink-soft); margin-top:2px; }
+  .metric .num{ font-size:var(--fs-num); font-weight:900; color:var(--ink); }
+  .metric .lbl{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; }
 
   .section{ padding:22px 20px 0; }
   .section h2{
-    font-size:25.5px; margin:0 0 12px; font-weight:400;
+    font-size:var(--fs-title); margin:0 0 12px; font-weight:400;
     display:flex; align-items:center; gap:6px;
   }
   .section h2 .dot{
@@ -98,26 +104,26 @@
     display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;
   }
   .field{ display:flex; flex-direction:column; gap:4px; }
-  .field label{ font-size:17.5px; color:var(--ink-soft); font-weight:700; padding-left:2px; }
+  .field label{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; padding-left:2px; }
   .field .wrap{ position:relative; }
   .field input{
     width:100%; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:23.1px; background:#FFFDFA; color:var(--ink);
+    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink);
   }
   .field input:focus{ outline:none; border-color:var(--pink); }
   .field .unit{
     position:absolute; right:10px; top:50%; transform:translateY(-50%);
-    font-size:17.5px; color:var(--ink-soft);
+    font-size:var(--fs-label); color:var(--ink-soft);
   }
   .save-btn{
     width:100%; background:var(--pink); color:#fff; border:none; border-radius:14px;
-    padding:12px; font-size:23.8px; font-weight:700; letter-spacing:0.02em;
+    padding:12px; font-size:var(--fs-body); font-weight:700; letter-spacing:0.02em;
     box-shadow:0 4px 0 #B49599;
   }
   .save-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #B49599; }
 
   svg.chart{ width:100%; height:130px; display:block; margin-top:14px; }
-  .chart-empty{ font-size:20.0px; color:var(--ink-soft); padding:14px 0 2px; text-align:center; }
+  .chart-empty{ font-size:var(--fs-body); color:var(--ink-soft); padding:14px 0 2px; text-align:center; }
 
   .snapshot-row{
     display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;
@@ -128,13 +134,13 @@
   }
   .chip.pink{ background:var(--pink-soft); }
   .chip.lav{ background:var(--lav-soft); }
-  .chip .v{ font-size:23.8px; font-weight:900; color:var(--ink); }
-  .chip .k{ font-size:16.0px; color:var(--ink-soft); margin-top:1px; }
+  .chip .v{ font-size:var(--fs-num); font-weight:900; color:var(--ink); }
+  .chip .k{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:1px; }
 
   .history{ margin-top:14px; }
   .history-row{
     display:flex; justify-content:space-between; align-items:center;
-    font-size:20.0px; padding:7px 0; border-bottom:1px dashed var(--line);
+    font-size:var(--fs-body); padding:7px 0; border-bottom:1px dashed var(--line);
     color:var(--ink-soft);
   }
   .history-row:last-child{ border-bottom:none; }
@@ -151,11 +157,11 @@
     padding:13px 15px; cursor:pointer;
   }
   .day-head .left{ display:flex; align-items:center; gap:9px; }
-  .day-emoji{ font-size:30.2px; }
-  .day-date{ font-size:23.1px; font-weight:700; }
-  .day-idx{ font-size:16.7px; color:var(--ink-soft); }
+  .day-emoji{ font-size:26px; }
+  .day-date{ font-size:var(--fs-title); font-weight:700; }
+  .day-idx{ font-size:var(--fs-label); color:var(--ink-soft); }
   .day-tag{
-    font-size:16.7px; font-weight:700; padding:3px 9px; border-radius:20px; color:#fff;
+    font-size:var(--fs-label); font-weight:700; padding:3px 9px; border-radius:20px; color:#fff;
   }
   .tag-lift{ background:var(--pink); }
   .tag-cardio{ background:var(--peach); }
@@ -168,20 +174,20 @@
   }
   .day-card.done .check{ background:var(--mint); border-color:var(--mint); color:#fff; }
 
-  .day-body{ display:none; padding:0 15px 15px; font-size:21.5px; line-height:1.65; }
+  .day-body{ display:none; padding:0 15px 15px; font-size:var(--fs-body); line-height:1.6; }
   .day-card.open .day-body{ display:block; }
-  .day-body .blk{ margin-bottom:10px; }
+  .day-body .blk{ margin-bottom:8px; }
   .day-body .blk-title{
-    font-size:16.7px; color:var(--ink-soft); margin-bottom:3px; font-weight:700;
+    font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:2px; font-weight:700;
   }
-  /* 今日菜單:餐別粗體、字放大 */
-  #todayMenuBox .blk{ margin-bottom:14px; }
-  #todayMenuBox .blk-title{ font-size:19px; color:var(--ink-soft); margin-bottom:4px; }
-  #todayMenuBox .blk-title b{ font-weight:900; color:var(--ink); font-size:23px; }
-  #todayMenuBox .editable-content{ font-size:23.5px; line-height:1.6; color:var(--ink); }
+  /* 今日菜單:每餐一行(餐別粗體 + 內容同一行,不留空行) */
+  #todayMenuBox .blk{ margin-bottom:9px; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  #todayMenuBox .blk:last-child{ margin-bottom:0; }
+  #todayMenuBox .blk-label{ font-weight:900; color:var(--ink); font-size:var(--fs-body); white-space:nowrap; }
+  #todayMenuBox .editable-content{ font-size:var(--fs-body); line-height:1.5; color:var(--ink); flex:1; min-width:120px; }
 
   .today-marker{
-    font-size:15.1px; color:#fff; background:var(--pink); border-radius:20px;
+    font-size:var(--fs-hint); color:#fff; background:var(--pink); border-radius:20px;
     padding:2px 8px; margin-left:2px; font-weight:700;
   }
 
@@ -197,64 +203,64 @@
     background:#fff; margin-top:1px;
   }
   .ex-row.done .ex-check{ background:var(--mint); border-color:var(--mint); color:#fff; }
-  .ex-text b{ font-size:21.5px; }
-  .ex-detail{ font-size:20.0px; color:var(--ink-soft); margin-top:2px; line-height:1.5; }
+  .ex-text b{ font-size:var(--fs-body); }
+  .ex-detail{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; line-height:1.5; }
 
   .food-card{
     display:flex; gap:10px; background:#FFFBF6; border:2px solid var(--line);
     border-radius:14px; padding:10px; margin-top:10px; align-items:flex-start;
   }
   .food-card img{ width:56px; height:56px; object-fit:cover; border-radius:10px; flex-shrink:0; }
-  .food-card .fc-name{ font-size:22.3px; font-weight:700; }
-  .food-card .fc-kcal{ font-size:20.7px; color:var(--pink); font-weight:900; }
-  .food-card .fc-macro{ font-size:18.3px; color:var(--ink-soft); margin-top:2px; }
-  .food-card .fc-note{ font-size:18.3px; color:var(--ink-soft); margin-top:3px; }
-  .food-card .fc-del{ margin-left:auto; font-size:17.5px; color:var(--ink-soft); cursor:pointer; padding:2px 6px; }
+  .food-card .fc-name{ font-size:var(--fs-body); font-weight:700; }
+  .food-card .fc-kcal{ font-size:var(--fs-body); color:var(--pink); font-weight:900; }
+  .food-card .fc-macro{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; }
+  .food-card .fc-note{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:3px; }
+  .food-card .fc-del{ margin-left:auto; font-size:var(--fs-label); color:var(--ink-soft); cursor:pointer; padding:2px 6px; }
   .kcal-total{
     display:inline-block; background:var(--pink-soft); border-radius:20px; padding:6px 16px;
-    font-size:22.3px; font-weight:900; color:var(--ink);
+    font-size:var(--fs-num); font-weight:900; color:var(--ink);
   }
   .editable-wrap{ position:relative; }
   .edit-pencil{
-    font-size:17.5px; color:var(--ink-soft); cursor:pointer; margin-left:6px; user-select:none;
+    font-size:var(--fs-label); color:var(--ink-soft); cursor:pointer; margin-left:6px; user-select:none;
   }
   [contenteditable="true"]{
     outline:2px dashed var(--pink); border-radius:8px; padding:3px 5px; background:#FFFDF8;
   }
 
   .footnote{
-    padding:26px 20px 10px; font-size:19.1px; color:var(--ink-soft); line-height:1.75;
+    padding:26px 20px 10px; font-size:var(--fs-label); color:var(--ink-soft); line-height:1.75;
   }
   /* 飲食紀錄 · 熱量 */
   .meal-tabs{ display:flex; gap:6px; margin-bottom:12px; }
   .meal-tab{ flex:1; padding:9px 0; border:none; border-radius:12px; background:var(--pink-soft);
-    color:var(--ink-soft); font-weight:700; font-size:17.6px; font-family:inherit; cursor:pointer; }
+    color:var(--ink-soft); font-weight:700; font-size:var(--fs-label); font-family:inherit; cursor:pointer; }
   .meal-tab.active{ background:var(--pink); color:#fff; }
   .food-input-row{ display:flex; gap:8px; margin-bottom:10px; }
   .food-input-row .fname{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:19.5px; background:#FFFDFA; color:var(--ink); font-family:inherit; }
+    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
   .kwrap{ position:relative; flex:none; }
   .kwrap input{ width:120px; padding:10px 44px 10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:19.5px; background:#FFFDFA; color:var(--ink); font-family:inherit; text-align:right; }
+    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; text-align:right; }
   .food-input-row .fname:focus, .kwrap input:focus, .target-row input:focus{ outline:none; border-color:var(--pink); }
-  .kwrap .unit{ position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:14.7px; color:var(--ink-soft); }
+  .kwrap .unit{ position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:var(--fs-hint); color:var(--ink-soft); }
   .target-row{ display:flex; align-items:center; justify-content:space-between; margin:16px 0 6px;
-    font-size:18.5px; color:var(--ink-soft); font-weight:700; }
+    font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
   .kcal-head{ display:flex; justify-content:space-between; align-items:baseline; margin-top:6px; gap:8px; }
-  .kcal-head .big{ font-size:29.3px; font-weight:900; color:var(--ink); }
-  .kcal-head .sub{ font-size:16.6px; color:var(--ink-soft); }
+  .kcal-head .big{ font-size:var(--fs-num); font-weight:900; color:var(--ink); }
+  .kcal-head .sub{ font-size:var(--fs-label); color:var(--ink-soft); }
   .kcal-bar{ height:14px; border-radius:10px; background:var(--pink-soft); overflow:hidden; margin:8px 0 2px; }
   .kcal-bar > span{ display:block; height:100%; border-radius:10px; background:var(--pink); }
   .kcal-bar.over > span{ background:#CDA9A2; }
   .advice{ background:var(--mint-soft); border-radius:16px; padding:12px 14px; margin:12px 0 2px;
-    font-size:17.6px; line-height:1.65; color:var(--ink); }
+    font-size:var(--fs-body); line-height:1.6; color:var(--ink); }
   .advice.over{ background:#EFE6E1; }
   .advice.warn{ background:var(--lav-soft); }
   .meal-group{ margin-top:14px; }
-  .meal-group-title{ font-size:16.6px; font-weight:900; color:var(--pink); margin-bottom:2px; }
+  .meal-group-title{ font-size:var(--fs-label); font-weight:900; color:var(--pink); margin-bottom:2px; }
   .field select{
     width:100%; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:23.1px; background:#FFFDFA; color:var(--ink); font-family:inherit;
+    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit;
     -webkit-appearance:none; appearance:none;
   }
   .field select:focus{ outline:none; border-color:var(--pink); }
@@ -264,83 +270,83 @@
   .section.collapsed .weight-box{ display:none; }
   .section.collapsed .pf-mini{
     display:block; background:var(--card); border-radius:16px; padding:12px 16px;
-    box-shadow:var(--shadow); font-size:20.7px; color:var(--ink); cursor:pointer;
+    box-shadow:var(--shadow); font-size:var(--fs-body); color:var(--ink); cursor:pointer;
   }
   .pf-hint{ color:var(--ink-soft); }
   .food-suggest{ display:none; margin:-4px 0 10px; border:2px solid var(--line);
     border-radius:12px; overflow:hidden; background:var(--card); box-shadow:var(--shadow); }
   .food-suggest.show{ display:block; }
   .food-suggest .fs-item{ display:flex; justify-content:space-between; gap:10px;
-    padding:11px 14px; border-bottom:1px solid var(--line); cursor:pointer; font-size:20.7px; color:var(--ink); }
+    padding:11px 14px; border-bottom:1px solid var(--line); cursor:pointer; font-size:var(--fs-body); color:var(--ink); }
   .food-suggest .fs-item:last-child{ border-bottom:none; }
   .food-suggest .fs-item:active{ background:var(--pink-soft); }
   .food-suggest .fs-k{ color:var(--ink-soft); white-space:nowrap; }
   .plan-bar{ display:flex; justify-content:center; padding:12px 20px 2px; }
   .plan-current{ background:var(--pink-soft); color:var(--ink); border:none; border-radius:20px;
-    padding:8px 20px; font-size:20.7px; font-weight:700; cursor:pointer; font-family:inherit; }
+    padding:8px 20px; font-size:var(--fs-body); font-weight:700; cursor:pointer; font-family:inherit; }
   .plan-panel{ display:none; margin:8px 20px 0; background:var(--card); border-radius:18px;
     box-shadow:var(--shadow); padding:14px; }
   .plan-panel.show{ display:block; }
   .plan-item{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; cursor:pointer; }
   .plan-item.active{ background:var(--pink-soft); }
-  .plan-item .pi-name{ flex:1; font-weight:700; font-size:20.7px; color:var(--ink); }
-  .plan-item .pi-type{ font-size:16.1px; color:var(--ink-soft); }
-  .plan-item .pi-edit{ font-size:16.1px; color:var(--pink); padding:2px 8px; }
-  .plan-item .pi-del{ font-size:16.1px; color:var(--ink-soft); padding:2px 8px; }
+  .plan-item .pi-name{ flex:1; font-weight:700; font-size:var(--fs-body); color:var(--ink); }
+  .plan-item .pi-type{ font-size:var(--fs-label); color:var(--ink-soft); }
+  .plan-item .pi-edit{ font-size:var(--fs-label); color:var(--pink); padding:2px 8px; }
+  .plan-item .pi-del{ font-size:var(--fs-label); color:var(--ink-soft); padding:2px 8px; }
   .plan-new{ margin-top:10px; border-top:1px dashed var(--line); padding-top:12px; display:flex; flex-direction:column; gap:8px; }
   .plan-new input, .plan-new select{ padding:10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:20.7px; background:#FFFDFA; color:var(--ink); font-family:inherit; }
-  #planHeader{ padding:14px 20px 0; margin:0; font-size:27.6px; }
+    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
+  #planHeader{ padding:14px 20px 0; margin:0; font-size:var(--fs-title); }
   .mini-btn{ background:var(--mint-soft); color:var(--ink); border:none; border-radius:12px;
-    padding:8px 14px; font-size:18.4px; font-family:inherit; cursor:pointer; }
+    padding:8px 14px; font-size:var(--fs-label); font-family:inherit; cursor:pointer; }
   .food-photo-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   #foodPhotoPreview{ display:inline-flex; align-items:center; gap:6px; }
   .food-thumb-prev{ width:44px; height:44px; object-fit:cover; border-radius:8px; }
-  .pp-x{ color:var(--ink-soft); cursor:pointer; font-size:20.7px; padding:0 4px; }
+  .pp-x{ color:var(--ink-soft); cursor:pointer; font-size:var(--fs-body); padding:0 4px; }
   .ai-photo-box{ background:var(--mint-soft); border-radius:16px; padding:14px; margin:14px 0; }
-  .ai-photo-title{ font-size:19px; font-weight:900; color:var(--ink); margin-bottom:10px; }
-  .ai-badge{ background:var(--mint); color:#fff; font-size:12.5px; font-weight:900; padding:2px 8px; border-radius:10px; vertical-align:middle; margin-left:4px; }
+  .ai-photo-title{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:10px; }
+  .ai-badge{ background:var(--mint); color:#fff; font-size:var(--fs-hint); font-weight:900; padding:2px 8px; border-radius:10px; vertical-align:middle; margin-left:4px; }
   .ai-photo-btn{ width:100%; background:var(--mint); color:#fff; border:none; border-radius:14px;
-    padding:13px; font-size:18.5px; font-weight:900; font-family:inherit; cursor:pointer; box-shadow:0 4px 0 #A7B4A4; }
+    padding:13px; font-size:var(--fs-body); font-weight:900; font-family:inherit; cursor:pointer; box-shadow:0 4px 0 #A7B4A4; }
   .ai-photo-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #A7B4A4; }
   .ai-photo-btn:disabled{ opacity:.6; cursor:default; }
-  .ai-photo-status{ font-size:17px; color:var(--ink); margin-top:10px; text-align:center; min-height:1px; }
+  .ai-photo-status{ font-size:var(--fs-label); color:var(--ink); margin-top:10px; text-align:center; min-height:1px; }
   .ai-photo-status .ok{ color:var(--ink); font-weight:900; }
   .ai-photo-status .err{ color:#B5766F; }
   .ai-spin{ display:inline-block; width:16px; height:16px; border:3px solid var(--mint); border-top-color:transparent;
     border-radius:50%; animation:aispin .8s linear infinite; vertical-align:-3px; margin-right:6px; }
   @keyframes aispin{ to{ transform:rotate(360deg); } }
-  .ai-key-toggle{ display:inline-block; margin-top:10px; font-size:15.5px; color:var(--ink-soft); cursor:pointer; text-decoration:underline; }
+  .ai-key-toggle{ display:inline-block; margin-top:10px; font-size:var(--fs-label); color:var(--ink-soft); cursor:pointer; text-decoration:underline; }
   .ai-key-row{ display:none; gap:8px; margin-top:10px; }
   .ai-key-row.show{ display:flex; }
-  .ai-key-row input{ flex:1; min-width:0; border:1.5px solid var(--line); border-radius:12px; padding:9px 12px; font-size:16px; font-family:inherit; background:#fff; color:var(--ink); }
-  .ai-key-hint{ font-size:14.5px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
+  .ai-key-row input{ flex:1; min-width:0; border:1.5px solid var(--line); border-radius:12px; padding:9px 12px; font-size:var(--fs-label); font-family:inherit; background:#fff; color:var(--ink); }
+  .ai-key-hint{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:8px; line-height:1.5; }
   .ai-key-hint a{ color:var(--mint); font-weight:900; }
   .menu-regen-box{ display:none; margin-top:12px; padding:14px; background:var(--mint-soft); border-radius:16px; }
   .menu-regen-box.show{ display:block; }
   .menu-regen-box input{ width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px;
-    padding:11px 13px; font-size:18px; font-family:inherit; background:#fff; color:var(--ink); }
+    padding:11px 13px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); }
   .wo-field{ margin:12px 0; }
-  .wo-field label{ display:block; font-size:16.5px; color:var(--ink-soft); margin-bottom:6px; }
+  .wo-field label{ display:block; font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:6px; }
   .wo-textarea{ width:100%; box-sizing:border-box; min-height:78px; border:1.5px solid var(--line); border-radius:14px;
-    padding:11px 13px; font-size:18px; font-family:inherit; background:#fff; color:var(--ink); line-height:1.5; resize:vertical; }
-  .wo-hint{ font-size:15px; color:var(--ink-soft); margin:10px 0; line-height:1.5; }
+    padding:11px 13px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); line-height:1.5; resize:vertical; }
+  .wo-hint{ font-size:var(--fs-hint); color:var(--ink-soft); margin:10px 0; line-height:1.5; }
   .wo-hint.err{ color:#B5766F; }
   .wo-week{ margin-top:12px; }
   .wo-day{ background:#FFFBF6; border:2px solid var(--line); border-radius:14px; padding:11px 13px; margin-bottom:9px; }
-  .wo-day-h{ font-size:20px; margin-bottom:5px; }
+  .wo-day-h{ font-size:var(--fs-body); margin-bottom:5px; }
   .wo-day-h b{ font-weight:900; color:var(--ink); }
   .wo-items{ margin:0; padding-left:20px; }
-  .wo-items li{ font-size:18.5px; color:var(--ink); line-height:1.55; margin-bottom:2px; }
+  .wo-items li{ font-size:var(--fs-label); color:var(--ink); line-height:1.55; margin-bottom:2px; }
   .water-row{ display:flex; align-items:center; justify-content:center; gap:20px; }
   .water-btn{ width:56px; height:56px; border-radius:50%; border:none; background:var(--lav-soft);
-    color:var(--ink); font-size:30px; font-weight:900; cursor:pointer; font-family:inherit; line-height:1; }
+    color:var(--ink); font-size:28px; font-weight:900; cursor:pointer; font-family:inherit; line-height:1; }
   .water-btn:active{ transform:scale(0.94); }
-  .water-count{ font-size:26px; font-weight:900; color:var(--ink); min-width:130px; text-align:center; }
+  .water-count{ font-size:var(--fs-num); font-weight:900; color:var(--ink); min-width:130px; text-align:center; }
   .water-cups{ display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin:14px 0 4px; }
   .water-cups .cup{ width:24px; height:30px; border-radius:5px 5px 10px 10px; border:2px solid var(--lav); background:transparent; }
   .water-cups .cup.full{ background:var(--lav); }
-  .water-ml{ text-align:center; color:var(--ink-soft); font-size:18px; }
+  .water-ml{ text-align:center; color:var(--ink-soft); font-size:var(--fs-label); }
 </style>
 </head>
 <body>
@@ -393,8 +399,14 @@
   </div>
   <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;">🔄 不想吃這些?換一份</button>
   <div class="menu-regen-box" id="menuRegenBox">
+    <div class="meal-tabs" id="regenMealTabs">
+      <button type="button" class="meal-tab" data-rmeal="breakfast">早餐</button>
+      <button type="button" class="meal-tab active" data-rmeal="lunch">午餐</button>
+      <button type="button" class="meal-tab" data-rmeal="dinner">晚餐</button>
+      <button type="button" class="meal-tab" data-rmeal="fruit">水果</button>
+    </div>
     <input id="menuWish" placeholder="想吃什麼?例:牛肉麵、清淡的、日式(可留空)" autocomplete="off">
-    <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">產生新菜單 ✨</button>
+    <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">換這一餐 ✨</button>
     <div class="ai-photo-status" id="menuRegenStatus"></div>
   </div>
 </div>
@@ -679,10 +691,11 @@
     const todayEntry = days.find(d=>d.iso===todayIso) || days[0];
     const box = document.getElementById("todayMenuBox");
     const fields = [["breakfast","早餐"],["lunch","午餐"],["dinner","晚餐"],["fruit","水果點心"]];
-    box.innerHTML = fields.map(([f,label],i)=>`
-      <div class="blk" style="${i===fields.length-1?'margin-bottom:0;':''}">
-        <div class="blk-title"><b style="font-weight:900;">${label}</b> <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}">✏️</span></div>
-        <div class="editable-content" data-field="${f}" data-iso="${todayEntry.iso}">${todayEntry.diet[f]}</div>
+    box.innerHTML = fields.map(([f,label])=>`
+      <div class="blk">
+        <span class="blk-label">${label}</span>
+        <span class="editable-content" data-field="${f}" data-iso="${todayEntry.iso}">${todayEntry.diet[f]}</span>
+        <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}">✏️</span>
       </div>`).join("");
     box.querySelectorAll(".edit-pencil").forEach(p=>{
       p.addEventListener("click", ()=>{
@@ -703,50 +716,59 @@
     });
   }
 
-  // ---------- 換今日菜單(不想吃就選想吃的、重新給一份) ----------
-  let menuVariant = 0;
-  function applyMenu(menu){
+  // ---------- 換今日菜單(選一餐、輸入想吃的,重新給那一餐) ----------
+  let regenField = "lunch";
+  const MEAL_LABEL = { breakfast:"早餐", lunch:"午餐", dinner:"晚餐", fruit:"水果點心" };
+  const MEAL_ALT = {
+    breakfast: ["水煮蛋 1 顆","茶葉蛋 1 顆 + 無糖豆漿","希臘優格 + 一份水果","全麥吐司 1 片 + 荷包蛋","燕麥粥 + 水煮蛋"],
+    lunch: ["雞胸肉(或雞腿) + 白飯一碗 + 炒青菜","清蒸鱸魚 + 白飯 + 燙青菜","燙牛肉片 + 白飯一碗 + 青菜","蒜炒蝦仁 + 白飯 + 蔬菜","煎牛排一片 + 白飯一碗 + 大量蔬菜","韓式嫩豆腐鍋 + 白飯"],
+    dinner: ["雞肉 + 蔬菜 + 半碗飯","清蒸鱸魚 + 蔬菜 + 半碗飯","牛肉片炒蔬菜 + 半碗飯","蝦仁 + 蔬菜 + 半碗飯","牛排(份量小) + 大量蔬菜","嫩豆腐鍋 + 半碗飯"],
+    fruit: ["蕃茄 一份","橘子 一份","蘋果 一份","芭樂 半顆","藍莓 一小把"]
+  };
+  const altIdx = { breakfast:0, lunch:0, dinner:0, fruit:0 };
+  function applyMeal(field, text){
+    if(!text) return;
     const iso = isoDate(today);
     const te = days.find(d=>d.iso===iso) || days[0];
-    ["breakfast","lunch","dinner","fruit"].forEach(f=>{
-      if(menu[f]!=null && String(menu[f]).trim()){
-        te.diet[f] = String(menu[f]).trim();
-        try{ window.storage.set("dietover:"+iso+":"+f, te.diet[f], false); }catch(e){}
-      }
-    });
+    te.diet[field] = String(text).trim();
+    try{ window.storage.set("dietover:"+iso+":"+field, te.diet[field], false); }catch(e){}
     renderTodayMenu(); renderDays();
   }
-  function localNewMenu(){
-    const iso = isoDate(today);
-    const te = days.find(d=>d.iso===iso) || days[0];
-    menuVariant++;
-    return dietForDay((te.idx - 1) + menuVariant);  // 換一個輪替組合(不同蛋白質/澱粉)
+  function localNewMeal(field){
+    const arr = MEAL_ALT[field] || []; if(!arr.length) return "";
+    const iso = isoDate(today); const te = days.find(d=>d.iso===iso) || days[0];
+    const cur = te.diet[field];
+    altIdx[field] = (altIdx[field]+1) % arr.length;
+    if(arr[altIdx[field]] === cur) altIdx[field] = (altIdx[field]+1) % arr.length;  // 避免換到一樣的
+    return arr[altIdx[field]];
   }
   async function regenMenu(){
     const status = document.getElementById("menuRegenStatus");
     const wish = (document.getElementById("menuWish").value||"").trim();
+    const field = regenField, label = MEAL_LABEL[field];
     if(!geminiKey){
-      applyMenu(localNewMenu());
-      status.innerHTML = '<span class="ok">已換一份 ✅</span>' + (wish ? ' <span style="color:var(--ink-soft);font-size:14.5px">想精準指定「'+esc(wish)+'」需到下方「飲食紀錄」貼上免費 AI 金鑰</span>' : '');
+      applyMeal(field, localNewMeal(field));
+      status.innerHTML = '<span class="ok">已換一份'+label+' ✅</span>' + (wish ? ' <span style="color:var(--ink-soft);font-size:var(--fs-hint)">想精準指定「'+esc(wish)+'」需到下方「飲食紀錄」貼上免費 AI 金鑰</span>' : '');
       return;
     }
     const btn = document.getElementById("menuGenBtn"); const old = btn.textContent;
     btn.disabled = true; btn.textContent = "產生中…";
-    status.innerHTML = '<span class="ai-spin"></span>重新設計中…';
+    status.innerHTML = '<span class="ai-spin"></span>重新設計'+label+'中…';
     try{
       const target = parseInt(document.getElementById("inKcalTarget").value,10) || kcalTarget || 1500;
-      const prompt = '你是營養師,幫正在減重的人重新設計「今天一天」的菜單。'
-        + '每日熱量目標約 '+target+' 大卡,以原型食物、好準備為主。'
-        + '使用者的需求 / 想吃的:'+(wish || '沒特別指定,給清爽好準備的')+'。'
+      const prompt = '你是營養師,幫正在減重的人重新設計今天的「'+label+'」。'
+        + '每日總熱量目標約 '+target+' 大卡,這一餐抓合理比例,以原型食物、好準備為主。'
+        + '使用者想吃的:'+(wish || '沒特別指定,給清爽好準備的')+'。'
         + '冰箱可能有:牛排、雞肉、鱸魚、牛肉片、蝦仁、豆腐、白飯、白麵、蔬菜、蕃茄橘子蘋果玉米(不一定要全用,想吃外食也可以)。'
-        + '只回傳 JSON,每一項「只寫吃什麼」、不要說明或理由、不超過 25 字,格式:{"breakfast":"...","lunch":"...","dinner":"...","fruit":"..."}。';
+        + '只回傳 JSON,「只寫吃什麼」不要說明或理由、不超過 25 字,格式:{"text":"..."}。';
       const m = await geminiJSON(prompt, null, 0.6);
-      if(!m || !m.lunch) throw new Error("回傳格式看不懂");
-      applyMenu(m);
-      status.innerHTML = '<span class="ok">新菜單好了 ✅ 已套用到上面</span>';
+      const text = (m && (m.text || m[field])) || "";
+      if(!text) throw new Error("回傳格式看不懂");
+      applyMeal(field, text);
+      status.innerHTML = '<span class="ok">新的'+label+'好了 ✅ 已套用到上面</span>';
     }catch(e){
-      applyMenu(localNewMenu());
-      status.innerHTML = '<span class="err">AI 失敗('+esc(e.message||e)+'),先幫你換一種現成組合。</span>';
+      applyMeal(field, localNewMeal(field));
+      status.innerHTML = '<span class="err">AI 失敗('+esc(e.message||e)+'),先幫你換一種現成的。</span>';
     }
     btn.disabled = false; btn.textContent = old;
   }
@@ -754,6 +776,12 @@
     const tgl = document.getElementById("menuRegenBtn");
     const box = document.getElementById("menuRegenBox");
     if(tgl && box) tgl.addEventListener("click", ()=> box.classList.toggle("show"));
+    document.querySelectorAll("#regenMealTabs .meal-tab").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        regenField = b.dataset.rmeal;
+        document.querySelectorAll("#regenMealTabs .meal-tab").forEach(x=> x.classList.toggle("active", x===b));
+      });
+    });
     const gen = document.getElementById("menuGenBtn");
     if(gen) gen.addEventListener("click", regenMenu);
   }
