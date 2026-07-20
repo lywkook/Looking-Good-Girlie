@@ -1285,16 +1285,34 @@
     else { h.innerHTML='免費申請:到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 用 Google 帳號登入 →「Create API key」→ 複製貼上、按儲存。免費、不需信用卡。'; }
   }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+  // 依序嘗試目前仍在免費額度內的模型(舊的 gemini-2.0-flash 免費額度已歸零,擺最後備援)
+  const GEMINI_MODELS = ["gemini-2.5-flash","gemini-2.5-flash-lite","gemini-flash-latest","gemini-2.0-flash"];
   async function geminiJSON(prompt, extraParts, temp){
     const parts=[{text:prompt}]; if(extraParts) extraParts.forEach(p=>parts.push(p));
     const body = { contents:[{ parts }], generationConfig:{ responseMimeType:"application/json", temperature: temp==null?0.3:temp } };
-    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+encodeURIComponent(geminiKey);
-    const res = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
-    if(!res.ok){ let msg="連線失敗 ("+res.status+")"; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){} throw new Error(msg); }
-    const data = await res.json();
-    const rparts = ((((data.candidates||[])[0]||{}).content||{}).parts)||[];
-    const txt = (rparts[0]||{}).text || "";
-    try{ return JSON.parse(txt); }catch(e){ throw new Error("AI 回傳格式看不懂,請再試一次"); }
+    let lastMsg="連線失敗", quotaHit=false;
+    for(let i=0;i<GEMINI_MODELS.length;i++){
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/"+GEMINI_MODELS[i]+":generateContent?key="+encodeURIComponent(geminiKey);
+      let res;
+      try{ res = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) }); }
+      catch(netErr){ lastMsg="無法連線到 Google,請檢查網路"; continue; }
+      if(res.ok){
+        const data = await res.json();
+        const rparts = ((((data.candidates||[])[0]||{}).content||{}).parts)||[];
+        const txt = (rparts[0]||{}).text || "";
+        try{ return JSON.parse(txt); }catch(e){ throw new Error("AI 回傳格式看不懂,請再試一次"); }
+      }
+      let msg="錯誤 "+res.status; const status=res.status;
+      try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
+      lastMsg=msg;
+      // 金鑰無效 / 沒開啟 API → 換模型也沒用,直接停
+      if((status===400||status===403) && /API.?key|API_KEY_INVALID|PERMISSION|not valid|SERVICE_DISABLED|has not been used/i.test(msg)){
+        throw new Error("金鑰無效或尚未啟用,請重新確認:"+msg);
+      }
+      if(status===429) quotaHit=true;   // 這個模型免費額度用完/歸零 → 換下一個
+    }
+    if(quotaHit) throw new Error("免費額度已用完或此金鑰暫無可用的免費模型,請稍後再試或明天再用(免費額度每天會重置)。");
+    throw new Error(lastMsg);
   }
   async function analyzeFoodPhoto(b64){
     const prompt = '你是營養師。看這張食物照片,用繁體中文判斷主要是什麼食物或餐點,並估計「整份」的總熱量(大卡)。只回傳 JSON,不要多餘文字。格式:{"name":"簡短餐點名稱(繁體中文,不超過12字)","kcal":整數總熱量,"note":"一句話說明估算依據"}。若照片看不出是食物,name 請回空字串。';
