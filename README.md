@@ -18,8 +18,7 @@
    - 每個運動動作、每個飲食欄位都可以點 ✏️ 直接編輯,存檔後永久覆蓋預設文字(`dietover:`、`exover:` storage prefix)
    - 每個運動動作、每天整體都能打勾記錄完成(`ex:`、`dayplan:` prefix)
 4. **體重/體脂/BMI/肌肉重量紀錄**:手動輸入四個數字,存成 `metricslog`(JSON array),畫體重趨勢 SVG 折線圖 + 目標線(60kg)+ 最新數值卡片 + 近 7 天歷史
-5. **拍照計算熱量**:用 `<input type="file" accept="image/*" capture="environment">` 拍照或選圖 → resize 成 base64 → 直接從瀏覽器呼叫 `https://api.anthropic.com/v1/messages`(model: `claude-sonnet-4-6`,vision + 純 JSON 輸出)辨識食物名稱/熱量/三大營養素 → 存進 `foodlog`(JSON array,含縮圖 base64、不含原圖)→ 顯示今日總熱量 + 可刪除的食物卡片列表
-   - 瀏覽器直接呼叫 Anthropic API 需要金鑰,第一次使用會用 `window.prompt` 請使用者貼上自己的 API Key(存成 `anthropic_api_key`,只留在這台裝置);請求會帶上 `x-api-key`、`anthropic-version`、`anthropic-dangerous-direct-browser-access` 這三個必要 header。金鑰錯誤(401/403)會自動清掉,下次重新詢問。
+5. **飲食紀錄 · 熱量(手動輸入)**:選餐別(早/午/晚/點心)→ 輸入食物;內建常見食物資料庫(`FOOD_DB`,含使用者常吃食材與台式外食),打字用 `<datalist>` 跳建議並自動帶入熱量 → 存進 `foodlog`(JSON array `{id,date,meal,name,kcal}`)。可設「今日熱量目標」(存 `kcaltarget`),即時算今日總熱量、進度條、還可吃/超過多少;`buildAdvice()` 依「今天吃多少 + 今天是重訓/燃脂/休息日 + 哪幾餐還沒吃」動態給飲食或運動的調整建議(超標建議減澱粉或加運動、額度足則正常吃)。
 
 ## Storage Key 一覽
 | Prefix / Key         | 內容                                   | Shared |
@@ -29,8 +28,8 @@
 | `dietover:<iso>:<field>` | 使用者手動編輯覆蓋的飲食文字(field = breakfast/lunch/dinner/fruit) | false |
 | `exover:<iso>:<exi>`  | 使用者手動編輯覆蓋的運動細節文字         | false  |
 | `metricslog`          | JSON array,體重/體脂/BMI/肌肉重量歷史紀錄  | false  |
-| `foodlog`             | JSON array,拍照辨識的食物紀錄(含縮圖)  | false  |
-| `anthropic_api_key`   | 拍照辨識用的 Anthropic API Key(只存本機) | false  |
+| `foodlog`             | JSON array `{id,date,meal,name,kcal}`,手動三餐飲食紀錄 | false |
+| `kcaltarget`          | 每日熱量目標(kcal,可自訂)             | false  |
 
 ## 字型
 - **全站文字**(`body` 與 `.cute` 標題/按鈕/標籤)都用內嵌 base64 的 **RedBeanCream**(使用者提供的紅豆奶霜體 ttf,已用 fontTools 做過**字元子集化 + 轉 woff** 縮小體積,收錄目前 HTML 裡實際出現的所有字元)
@@ -55,7 +54,7 @@ base64 -w0 assets/redbean-subset.woff > assets/redbean-subset.b64
 
 ## 已知限制 / 待改進方向
 - 無法直接串接 RENPHO Health App 拉體重資料(無公開 API),仍須手動輸入
-- 拍照熱量估算是 AI 視覺估算,非精確秤重計算,誤差可能較大,已在功能上保留刪除/重拍
+- 熱量是使用者手動輸入 + 內建食物資料庫的估值,非精確秤重,數字僅供參考;每筆紀錄可刪除
 - Reminders(iPhone 提醒事項)是透過對話當時的 `reminder_create_v0` 工具一次性建立 39 筆(7/20-8/27,每天 16:20),**不是**由這個 HTML App 自動產生或管理的,App 本身沒有寫入提醒事項的程式碼
 - 目前運動/飲食輪替邏輯是寫死在 JS 陣列裡(`liftPrograms`、`cardioExercises`、`lunchText`、`dinnerText`、`proteinRotation`),要換食材或動作需要改程式碼,沒有另外做設定畫面
 - 沒有帳號系統,資料綁定在這個檔案的 storage 上,同一個裝置/瀏覽器打開才看得到之前的紀錄
