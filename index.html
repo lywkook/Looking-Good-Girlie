@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>減重計畫</title>
 <!-- 加到手機主畫面後,像 App 一樣有圖示、全螢幕開啟 -->
-<meta name="theme-color" content="#C0B5C8">
+<meta name="theme-color" content="#CDC3DB">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -19,7 +19,7 @@
   :root{
     --cream:#F5F1EB;
     --card:#FCFAF6;
-    --pink:#C0B5C8;
+    --pink:#CDC3DB;
     --pink-soft:#F3EFFA;
     --pink-shadow:#ADA2C7;
     --peach:#DAC6B2;
@@ -367,8 +367,9 @@
   .bg-sw{ width:38px; height:38px; border-radius:50%; border:2px solid var(--line); cursor:pointer; }
   .bg-sw.on{ outline:3px solid var(--pink); outline-offset:2px; }
   .bg-actions{ display:flex; gap:8px; flex-wrap:wrap; }
-  .set-block{ margin-bottom:20px; }
-  .set-title{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:10px; }
+  .set-block{ margin-bottom:22px; }
+  .set-title{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:12px;
+    background:var(--pink-soft); border-left:5px solid var(--pink); border-radius:8px; padding:8px 12px; }
   .color-row{ display:flex; align-items:center; gap:8px; margin:10px 0; }
   .color-pick{ width:44px; height:40px; border:2px solid var(--line); border-radius:12px; padding:0; background:#fff; cursor:pointer; }
   .hex-in{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
@@ -746,7 +747,7 @@
     <div class="set-block">
       <div class="set-title">主題色(這個計畫)</div>
       <div class="bg-swatches" id="accentSwatches"></div>
-      <div class="color-row"><input type="color" id="accentPicker" class="color-pick"><input type="text" id="accentHex" class="hex-in" placeholder="#C0B5C8" maxlength="7" autocomplete="off"><button type="button" class="mini-btn" id="accentApply">套用</button></div>
+      <div class="color-row"><input type="color" id="accentPicker" class="color-pick"><input type="text" id="accentHex" class="hex-in" placeholder="#CDC3DB" maxlength="7" autocomplete="off"><button type="button" class="mini-btn" id="accentApply">套用</button></div>
     </div>
 
     <div class="set-block">
@@ -1389,13 +1390,13 @@
     function x(idx){ return n===1? w/2 : padX + (idx/(n-1))*(w-padX*2); }
     function y(v){ return h-padY - ((v-minV)/(maxV-minV))*(h-padY*2); }
     let path = sorted.map((p,idx)=>(idx===0?"M":"L")+x(idx).toFixed(1)+","+y(p.weight).toFixed(1)).join(" ");
-    let dots = sorted.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.weight).toFixed(1)}" r="4" fill="#C0B5C8" stroke="#fff" stroke-width="1.5"/>`).join("");
+    let dots = sorted.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.weight).toFixed(1)}" r="4" fill="#CDC3DB" stroke="#fff" stroke-width="1.5"/>`).join("");
     const goalY = y(goal).toFixed(1);
     area.innerHTML = `
       <svg class="chart" viewBox="0 0 ${w} ${h}">
         <line x1="0" y1="${goalY}" x2="${w}" y2="${goalY}" stroke="#C3BDCB" stroke-width="1.5" stroke-dasharray="4 3"/>
         <text x="4" y="${goalY-4}" font-size="14.3" fill="#A69C90">目標 60kg</text>
-        <path d="${path}" fill="none" stroke="#C0B5C8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${path}" fill="none" stroke="#CDC3DB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         ${dots}
       </svg>`;
   }
@@ -2370,8 +2371,8 @@
   }
 
   // ---------- 每個計畫的主題色(莫蘭迪色盤) ----------
-  const ACCENT_PRESETS = ["#C0B5C8","#C9B4B0","#AEBBA6","#A7B8C0","#CDBFA6","#C2A59E","#AAB2A8","#B7ABC4"];
-  let themeColor = "#C0B5C8";
+  const ACCENT_PRESETS = ["#CDC3DB","#E2CDCB","#C8D3C0","#C4D3DB","#E2D7C1","#E0C8BC","#BFD3CE","#DEC9D2"];
+  let themeColor = "#CDC3DB";
   function shade(hex, amt){ // amt>0 往白、<0 往黑
     const n=parseInt(hex.slice(1),16); let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
     const t = amt<0?0:255, a=Math.abs(amt);
@@ -2390,7 +2391,7 @@
     box.querySelectorAll(".bg-sw").forEach(sw=> sw.addEventListener("click", async ()=>{ themeColor=sw.dataset.c; applyAccent(themeColor); await saveThemeColor(); renderAccentSwatches(); }));
   }
   async function loadThemeColor(){
-    themeColor="#C0B5C8";
+    themeColor="#CDC3DB";
     try{ const r=await window.storage.get(K("themecolor"),false); if(r&&r.value) themeColor=r.value; }catch(e){}
     applyAccent(themeColor); renderAccentSwatches();
   }
