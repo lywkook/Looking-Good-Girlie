@@ -59,6 +59,24 @@
   *{box-sizing:border-box;}
   input, textarea, select, button{ font-family: var(--font-main), "Noto Sans TC", -apple-system, sans-serif; }
   .bg-adjust{ margin-top:10px; }
+  /* 匯出 PDF:列印時只顯示整理好的內容 */
+  #printArea{ display:none; }
+  @media print{
+    body > *{ display:none !important; }
+    #printArea{ display:block !important; padding:8px 4px; color:#111; font-family:"Noto Sans TC", sans-serif; }
+    #printArea h1{ font-size:20px; margin:0 0 4px; }
+    #printArea h2{ font-size:15px; margin:14px 0 6px; border-bottom:1px solid #999; padding-bottom:2px; }
+    #printArea table{ width:100%; border-collapse:collapse; font-size:12px; margin:2px 0 8px; }
+    #printArea .p-tbl th, #printArea .p-tbl td{ border:1px solid #bbb; padding:3px 5px; text-align:left; }
+    #printArea .p-kv td{ padding:2px 8px 2px 0; }
+    #printArea .p-kv td:first-child{ color:#555; width:90px; }
+    #printArea .p-day{ margin:5px 0; font-size:12px; }
+    #printArea ul{ margin:2px 0 6px 18px; padding:0; }
+    #printArea li{ margin:1px 0; }
+    #printArea .p-sub, #printArea .p-foot{ font-size:11px; color:#555; }
+    #printArea .p-note{ font-size:12px; margin:3px 0; }
+    #printArea .p-day{ break-inside:avoid; }
+  }
   .bg-slider-row{ display:flex; align-items:center; gap:10px; margin:8px 0; }
   .bg-slider-row label{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; width:36px; flex:none; }
   .bg-slider-row input[type=range]{ flex:1; accent-color:var(--pink); }
@@ -973,12 +991,20 @@
       </div>
     </div>
 
+    <div class="set-block" id="setExportBlock">
+      <div class="set-title">匯出 / 備份</div>
+      <button type="button" id="exportPdfBtn" class="mini-btn" style="width:100%;padding:12px;">📄 匯出成 PDF(可存手機/雲端/分享)</button>
+      <div class="set-hint" style="font-size:var(--fs-hint);color:var(--ink-soft);margin-top:6px;">會整理成一份文件(個人資料、身體數據、運動計畫、飲食紀錄),用手機的「列印 → 儲存成 PDF」存檔或分享。</div>
+    </div>
+
     <div class="set-block" id="setDangerBlock" style="display:none;">
       <div class="set-title">刪除計畫</div>
       <button type="button" id="setDeleteBtn" class="danger-btn">🗑 刪除這個計畫</button>
     </div>
   </div>
 </div>
+
+<div id="printArea"></div>
 
 <script>
 (function(){
@@ -3220,11 +3246,52 @@
     if(bh) bh.value=bgImage?"":bgColor; if(bp) bp.value=bgColor;
     const db=document.getElementById("setDangerBlock");
     if(db) db.style.display=(!isHome && PLAN)?"":"none";
+    const eb=document.getElementById("setExportBlock");
+    if(eb) eb.style.display=(!isHome && PLAN)?"":"none";
     const ttl=document.getElementById("setModalTitle"); if(ttl) ttl.textContent = isHome ? "主畫面外觀" : "設定";
     renderAccentSwatches(); renderSwatches(); refreshBgAdjustUI();
     document.getElementById("settingsModal").classList.add("show");
   }
   function openHomeSettings(){ themeScope="home"; openSettings(); }
+  // 匯出整個計畫成 PDF(用瀏覽器列印→儲存成 PDF,可存手機/雲端/分享)
+  function pdfRow(k,v){ return '<tr><td>'+esc(k)+'</td><td>'+esc(v||"—")+'</td></tr>'; }
+  function buildPrintHTML(){
+    const g=id=>{ const e=document.getElementById(id); return e?(e.value||"").trim():""; };
+    const title=((document.getElementById("heroTitle")||{}).textContent||(PLAN&&PLAN.name)||"我的計畫").trim();
+    let h='<h1>'+esc(title)+'</h1><div class="p-sub">匯出日期:'+esc(isoDate(today))+' · 計畫:'+esc(PLAN?PLAN.name:"")+'</div>';
+    const sex=g("pfSex")==="male"?"男":"女";
+    h+='<h2>個人資料</h2><table class="p-kv">'
+      +pdfRow("性別",sex)+pdfRow("年齡",g("pfAge")&&g("pfAge")+" 歲")+pdfRow("身高",g("pfHeight")&&g("pfHeight")+" cm")
+      +pdfRow("目前體重",g("pfWeight")&&g("pfWeight")+" kg")+pdfRow("目標體重",g("pfTargetW")&&g("pfTargetW")+" kg")
+      +pdfRow("目標體脂",g("pfTargetBf")&&g("pfTargetBf")+" %")+pdfRow("希望達成日期",g("pfDate"))
+      +pdfRow("每日熱量目標",kcalTarget+" kcal")+'</table>';
+    if(typeof log!=="undefined" && log && log.length){
+      h+='<h2>身體數據紀錄</h2><table class="p-tbl"><tr><th>日期</th><th>體重</th><th>體脂%</th><th>BMI</th><th>肌肉</th></tr>';
+      log.slice().sort((a,b)=> a.date<b.date?-1:1).forEach(r=>{ h+='<tr><td>'+esc(r.date)+'</td><td>'+esc(r.weight!=null?r.weight:"")+'</td><td>'+esc(r.fat!=null?r.fat:"")+'</td><td>'+esc(r.bmi!=null?r.bmi:"")+'</td><td>'+esc(r.muscle!=null?r.muscle:"")+'</td></tr>'; });
+      h+='</table>';
+    }
+    if(typeof workoutPlan!=="undefined" && workoutPlan && workoutPlan.week && workoutPlan.week.length){
+      h+='<h2>運動計畫</h2>';
+      if(workoutPlan.summary) h+='<div class="p-note">'+esc(workoutPlan.summary)+'</div>';
+      workoutPlan.week.forEach(d=>{ h+='<div class="p-day"><b>'+esc(d.day||"")+' · '+esc(d.type||"")+(d.focus?" · "+esc(d.focus):"")+'</b><ul>'+((d.items||[]).map(it=>'<li>'+esc(it)+'</li>').join(''))+'</ul></div>'; });
+    }
+    if(typeof foodLog!=="undefined" && foodLog && foodLog.length){
+      h+='<h2>飲食紀錄</h2>';
+      const byDate={}; foodLog.forEach(f=>{ (byDate[f.date]=byDate[f.date]||[]).push(f); });
+      Object.keys(byDate).sort().forEach(dt=>{
+        const items=byDate[dt]; const tot=items.reduce((s,f)=>s+(Number(f.kcal)||0),0);
+        h+='<div class="p-day"><b>'+esc(dt)+'(共 '+Math.round(tot)+' kcal)</b><ul>'+items.map(f=>'<li>'+esc(f.meal||"")+' · '+esc(f.name)+' '+Math.round(Number(f.kcal)||0)+' kcal</li>').join('')+'</ul></div>';
+      });
+    }
+    h+='<div class="p-foot">由減重計畫 App 匯出 · 計畫:'+esc(PLAN?PLAN.name:"")+'</div>';
+    return h;
+  }
+  function exportPlanPDF(){
+    const pa=document.getElementById("printArea"); if(!pa) return;
+    pa.innerHTML=buildPrintHTML();
+    const sm=document.getElementById("settingsModal"); if(sm) sm.classList.remove("show");
+    setTimeout(()=>{ try{ window.print(); }catch(e){ alert("匯出失敗:"+(e.message||e)); } }, 200);
+  }
   async function enterPlan(id){
     await switchPlan(id);
     document.getElementById("homeScreen").style.display="none";
@@ -3384,6 +3451,8 @@
     if(clr) clr.addEventListener("click", async ()=>{ bgImage=""; bgColor="#F5F1EB"; bgScale=100; bgPosX=50; bgPosY=0; applyTheme(); await saveTheme(); refreshBgAdjustUI(); });
     const delBtn=document.getElementById("setDeleteBtn");
     if(delBtn) delBtn.addEventListener("click", ()=>{ if(PLAN) deletePlan(PLAN.id); });
+    const expBtn=document.getElementById("exportPdfBtn");
+    if(expBtn) expBtn.addEventListener("click", exportPlanPDF);
   }
 
   // ---------- 標題可編輯(自動儲存) ----------
