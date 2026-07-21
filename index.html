@@ -302,6 +302,7 @@
   .kwrap .unit{ position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:var(--fs-hint); color:var(--ink-soft); }
   .target-row{ display:flex; align-items:center; justify-content:space-between; margin:16px 0 6px;
     font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
+  .burn-note{ font-size:var(--fs-hint); color:var(--ink-soft); margin:-2px 0 8px; }
   .kcal-head{ display:flex; justify-content:space-between; align-items:baseline; margin-top:6px; gap:8px; }
   .kcal-head .big{ font-size:var(--fs-num); font-weight:900; color:var(--ink); }
   .kcal-head .sub{ font-size:var(--fs-label); color:var(--ink-soft); }
@@ -702,7 +703,7 @@
         <a class="ai-key-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>
       </div>
       <div class="ai-key-row" id="aiKeyRow">
-        <input type="password" id="inGeminiKey" placeholder="貼上免費金鑰(Groq gsk_… 或 Google AIza…)" autocomplete="off">
+        <input type="password" id="inGeminiKey" placeholder="貼上金鑰(拍照用 Google AIza… / 文字用 Groq gsk_…,可分別貼兩把)" autocomplete="off">
         <button type="button" class="mini-btn" id="saveGeminiKey">儲存</button>
       </div>
     </div>
@@ -711,6 +712,11 @@
       <span>今日目標</span>
       <div class="kwrap"><input type="number" step="50" id="inKcalTarget" value="1500"><span class="unit">kcal</span></div>
     </div>
+    <div class="target-row">
+      <span>今日運動消耗</span>
+      <div class="kwrap"><input type="number" step="10" id="inExBurn" placeholder="0"><span class="unit">kcal</span></div>
+    </div>
+    <div class="burn-note">從 iPhone「健康」App → 今天的「活動能量」抄過來,會從今天可吃的熱量一起扣抵</div>
 
     <div id="kcalSummary"></div>
     <div id="foodAdvice"></div>
@@ -1052,7 +1058,7 @@
     const status = document.getElementById("menuRegenStatus");
     const wish = (document.getElementById("menuWish").value||"").trim();
     const field = regenField, label = MEAL_LABEL[field];
-    if(!geminiKey){
+    if(!anyKey()){
       applyMeal(field, localNewMeal(field));
       status.innerHTML = '<span class="ok">已換一份'+label+' ✅</span>' + (wish ? ' <span style="color:var(--ink-soft);font-size:var(--fs-hint)">想精準指定「'+esc(wish)+'」需到下方「飲食紀錄」貼上免費 AI 金鑰</span>' : '');
       return;
@@ -1159,7 +1165,7 @@
   async function suggestDishes(){
     const status=document.getElementById("fridgeStatus");
     if(!fridgeHave.length){ status.innerHTML='<span class="err">先點一下你冰箱有的食材</span>'; return; }
-    if(!geminiKey){ renderDishes(localDishes()); status.innerHTML=''; return; }
+    if(!anyKey()){ renderDishes(localDishes()); status.innerHTML=''; return; }
     const btn=document.getElementById("fridgeGenBtn"); const old=btn.textContent; btn.disabled=true; btn.textContent="想菜中…";
     status.innerHTML='<span class="ai-spin"></span>依你的食材想菜中…';
     try{
@@ -1635,6 +1641,7 @@
   let foodLog = [];        // [{id, date, meal, name, kcal}]
   let selectedMeal = "早餐";
   let kcalTarget = 1500;
+  let exBurn = {};         // 每天運動消耗 { "YYYY-MM-DD": kcal }(從 iPhone 健康 App 手動填)
 
   function foodCandidates(){ return customFoods.concat(FOOD_DB); }
   function hideSuggest(){ const b=document.getElementById("foodSuggest"); if(b){ b.className="food-suggest"; b.innerHTML=""; } }
@@ -1662,7 +1669,7 @@
   }
 
   async function loadFoodLog(){
-    foodLog = []; kcalTarget = 1500;
+    foodLog = []; kcalTarget = 1500; exBurn = {};
     try{
       const r = await window.storage.get(K("foodlog"), false);
       if(r && r.value) foodLog = JSON.parse(r.value);
@@ -1672,11 +1679,17 @@
       if(t && t.value){ const v = parseInt(t.value,10); if(!isNaN(v)&&v>0) kcalTarget = v; }
     }catch(e){}
     try{
+      const b = await window.storage.get(K("exburn"), false);
+      if(b && b.value) exBurn = JSON.parse(b.value)||{};
+    }catch(e){ exBurn = {}; }
+    try{
       const cf = await window.storage.get("customfoods", false);
       if(cf && cf.value){ customFoods = JSON.parse(cf.value)||[]; rebuildFoodMap(); }
     }catch(e){}
     const tgt = document.getElementById("inKcalTarget");
     if(tgt) tgt.value = kcalTarget;
+    const eb = document.getElementById("inExBurn");
+    if(eb){ const v=Math.round(exBurn[isoDate(today)]||0); eb.value = v>0 ? v : ""; }
     renderFoodLog();
   }
   async function saveFoodLog(){
@@ -1684,6 +1697,9 @@
   }
   async function saveTarget(){
     try{ await window.storage.set(K("kcaltarget"), String(kcalTarget), false); }catch(e){}
+  }
+  async function saveExBurn(){
+    try{ await window.storage.set(K("exburn"), JSON.stringify(exBurn), false); }catch(e){}
   }
 
   // 依你今天吃多少 + 今天是重訓/燃脂/休息,動態給飲食或運動的調整建議
@@ -1721,17 +1737,20 @@
     const iso = isoDate(today);
     const todays = foodLog.filter(f=>f.date===iso);
     const total = todays.reduce((s,f)=>s + (Number(f.kcal)||0), 0);
-    const over = total > kcalTarget;
-    const pct = kcalTarget>0 ? Math.min(100, Math.round(total/kcalTarget*100)) : 0;
+    const burned = Math.round(exBurn[iso]||0);
+    const net = total - burned;              // 淨攝取 = 吃進 − 運動消耗
+    const over = net > kcalTarget;
+    const pct = kcalTarget>0 ? Math.min(100, Math.max(0, Math.round(net/kcalTarget*100))) : 0;
 
     document.getElementById("kcalSummary").innerHTML = `
       <div class="kcal-head">
         <div><span class="big">${Math.round(total)}</span> <span class="sub">/ ${kcalTarget} kcal</span></div>
-        <div class="sub">${over ? '超過 '+Math.round(total-kcalTarget) : '還可吃 '+Math.round(kcalTarget-total)} kcal</div>
+        <div class="sub">${over ? '超過 '+Math.round(net-kcalTarget) : '還可吃 '+Math.round(kcalTarget-net)} kcal</div>
       </div>
-      <div class="kcal-bar ${over?'over':''}"><span style="width:${pct}%"></span></div>`;
+      <div class="kcal-bar ${over?'over':''}"><span style="width:${pct}%"></span></div>
+      ${burned>0 ? `<div class="burn-note">吃進 ${Math.round(total)} − 運動 ${burned} = 淨 ${Math.round(net)} kcal(已扣運動消耗)</div>` : ''}`;
 
-    document.getElementById("foodAdvice").innerHTML = buildAdvice(todays, total);
+    document.getElementById("foodAdvice").innerHTML = buildAdvice(todays, net);
 
     const base = ["早餐","午餐","晚餐","點心"];
     const groups = {}; base.forEach(m=>groups[m]=[]);
@@ -1866,23 +1885,32 @@
   }
 
   // ---------- 拍照估熱量 (AI · Google AI Studio 免費金鑰) ----------
-  let geminiKey = "";
+  // 可同時存 Groq(文字功能、額度高)與 Google(拍照看圖穩定)兩把金鑰,拍照自動用 Google
+  let groqKey = "", googleKey = "";
   function cleanKey(v){ return String(v==null?"":v).trim().replace(/\s+/g,"").replace(/^["']+|["']+$/g,""); }
+  function anyKey(){ return cleanKey(groqKey) || cleanKey(googleKey); }
   async function loadGeminiKey(){
-    geminiKey = "";
-    try{ const r=await window.storage.get("geminikey",false); if(r&&r.value) geminiKey=cleanKey(r.value); }catch(e){}
-    const gi=document.getElementById("inGeminiKey"); if(gi) gi.value=geminiKey;
+    groqKey = ""; googleKey = "";
+    try{ const r=await window.storage.get("groqkey",false); if(r&&r.value) groqKey=cleanKey(r.value); }catch(e){}
+    try{ const r=await window.storage.get("googlekey",false); if(r&&r.value) googleKey=cleanKey(r.value); }catch(e){}
+    // 舊版單一金鑰 → 依前綴搬到正確欄位
+    try{ const r=await window.storage.get("geminikey",false); if(r&&r.value){ const v=cleanKey(r.value);
+      if(v.slice(0,4)==="gsk_" && !groqKey){ groqKey=v; window.storage.set("groqkey",v,false); }
+      else if(v.slice(0,4)==="AIza" && !googleKey){ googleKey=v; window.storage.set("googlekey",v,false); } } }catch(e){}
+    const gi=document.getElementById("inGeminiKey"); if(gi) gi.value="";
     updateAIKeyHint();
+  }
+  function keySummary(){
+    const parts=[]; if(cleanKey(groqKey)) parts.push("Groq ✅"); if(cleanKey(googleKey)) parts.push("Google ✅");
+    return parts.length ? parts.join(" · ") : "";
   }
   function updateAIKeyHint(){
     const h=document.getElementById("aiKeyHint"); if(!h) return;
-    if(geminiKey){
-      const ok = /^AIza[0-9A-Za-z\-_]{20,}$/.test(geminiKey);
-      h.innerHTML = ok
-        ? '✅ 金鑰已儲存(只存在這支手機、不會上傳到程式碼)。直接上傳照片就會自動估熱量。'
-        : '⚠️ 這串看起來不像正確的金鑰(正確的通常以 <b>AIza</b> 開頭、整串無空格)。請到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 重新複製後再貼一次。';
+    const sum=keySummary();
+    if(sum){
+      h.innerHTML='已存金鑰:'+sum+'。'+(cleanKey(googleKey)?'拍照會用 Google(看圖穩定)。':'⚠️ 拍照看圖建議加一把 <b>Google</b> 金鑰(AIza),Groq 帳號多半沒有看圖模型。')+'(只存在這支手機)';
     }
-    else { h.innerHTML='免費申請:到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 用 Google 帳號登入 →「Create API key」→ 複製貼上、按儲存。金鑰通常以 <b>AIza</b> 開頭。免費、不需信用卡。'; }
+    else { h.innerHTML='免費申請:拍照看圖用 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>(AIza 開頭);文字功能可用 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>(gsk_,額度高)。兩把都貼最好,拍照會自動選 Google。免費、免信用卡。'; }
   }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
   // 容錯 JSON 解析:AI 有時會多回 ```json 圍欄或前後多字,盡量抓出 JSON 主體
@@ -1903,11 +1931,13 @@
   const GROQ_VISION_RE = /scout|maverick|vision|llava|llama-?4|pixtral|[-_]vl\b|qwen3|qwen.*vl|omni|gemini/i;
   const GROQ_TEXT = ["llama-3.3-70b-versatile","openai/gpt-oss-120b","llama-3.1-8b-instant"];
   let groqGoodVision = null, groqGoodText = null;
-  // 依金鑰前綴自動選服務:gsk_ = Groq(免費額度高很多)、其他 = Google
+  // 看圖(有照片)→ 優先用 Google(穩定);純文字 → 優先用 Groq(額度高)。缺哪把就用另一把備援
   async function geminiJSON(prompt, extraParts, temp){
-    const key = cleanKey(geminiKey);
-    if(!key) throw new Error("尚未設定 API 金鑰");
+    const gq=cleanKey(groqKey), gg=cleanKey(googleKey);
     const b64s=[]; if(extraParts) extraParts.forEach(p=>{ if(p&&p.inline_data&&p.inline_data.data) b64s.push(p.inline_data.data); });
+    const hasImg=b64s.length>0;
+    const key = hasImg ? (gg || gq) : (gq || gg);
+    if(!key) throw new Error(hasImg ? "拍照看圖需要金鑰,建議用免費的 Google 金鑰(AIza 開頭)。請到 🔑 貼上。" : "尚未設定 API 金鑰");
     if(key.slice(0,4)==="gsk_") return await groqJSON(prompt, b64s, key, temp);
     return await googleJSON(prompt, extraParts, temp, key);
   }
@@ -1951,8 +1981,7 @@
     }
     if(quota) throw new Error("Groq 額度滿了,稍等再試。");
     if(hasImg){
-      const listStr = avail.length ? avail.join("、") : "(抓不到清單)";
-      throw new Error("Groq 看圖失敗。你帳號可用模型:"+listStr+"。原始:"+lastMsg);
+      throw new Error("你的 Groq 帳號沒有可看圖的模型,拍照功能無法用 Groq。請到 🔑 加一把免費的 Google 金鑰(AIza 開頭),拍照就會自動改用 Google(看圖穩定);Groq 仍可用在換菜單等文字功能。");
     }
     throw new Error(lastMsg);
   }
@@ -2012,12 +2041,16 @@
     keyToggle.addEventListener("click", ()=> keyRow.classList.toggle("show"));
     keySave.addEventListener("click", async ()=>{
       const v=cleanKey(keyInput.value);
-      geminiKey=v; keyInput.value=v; try{ await window.storage.set("geminikey", v, false); }catch(e){}
-      keyRow.classList.remove("show");
-      status.innerHTML = v ? '<span class="ok">金鑰已儲存 ✅ 現在可以上傳照片了</span>' : '';
+      if(v==="" ){ groqKey=""; googleKey=""; try{ await window.storage.set("groqkey","",false); await window.storage.set("googlekey","",false); await window.storage.set("geminikey","",false); }catch(e){}
+        keyInput.value=""; updateAIKeyHint(); status.innerHTML='<span class="err">已清除金鑰</span>'; return; }
+      if(v.slice(0,4)==="gsk_"){ groqKey=v; try{ await window.storage.set("groqkey", v, false); }catch(e){} }
+      else if(v.slice(0,4)==="AIza"){ googleKey=v; try{ await window.storage.set("googlekey", v, false); }catch(e){} }
+      else { status.innerHTML='<span class="err">看不出金鑰類型:Google 以 AIza 開頭、Groq 以 gsk_ 開頭,請重新複製。</span>'; return; }
+      keyInput.value=""; updateAIKeyHint();
+      status.innerHTML='<span class="ok">已儲存('+keySummary()+')✅ 可繼續貼另一把;拍照建議用 Google</span>';
     });
     btn.addEventListener("click", ()=>{
-      if(!geminiKey){ keyRow.classList.add("show"); status.innerHTML='<span class="err">請先貼上免費金鑰(下方 🔑 展開)</span>'; keyInput.focus(); return; }
+      if(!anyKey()){ keyRow.classList.add("show"); status.innerHTML='<span class="err">請先貼上免費金鑰(下方 🔑 展開,拍照建議用 Google)</span>'; keyInput.focus(); return; }
       input.click();
     });
     input.addEventListener("change", async ()=>{
@@ -2107,6 +2140,10 @@
       const v = parseInt(tgt.value,10);
       if(!isNaN(v) && v>0){ kcalTarget = v; await saveTarget(); renderFoodLog(); }
     });
+    const eb = document.getElementById("inExBurn");
+    if(eb){ const upd=async ()=>{ const iso=isoDate(today); let v=parseInt(eb.value,10); if(isNaN(v)||v<0) v=0;
+        if(v>0) exBurn[iso]=v; else delete exBurn[iso]; await saveExBurn(); renderFoodLog(); };
+      eb.addEventListener("input", upd); eb.addEventListener("change", upd); }
   }
 
 
@@ -2360,7 +2397,7 @@
     const cardio=parseInt(document.getElementById("woCardio").value,10)||20;
     const note=(document.getElementById("woNote").value||"").trim();
     await saveWorkout();
-    if(!geminiKey){
+    if(!anyKey()){
       workoutPlan=localWorkoutPlan(days,cardio,note); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini();
       box.insertAdjacentHTML("afterbegin",'<div class="wo-hint">目前用內建規則產生。想要更貼你需求的計畫,可到下方「飲食紀錄」貼上免費 AI 金鑰,再回來按一次 ✨</div>');
       return;
@@ -2402,7 +2439,7 @@
     const days=parseInt(document.getElementById("woDays").value,10)||4;
     const cardio=parseInt(document.getElementById("woCardio").value,10)||20;
     await saveWorkout();
-    if(!geminiKey){
+    if(!anyKey()){
       const map=[["肚|腹|馬甲|核心|腰|游泳圈","腹部/核心"],["大腿|腿|下半身","腿"],["臀|屁股|蜜桃|翹","臀"],["手臂|掰掰|蝴蝶|拜拜","手臂"],["肩|直角","肩"],["胸","胸"],["背|虎背","背"],["全身|瘦身|減肥|全部","全身"]];
       const picked=[]; map.forEach(mp=>{ if(new RegExp(mp[0]).test(goal) && picked.indexOf(mp[1])<0) picked.push(mp[1]); });
       if(!picked.length) picked.push("全身");
@@ -2456,7 +2493,7 @@
     const box=document.getElementById("woResult");
     if(!input||!btn) return;
     btn.addEventListener("click", ()=>{
-      if(!geminiKey){ status.innerHTML='<span class="err">請先到下方「飲食紀錄」的 🔑 貼上免費 AI 金鑰,才能認出照片裡的動作</span>'; return; }
+      if(!anyKey()){ status.innerHTML='<span class="err">請先到下方「飲食紀錄」的 🔑 貼上免費 AI 金鑰,才能認出照片裡的動作</span>'; return; }
       input.click();
     });
     input.addEventListener("change", async ()=>{
