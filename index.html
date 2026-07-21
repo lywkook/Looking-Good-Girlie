@@ -505,7 +505,7 @@
 
 <div id="homeScreen">
   <div class="home-head">
-    <div class="home-title cute">🍑 我的計畫</div>
+    <div class="home-title cute">我的計畫</div>
     <div class="home-sub">點一個計畫進入</div>
   </div>
   <div id="homeList" class="home-list"></div>
@@ -2638,7 +2638,7 @@
         <span class="pi-name">${p.name}</span>
         <span class="pi-type">${PLAN_LABEL[p.type]||''}</span>
         <span class="pi-edit" data-edit="${p.id}">改名</span>
-        ${p.id!=="default"?`<span class="pi-del" data-del="${p.id}">刪除</span>`:''}
+        <span class="pi-del" data-del="${p.id}">刪除</span>
       </div>`).join("");
     box.querySelectorAll(".plan-item").forEach(it=>{
       it.addEventListener("click",(e)=>{ if(e.target.classList.contains("pi-del")||e.target.classList.contains("pi-edit")) return;
@@ -2655,14 +2655,33 @@
       d.addEventListener("click", (e)=>{ e.stopPropagation(); deletePlan(d.dataset.del); });
     });
   }
+  const PLAN_DATA_KEYS=["metricslog","foodlog","kcaltarget","exburn","profile","pfcollapsed","mxcollapsed","waterlog","watergoal","workout","wocollapsed","fridge","frcollapsed","reminder","rmcollapsed","herotitle","themecolor"];
+  function clearPlanData(id){
+    const prefix = id==="default" ? "" : ("p:"+id+":");
+    PLAN_DATA_KEYS.forEach(k=>{ try{ window.storage.set(prefix+k,"",false);}catch(e){} });
+  }
   async function deletePlan(id){
-    if(id==="default"){ alert("預設計畫不能刪除"); return; }
     const pl=plans.find(p=>p.id===id); if(!pl) return;
-    if(!confirm("刪除計畫「"+pl.name+"」?裡面的紀錄會一起清掉,無法復原")) return;
-    ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed","waterlog","watergoal","workout","wocollapsed","fridge","frcollapsed","reminder","rmcollapsed","herotitle","themecolor"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
-    plans=plans.filter(p=>p.id!==id); await savePlans();
+    const isLast = plans.length<=1;
+    const msg = isLast
+      ? "「"+pl.name+"」是目前唯一的計畫。刪除會清空裡面所有紀錄、重設成一個全新的空白計畫,確定?"
+      : "刪除計畫「"+pl.name+"」?裡面的紀錄會一起清掉,無法復原";
+    if(!confirm(msg)) return;
+    clearPlanData(id);
+    plans=plans.filter(p=>p.id!==id);
     const sm=document.getElementById("settingsModal"); if(sm) sm.classList.remove("show");
     const pp=document.getElementById("planPanel"); if(pp) pp.classList.remove("show");
+    if(!plans.length){
+      // 至少保留一個計畫:重建一個全新的空白預設(資料一併清空)
+      clearPlanData("default");
+      plans=[{id:"default",name:"我的計畫",type:"full"}];
+      await savePlans();
+      try{ await window.storage.set("currentplan","default",false); }catch(e){}
+      await switchPlan("default");
+      goHome();
+      return;
+    }
+    await savePlans();
     if(PLAN && PLAN.id===id){ PLAN=plans.find(p=>p.id==="default")||plans[0]; try{ await window.storage.set("currentplan", PLAN.id, false); }catch(e){} renderPlanList(); goHome(); }
     else { renderPlanList(); renderHome(); }
   }
@@ -2721,12 +2740,11 @@
   function renderHome(){
     const box=document.getElementById("homeList"); if(!box) return;
     box.innerHTML = plans.map(p=>{
-      const canDel = p.id!=="default";
       return `<div class="home-card" data-id="${p.id}">
         <div class="home-card-name">${esc(p.name)}</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="home-card-type">${esc(PLAN_LABEL[p.type]||'')}</span>
-          ${canDel?`<button type="button" class="home-trash" data-del="${p.id}" aria-label="刪除計畫">${DEL_SVG}</button>`:''}
+          <button type="button" class="home-trash" data-del="${p.id}" aria-label="刪除計畫">${DEL_SVG}</button>
           <span class="home-arrow">›</span>
         </div>
       </div>`;
@@ -2742,7 +2760,7 @@
     const bh=document.getElementById("bgHex"), bp=document.getElementById("bgPicker");
     if(bh) bh.value=bgImage?"":bgColor; if(bp) bp.value=bgColor;
     const db=document.getElementById("setDangerBlock");
-    if(db) db.style.display=(PLAN && PLAN.id!=="default")?"":"none";
+    if(db) db.style.display=PLAN?"":"none";
     renderAccentSwatches(); renderSwatches();
     document.getElementById("settingsModal").classList.add("show");
   }
