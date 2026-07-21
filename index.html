@@ -707,6 +707,12 @@
   .water-cups .cup{ width:16px; height:20px; border-radius:3px 3px 7px 7px; border:2px solid var(--blue); background:transparent; }
   .water-cups .cup.full{ background:var(--blue); }
   .water-ml{ text-align:center; color:var(--ink-soft); font-size:var(--fs-label); }
+  /* 收合時的迷你喝水進度(小水杯 + 目前/目標) */
+  .water-mini{ display:flex; align-items:center; gap:10px; }
+  .wm-cup{ position:relative; width:20px; height:26px; flex:none; border:2px solid var(--blue); border-radius:4px 4px 8px 8px; background:#fff; overflow:hidden; }
+  .wm-fill{ position:absolute; left:0; right:0; bottom:0; background:var(--blue); transition:height .2s; }
+  .wm-txt{ font-size:var(--fs-body); font-weight:900; color:var(--blue); }
+  .wm-txt .wm-ml{ color:var(--ink-soft); font-weight:700; }
   /* 喝水那一區的圓點也用藍色、整體更精簡 */
   #waterSection .dot{ background:var(--blue); }
   #waterSection .weight-box{ border-color:var(--blue-soft); padding:12px; }
@@ -4426,8 +4432,23 @@
   }
   async function saveWater(){ try{ await window.storage.set(K("waterlog"), JSON.stringify(waterLog), false); }catch(e){} }
   async function saveWaterGoal(){ try{ await window.storage.set(K("watergoal"), String(waterGoal), false); }catch(e){} }
+  // 收合時顯示的迷你進度:小水杯(依比例填滿)+ 目前/目標杯數與 ml
+  function waterMiniHTML(){
+    const cups = waterLog[curIso()]||0, goal = waterGoal||8;
+    const pct = goal>0 ? Math.max(0, Math.min(100, cups/goal*100)) : 0;
+    const done = goal>0 && cups>=goal;
+    return '<div class="water-mini">'
+      + '<span class="wm-cup"><span class="wm-fill" style="height:'+pct.toFixed(0)+'%"></span></span>'
+      + '<span class="wm-txt">'+cups+' / '+goal+' '+(lang==="en"?"cups":"杯")
+      + ' <span class="wm-ml">· '+(cups*250)+' ml'+(done?(lang==="en"?" · done":" · 達標"):'')+'</span></span>'
+      + '</div>';
+  }
   function renderWater(){
-    const cEl=document.getElementById("waterCups"); if(!cEl) return;
+    const cEl=document.getElementById("waterCups");
+    // 收合狀態時,同步更新迷你進度
+    const wm=document.getElementById("waterMini"), ws=document.getElementById("waterSection");
+    if(wm && ws && ws.classList.contains("collapsed")) wm.innerHTML = waterMiniHTML();
+    if(!cEl) return;
     const cups = waterLog[curIso()]||0;
     cEl.textContent = cups;
     document.getElementById("waterGoalNum").textContent = waterGoal;
@@ -5183,7 +5204,10 @@
     for(const [sec,tog,caret,mini,key,label] of defs){
       const s=document.getElementById(sec); if(!s) continue;
       const setC=(c)=>{ s.classList.toggle("collapsed",c); const cc=document.getElementById(caret); if(cc) cc.textContent=c?"▸":"▾";
-        const mm=document.getElementById(mini); if(mm) mm.innerHTML='<span class="pf-hint">'+label+'(點開)</span>'; };
+        const mm=document.getElementById(mini); if(mm){
+          if(sec==="waterSection" && c && typeof waterMiniHTML==="function") mm.innerHTML = waterMiniHTML();
+          else mm.innerHTML='<span class="pf-hint">'+label+'(點開)</span>';
+        } };
       const tg=document.getElementById(tog); if(tg) tg.addEventListener("click", async ()=>{ const c=!s.classList.contains("collapsed"); setC(c); try{ await window.storage.set(key, c?"1":"0", false);}catch(e){} });
       const mn=document.getElementById(mini); if(mn) mn.addEventListener("click", async ()=>{ setC(false); try{ await window.storage.set(key,"0",false);}catch(e){} });
       let st=null; try{ const r=await window.storage.get(key,false); if(r&&r.value!=null&&r.value!=="") st=r.value; }catch(e){}
