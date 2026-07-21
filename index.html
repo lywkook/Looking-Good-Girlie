@@ -1788,7 +1788,12 @@
       cardioTitle:"Treadmill intervals + full-body cardio", cardioNote:"“Cardio” just means continuous moves that raise your heart rate — a bit breathless but sustainable. No dumbbells; keep moving and keep rests short.",
       tm:"Treadmill intervals", tmD:"Brisk walk 2 min, jog or fast walk 1 min; repeat 7-8 rounds, 20-25 min total." } };
 
+  function isOriginPlan(){ return !!(typeof PLAN!=="undefined" && PLAN && PLAN.type==="origin"); }
   function workoutForWeekday(wd, liftCounter){
+    // 非 origin(如空白分享版):不套用內建範本,顯示空白+簡單指示,讓使用者自行生成/編輯
+    if(!isOriginPlan()) return { type:"rest", emoji:"", title:(lang==="en"?"Not set yet":"尚未安排"),
+      note:(lang==="en"?"Generate a plan in “Workout plan” above, or tap “Edit this day”.":"在上方「運動計畫」生成,或點「編輯這天運動」新增。"),
+      exercises:[{name:"—", detail:""}] };
     const W = lang==="en"?WO_TXT.en:WO_TXT.zh;
     const LP = lang==="en"?liftPrograms.en:liftPrograms.zh;
     const CE = lang==="en"?cardioExercises.en:cardioExercises.zh;
@@ -1817,6 +1822,8 @@
   ] };
 
   function dietForDay(idx){
+    // 非 origin(如空白分享版):不套用內建範本菜單,顯示「—」讓使用者自行填寫
+    if(!isOriginPlan()) return { breakfast:"—", lunch:"—", dinner:"—", fruit:"—" };
     const en = lang==="en";
     const lunchIdx = idx % 6;
     const dinnerIdx = (idx + 3) % 6;
@@ -1851,6 +1858,7 @@
   async function rebuildPlanContent(){
     try{
       buildDays();
+      if(typeof applyAiPlanToDays==="function") applyAiPlanToDays();   // 保留 AI 運動計畫對應
       if(typeof loadOverrides==="function") await loadOverrides();
       if(typeof renderTodayMenu==="function") renderTodayMenu();
       if(typeof renderDays==="function") renderDays();
@@ -3293,7 +3301,7 @@
 
   async function loadProfile(){
     const rst=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
-    rst("pfSex","female"); rst("pfAge",""); rst("pfHeight",""); rst("pfWeight",""); rst("pfTargetW",""); rst("pfTargetBf",""); rst("pfDate","2026-08-28");
+    rst("pfSex","female"); rst("pfAge",""); rst("pfHeight",""); rst("pfWeight",""); rst("pfTargetW",""); rst("pfTargetBf",""); rst("pfDate", isOriginPlan()?"2026-08-28":"");
     try{
       const r = await window.storage.get(K("profile"), false);
       if(r && r.value){
@@ -3975,7 +3983,11 @@
     const pl=plans.find(p=>p.id===id); if(!pl) return;
     PLAN=pl; try{ await window.storage.set("currentplan", id, false); }catch(e){}
     updatePlanBar(); renderPlanList(); applyPlanView();
+    buildDays();   // 依這個計畫類型重建每日內容(origin=範本;其他=空白)
     await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile(); await loadWorkout(); await loadFridge(); await loadReminder();
+    if(typeof loadOverrides==="function") await loadOverrides();   // 套回使用者的編輯
+    if(typeof renderTodayMenu==="function") renderTodayMenu();
+    if(typeof renderDays==="function") renderDays();
     await applyScopeTheme(id);   // 套用「這個計畫」自己的主題色 + 背景
   }
   async function addPlan(){
@@ -4551,6 +4563,7 @@
 
   async function init(){
     await loadPlans();
+    buildDays();   // PLAN 已知後,依計畫類型建立每日內容
     initPlanModule();
     initFontModule();
     await loadFontPref();
