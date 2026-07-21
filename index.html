@@ -2098,11 +2098,13 @@
   async function menuPhotoPick(b64s, wish, label, target){
     const prompt =
       '你是減重營養教練。這是一份餐廳菜單的照片(共 '+b64s.length+' 張),使用者想從這份菜單點「'+label+'」。\n'
-      + '請看懂菜單上有哪些餐點(含品名、若有價格/份量也參考),從「菜單上實際有的餐點」裡挑 1 道最適合減重的。\n'
+      + '重要:照片可能是螢幕截圖、翻拍、有反光、角度歪或不太清楚。請「盡力」辨識看得到的菜名——即使有點模糊、只讀得出部分品項,也要從你讀得出來的餐點裡挑;不要輕易放棄。'
+      + '若照片裡有店名/招牌,可用你對這類餐廳常見菜色的知識合理補充。\n'
+      + '從「這份菜單上讀得到(或這間店合理會有)的餐點」裡挑 1 道最適合減重的。\n'
       + '條件:這一餐盡量控制在約 '+target+' 大卡上下、蛋白質足夠、少油炸勾芡與含糖飲料。'
       + (wish ? ('使用者偏好:'+wish+',在此偏好內挑。') : '')
       + '\n只回 JSON、不要多餘文字:{"text":"菜單上的餐點名稱+簡短吃法建議(例:去醬、飲料換無糖),不超過25字","why":"為什麼推薦這道,不超過30字"}。'
-      + '\n若照片看不清楚、看不出是菜單,text 請回空字串。';
+      + '\n只有在「完全一個字都認不出來」時,text 才回空字串。';
     const parts = b64s.map(b=>({inline_data:{mime_type:"image/jpeg", data:b}}));
     try{ return await geminiJSON(prompt, parts, 0.2); }
     catch(e){
@@ -2146,7 +2148,7 @@
         const m = await menuPhotoPick(menuPhotos, wish, label, target);
         const text = (m && m.text) || "";
         if(!text){
-          status.innerHTML = '<span class="err">這份菜單照片看不太清楚。拍近一點、光線亮一點、把菜名拍清楚再試 🙏</span>';
+          status.innerHTML = '<span class="err">這張真的認不太出來 🙏 小撇步:靠近菜名「分區拍幾張」(可一次選多張)通常比整張拍更讀得到;或直接在上面打「想吃什麼」讓 AI 幫你配。</span>';
         } else {
           applyMeal(field, text);
           const why = (m && m.why) ? ' <span style="color:var(--ink-soft);font-size:var(--fs-hint)">'+esc(m.why)+'</span>' : '';
@@ -2213,7 +2215,8 @@
         const st = document.getElementById("menuRegenStatus");
         st.innerHTML = '<span class="ai-spin"></span>讀取照片中…';
         try{
-          const bigs = await Promise.all(files.map(f=>resizeImageToBase64(f, 900)));   // 菜單字多,存大一點才看得清
+          // 菜單字多又常不清楚:存大張(1600)、高品質(0.9)、並加強對比,讓 AI 讀得清楚
+          const bigs = await Promise.all(files.map(f=>resizeImageToBase64(f, 1600, 0.9, true)));
           menuPhotos = bigs.map(b=>b.split(",")[1]);
           updateMenuPhotoPreview();
           st.innerHTML = '<span class="ok">已附上 '+menuPhotos.length+' 張菜單,按下方「讓 AI 換這一餐」就幫你挑</span>';
@@ -3147,7 +3150,7 @@
     if(el){ try{ el.scrollIntoView({behavior:"smooth", block:"center"}); }catch(_){} el.focus(); }
   }
 
-  function resizeImageToBase64(file, maxSize){
+  function resizeImageToBase64(file, maxSize, quality, enhance){
     return new Promise((resolve,reject)=>{
       const img=new Image(), reader=new FileReader();
       reader.onload=()=>{ img.src=reader.result; }; reader.onerror=reject;
@@ -3155,8 +3158,18 @@
         let w=img.width,h=img.height;
         if(w>h){ if(w>maxSize){ h=h*maxSize/w; w=maxSize; } } else { if(h>maxSize){ w=w*maxSize/h; h=maxSize; } }
         const c=document.createElement("canvas"); c.width=w; c.height=h;
-        c.getContext("2d").drawImage(img,0,0,w,h);
-        resolve(c.toDataURL("image/jpeg",0.7));
+        const ctx=c.getContext("2d");
+        ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality="high";
+        ctx.drawImage(img,0,0,w,h);
+        if(enhance){
+          // 菜單常是截圖/翻拍,字不清楚:拉高對比讓字更明顯,幫助 AI 辨識
+          try{
+            const im=ctx.getImageData(0,0,w,h), d=im.data, k=1.28, b=128*(1-k);
+            for(let i=0;i<d.length;i+=4){ d[i]=d[i]*k+b; d[i+1]=d[i+1]*k+b; d[i+2]=d[i+2]*k+b; }
+            ctx.putImageData(im,0,0);
+          }catch(_){}
+        }
+        resolve(c.toDataURL("image/jpeg", quality||0.7));
       };
       img.onerror=reject; reader.readAsDataURL(file);
     });
