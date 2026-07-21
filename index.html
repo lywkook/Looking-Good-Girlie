@@ -123,6 +123,15 @@
   .home-lang-quick button{ border:2px solid var(--pink-soft); background:#fff; color:var(--ink); border-radius:20px;
     padding:5px 12px; font-family:inherit; font-size:var(--fs-hint); font-weight:900; cursor:pointer; }
   .home-head{ position:relative; }
+  /* 日期選擇列(計畫最上方,切換不同日期的頁面) */
+  .date-bar{ display:flex; align-items:center; gap:8px; margin:0 0 10px; padding:8px 10px; background:var(--card); border-radius:16px; box-shadow:var(--shadow); border:2px solid var(--pink-soft); }
+  .date-nav{ width:36px; height:36px; border:none; border-radius:11px; background:var(--pink-soft); color:var(--pink-shadow); font-size:22px; font-weight:900; cursor:pointer; flex:none; line-height:1; }
+  .date-nav:active{ transform:scale(0.93); }
+  .date-mid{ flex:1; display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; }
+  .date-input{ border:none; background:transparent; font-family:inherit; font-size:var(--fs-body); color:var(--ink); font-weight:900; text-align:center; max-width:100%; }
+  .date-label{ font-size:var(--fs-hint); color:var(--ink-soft); }
+  .date-today-btn{ border:none; border-radius:11px; background:var(--pink); color:#fff; font-family:inherit; font-weight:700; font-size:var(--fs-label); padding:8px 12px; cursor:pointer; flex:none; }
+  .date-today-btn:active{ transform:scale(0.95); }
   body{
     margin:0;
     background: var(--cream);
@@ -687,6 +696,15 @@
 <div id="appView" style="display:none;">
 <div class="plan-bar">
   <button id="planCurrent" class="plan-current cute">減重計畫 ▾</button>
+</div>
+<div class="date-bar" id="dateBar">
+  <button type="button" class="date-nav" id="datePrev" aria-label="前一天">‹</button>
+  <div class="date-mid">
+    <input type="date" id="datePicker" class="date-input">
+    <div class="date-label" id="dateLabel"></div>
+  </div>
+  <button type="button" class="date-nav" id="dateNext" aria-label="後一天">›</button>
+  <button type="button" class="date-today-btn" id="dateTodayBtn">今天</button>
 </div>
 <div class="plan-panel" id="planPanel">
   <div class="plan-list" id="planList"></div>
@@ -1628,6 +1646,7 @@
     document.querySelectorAll(".js-lang-quick").forEach(b=> b.textContent = lang==="en"?"中文":"EN");
     const fsLbl = lang==="en" ? {"0.9":"S","1":"M","1.15":"L","1.3":"XL"} : {"0.9":"小","1":"中","1.15":"大","1.3":"特大"};
     document.querySelectorAll(".js-fs-btn").forEach(b=>{ if(fsLbl[b.dataset.scale]) b.textContent=fsLbl[b.dataset.scale]; });
+    if(typeof syncDateBar==="function") syncDateBar();
   }
   function startLangObserver(){
     if(_mo) return;
@@ -1677,6 +1696,9 @@
   const startDate = new Date(2026,6,20);
   const endDate = new Date(2026,7,28);
   const today = new Date(2026,6,20);
+  // 目前檢視的日期(可用最上方日期選擇器切換);各日的菜單/飲食/喝水/體重都依這個日期
+  let viewDate = new Date(2026,6,20);
+  function curIso(){ return isoDate(viewDate); }
 
   const proteinRotation = [
     {name:"雞肉", note:"雞胸或雞腿肉,約掌心大小,用煎或烤"},
@@ -1824,13 +1846,38 @@
   }
   window.__rebuildPlanContent = rebuildPlanContent;
 
+  // ---------- 日期選擇(計畫最上方,切換不同日期的頁面) ----------
+  function syncDateBar(){
+    const dp=document.getElementById("datePicker"); if(dp) dp.value=curIso();
+    const dl=document.getElementById("dateLabel");
+    if(dl){ const wn=(lang==="en"?weekdayNames.en:weekdayNames.zh); const isT=curIso()===isoDate(today);
+      const wk=(lang==="en"?"":"週")+wn[viewDate.getDay()];
+      dl.textContent=fmtDate(viewDate)+" ("+wk+")"+(isT?(lang==="en"?" · Today":" · 今天"):""); }
+  }
+  function refreshDateViews(){
+    if(typeof renderTodayMenu==="function") renderTodayMenu();
+    if(typeof renderFoodLog==="function") renderFoodLog();
+    if(typeof renderWater==="function") renderWater();
+    const eb=document.getElementById("inExBurn");
+    if(eb){ const v=Math.round((typeof exBurn!=="undefined"&&exBurn[curIso()])||0); eb.value=v>0?v:""; }
+  }
+  function setViewDate(d){ viewDate=new Date(d.getFullYear(),d.getMonth(),d.getDate()); syncDateBar(); refreshDateViews(); }
+  function initDateBar(){
+    const dp=document.getElementById("datePicker"), prev=document.getElementById("datePrev"), next=document.getElementById("dateNext"), tb=document.getElementById("dateTodayBtn");
+    if(dp) dp.addEventListener("change", ()=>{ const v=dp.value; if(v){ const a=v.split("-").map(Number); setViewDate(new Date(a[0],a[1]-1,a[2])); } });
+    if(prev) prev.addEventListener("click", ()=>{ const d=new Date(viewDate); d.setDate(d.getDate()-1); setViewDate(d); });
+    if(next) next.addEventListener("click", ()=>{ const d=new Date(viewDate); d.setDate(d.getDate()+1); setViewDate(d); });
+    if(tb) tb.addEventListener("click", ()=> setViewDate(new Date(today)));
+    syncDateBar();
+  }
+
   document.getElementById("todayLabel").textContent = fmtDate(today) + " 今天";
   const msPerDay = 1000*60*60*24;
   document.getElementById("daysLeft").textContent = Math.max(0, Math.round((endDate - today)/msPerDay));
 
   // ---------- 今日菜單(一打開就看得到,不用點開,也可以直接編輯) ----------
   function renderTodayMenu(){
-    const todayIso = isoDate(today);
+    const todayIso = curIso();
     const todayEntry = days.find(d=>d.iso===todayIso) || days[0];
     const box = document.getElementById("todayMenuBox");
     const fields = [["breakfast","早餐"],["lunch","午餐"],["dinner","晚餐"],["fruit","水果點心"]];
@@ -1873,7 +1920,7 @@
   const altIdx = { breakfast:0, lunch:0, dinner:0, fruit:0 };
   function applyMeal(field, text){
     if(!text) return;
-    const iso = isoDate(today);
+    const iso = curIso();
     const te = days.find(d=>d.iso===iso) || days[0];
     te.diet[field] = String(text).trim();
     try{ window.storage.set("dietover:"+iso+":"+field, te.diet[field], false); }catch(e){}
@@ -1881,7 +1928,7 @@
   }
   function localNewMeal(field){
     const arr = MEAL_ALT[field] || []; if(!arr.length) return "";
-    const iso = isoDate(today); const te = days.find(d=>d.iso===iso) || days[0];
+    const iso = curIso(); const te = days.find(d=>d.iso===iso) || days[0];
     const cur = te.diet[field];
     altIdx[field] = (altIdx[field]+1) % arr.length;
     if(arr[altIdx[field]] === cur) altIdx[field] = (altIdx[field]+1) % arr.length;  // 避免換到一樣的
@@ -2184,7 +2231,7 @@
           const d = days.find(x=>x.iso===iso);
           if(d) d.diet[field] = val;
           try{ await window.storage.set("dietover:"+iso+":"+field, val, false); }catch(err){}
-          if(iso === isoDate(today)) renderTodayMenu();
+          if(iso === curIso()) renderTodayMenu();
         });
       });
       // ✏️ 直接編輯這天的運動(每行一個動作)
@@ -2390,7 +2437,7 @@
     const fat = document.getElementById("inFat").value;
     const bmi = document.getElementById("inBmi").value;
     const muscle = document.getElementById("inMuscle").value;
-    const todayIso = isoDate(today);
+    const todayIso = curIso();
     const entry = { date:todayIso, weight:w,
       fat: fat!==""? parseFloat(fat): null,
       bmi: bmi!==""? parseFloat(bmi): null,
@@ -2584,7 +2631,7 @@
     const tgt = document.getElementById("inKcalTarget");
     if(tgt) tgt.value = kcalTarget;
     const eb = document.getElementById("inExBurn");
-    if(eb){ const v=Math.round(exBurn[isoDate(today)]||0); eb.value = v>0 ? v : ""; }
+    if(eb){ const v=Math.round(exBurn[curIso()]||0); eb.value = v>0 ? v : ""; }
     renderFoodLog();
   }
   async function saveFoodLog(){
@@ -2602,7 +2649,7 @@
     if(!todays.length){
       return `<div class="advice">先設好<b>今日目標 ${kcalTarget} kcal</b>,每吃一餐就記一下,我會即時幫你算還能吃多少、要不要加運動 💪</div>`;
     }
-    const iso = isoDate(today);
+    const iso = curIso();
     const dEntry = days.find(d=>d.iso===iso) || days[0];
     const wtype = dEntry.workout.type; // lift / cardio / rest
     const logged = new Set(todays.map(f=>f.meal));
@@ -2629,7 +2676,7 @@
   }
 
   function renderFoodLog(){
-    const iso = isoDate(today);
+    const iso = curIso();
     const todays = foodLog.filter(f=>f.date===iso);
     const total = todays.reduce((s,f)=>s + (Number(f.kcal)||0), 0);
     const burned = Math.round(exBurn[iso]||0);
@@ -3085,7 +3132,7 @@
         const kcal=Math.round(Number(obj.kcal)||0);
         if(!name || !kcal){ status.innerHTML='<span class="err">看不太出來是什麼食物,換個角度拍清楚一點、或多拍幾張再試 🙏</span>'; btn.disabled=false; return; }
         const addedMeal=selectedMeal;
-        const entry={ id:Date.now().toString(), date:isoDate(today), meal:addedMeal, name:name, kcal:kcal, thumb:thumb };
+        const entry={ id:Date.now().toString(), date:curIso(), meal:addedMeal, name:name, kcal:kcal, thumb:thumb };
         foodLog.push(entry); await saveFoodLog(); renderFoodLog();
         status.innerHTML='<span class="ok">已加入'+addedMeal+':'+name+' '+kcal+' kcal</span><br>'
           +'<span class="ai-add-more" id="aiAddMore">＋ 補食材</span>';
@@ -3148,7 +3195,7 @@
         if(customFoods.length>80) customFoods = customFoods.slice(0,80);
         rebuildFoodMap(); saveCustomFoods();
       }
-      const entry = { id: Date.now().toString(), date: isoDate(today), meal: selectedMeal, name: name, unit: unit, qty: qty, kcal: unit*qty };
+      const entry = { id: Date.now().toString(), date: curIso(), meal: selectedMeal, name: name, unit: unit, qty: qty, kcal: unit*qty };
       if(pendingThumb) entry.thumb = pendingThumb;
       foodLog.push(entry);
       await saveFoodLog();
@@ -3161,12 +3208,12 @@
       if(!isNaN(v) && v>0){ kcalTarget = v; await saveTarget(); renderFoodLog(); }
     });
     const eb = document.getElementById("inExBurn");
-    if(eb){ const upd=async ()=>{ const iso=isoDate(today); let v=parseInt(eb.value,10); if(isNaN(v)||v<0) v=0;
+    if(eb){ const upd=async ()=>{ const iso=curIso(); let v=parseInt(eb.value,10); if(isNaN(v)||v<0) v=0;
         if(v>0) exBurn[iso]=v; else delete exBurn[iso]; await saveExBurn(); renderFoodLog(); };
       eb.addEventListener("input", upd); eb.addEventListener("change", upd); }
     const clearFood=document.getElementById("clearFoodBtn");
     if(clearFood) clearFood.addEventListener("click", async ()=>{
-      const iso=isoDate(today); const todays=foodLog.filter(f=>f.date===iso);
+      const iso=curIso(); const todays=foodLog.filter(f=>f.date===iso);
       if(!todays.length){ clearFood.textContent="今天還沒有紀錄"; setTimeout(()=>{ clearFood.textContent="清空今天,重新記錄"; },1500); return; }
       if(!confirm("清空今天已記錄的 "+todays.length+" 項食物?可以重新記錄")) return;
       foodLog=foodLog.filter(f=>f.date!==iso); await saveFoodLog(); renderFoodLog();
@@ -3752,7 +3799,7 @@
   async function saveWaterGoal(){ try{ await window.storage.set(K("watergoal"), String(waterGoal), false); }catch(e){} }
   function renderWater(){
     const cEl=document.getElementById("waterCups"); if(!cEl) return;
-    const cups = waterLog[isoDate(today)]||0;
+    const cups = waterLog[curIso()]||0;
     cEl.textContent = cups;
     document.getElementById("waterGoalNum").textContent = waterGoal;
     document.getElementById("waterMl").innerHTML = (cups*250) + " ml" + (cups>=waterGoal ? ' <b>✅ 達標!</b>' : '');
@@ -3762,7 +3809,7 @@
     row.innerHTML=h;
   }
   function changeWater(d){
-    const iso=isoDate(today); let c=(waterLog[iso]||0)+d; if(c<0) c=0;
+    const iso=curIso(); let c=(waterLog[iso]||0)+d; if(c<0) c=0;
     waterLog[iso]=c; saveWater(); renderWater();
   }
   function initWaterModule(){
@@ -4109,6 +4156,8 @@
   }
   async function enterPlan(id){
     await switchPlan(id);
+    viewDate = new Date(today);   // 進入計畫時預設看「今天」
+    if(typeof syncDateBar==="function") syncDateBar();
     document.getElementById("homeScreen").style.display="none";
     document.getElementById("appView").style.display="";
     window.scrollTo(0,0);
@@ -4458,6 +4507,7 @@
     await initSimpleCollapse();
     initHomeModule();
     initBottomNav();
+    initDateBar();
     initThemeModule();
     initSettingsInputs();
     await loadTheme();
