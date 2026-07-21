@@ -250,9 +250,6 @@
   .metric-tab{ flex:1 1 auto; min-width:0; padding:8px 6px; border-radius:12px; border:2px solid var(--line);
     background:#FFFDFA; color:var(--ink-soft); font-size:var(--fs-label); font-weight:700; font-family:inherit; cursor:pointer; white-space:nowrap; }
   .metric-tab.active{ background:var(--pink); border-color:var(--pink); color:#fff; }
-  .chart-analysis{ margin-top:8px; }
-  .chart-analysis .ca-line{ font-size:var(--fs-label); color:var(--ink); line-height:1.6; }
-  .chart-analysis .ca-line b{ font-weight:900; }
 
   .snapshot-row{
     display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;
@@ -1059,7 +1056,6 @@
       <button type="button" class="metric-tab" data-metric="muscle">肌肉重量</button>
     </div>
     <div id="chartArea"><div class="chart-empty">尚無紀錄,填入體重後會顯示趨勢曲線。</div></div>
-    <div class="chart-analysis" id="chartAnalysis"></div>
     <div id="snapshotArea"></div>
     <div class="history" id="historyArea"></div>
     <div class="clear-row"><button type="button" class="clear-all-btn" id="clearMetricsBtn">清空今日所有紀錄</button></div>
@@ -2258,7 +2254,7 @@
       const text = (m && (m.text || m[field])) || "";
       if(!text){
         if(hasPhoto) status.innerHTML = '<span class="err">'+RP('這張真的認不太出來 🙏 靠近菜名「分區拍幾張」通常更讀得到;或直接打「想吃什麼」讓 AI 配。','Couldn\'t read this one 🙏 Close-up shots of menu sections read better; or just type a craving.')+'</span>';
-        else if(rest || regenCtx.foods) showFoodsPrompt(RP('查不到「'+esc(regenCtx.rest||'')+'」的真實菜單,我不亂猜 🙏 直接告訴我這間店有賣什麼,我從裡面幫你挑:','Couldn\'t confirm this place\'s real menu — I won\'t guess 🙏 Tell me what it actually serves and I\'ll pick from those:'));
+        else if(rest || regenCtx.foods) showFoodsPrompt(RP('查不到「'+esc(regenCtx.rest||'')+'」的真實菜單,我不亂猜 🙏 最準的做法是用上面「上傳菜單照片」把菜單拍給我;或直接在這裡打這間店有賣什麼,我從裡面幫你挑:','Couldn\'t confirm this place\'s real menu — I won\'t guess 🙏 Best is to use “Upload menu photo” above; or just type what it serves here and I\'ll pick from those:'));
         else status.innerHTML = '<span class="err">'+RP('AI 沒給出建議,再按一次試試','No suggestion this time — tap again.')+'</span>';
       } else {
         regenCtx.last = text;
@@ -2794,33 +2790,8 @@
     muscle:{ label:"肌肉重量", unit:"kg", color:"#C6A9D9", goal:()=>null }
   };
   function metricVal(p, key){ const v=p[key]; return (v==null||v==="")?null:Number(v); }
-  function metricAnalysis(mk, pts, cfg, goal){
-    const P=(zh,en)=> (typeof lang!=="undefined" && lang==="en") ? en : zh;
-    const u=cfg.unit;
-    const first=pts[0].v, last=pts[pts.length-1].v, diff=last-first, ad=Math.abs(diff);
-    const goodDown = (mk!=="muscle");   // 肌肉越高越好,其餘越低越好
-    let dir;
-    if(ad<0.05) dir=P("和第一次差不多、持平","about the same as when you started");
-    else{
-      const down=diff<0, improving=(down===goodDown);
-      const word=down?P("下降","down"):P("上升","up");
-      dir=P("比第一次"+word+" "+ad.toFixed(1)+u+(improving?",方向很好!":",要留意一下"),
-            word+" "+ad.toFixed(1)+u+" vs your first record"+(improving?" — great direction!":" — keep an eye on it"));
-    }
-    let goalTxt="";
-    if(goal!=null){
-      const reached = (mk==="muscle") ? last>=goal : last<=goal;
-      goalTxt = reached
-        ? P("已達到目標 "+goal+u,"Goal "+goal+u+" reached")
-        : P("距離目標 "+goal+u+" 還差 "+Math.abs(last-goal).toFixed(1)+u, Math.abs(last-goal).toFixed(1)+u+" to the "+goal+u+" goal");
-    }
-    return '<div class="ca-line">'+P("最新","Latest")+' <b>'+last+u+'</b> · '+dir+'</div>'
-         + (goalTxt?'<div class="ca-line">'+goalTxt+'</div>':'')
-         + '<div class="ca-line" style="color:var(--ink-soft);font-size:var(--fs-hint)">'+pts.length+P(" 筆紀錄"," records")+'</div>';
-  }
   function drawChart(){
     const area = document.getElementById("chartArea");
-    const analysis = document.getElementById("chartAnalysis");
     if(typeof updateStripForDate==="function") updateStripForDate();   // 最新體重依所選日期
     document.querySelectorAll("#metricTabs .metric-tab").forEach(b=> b.classList.toggle("active", b.dataset.metric===chartMetric));
     const cfg = METRIC_CFG[chartMetric] || METRIC_CFG.weight;
@@ -2828,7 +2799,7 @@
       .map(p=>({date:p.date, v:metricVal(p, chartMetric)})).filter(p=>p.v!=null);
     if(!pts.length){
       area.innerHTML = '<div class="chart-empty">這個指標還沒有紀錄,填入'+cfg.label+'後會顯示趨勢。</div>';
-      if(analysis) analysis.innerHTML=""; return;
+      return;
     }
     const w=320,h=130,padX=8,padY=16;
     const goal = cfg.goal();
@@ -2863,7 +2834,6 @@
         ${dots}
         ${labels}
       </svg>`;
-    if(analysis) analysis.innerHTML = metricAnalysis(chartMetric, pts, cfg, goal);
   }
   document.querySelectorAll("#metricTabs .metric-tab").forEach(b=>{
     b.addEventListener("click", ()=>{ chartMetric = b.dataset.metric; drawChart(); });
