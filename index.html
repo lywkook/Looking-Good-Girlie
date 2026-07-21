@@ -615,9 +615,9 @@
       <button type="button" class="ai-photo-btn" id="woGoalBtn">幫我規劃</button>
     </div>
     <div class="wo-quick" style="margin-top:10px;">
-      <div class="wo-quick-title">📷 看到喜歡的動作?拍照上傳,幫你認出來並排組數與強度</div>
-      <input type="file" accept="image/*" id="woPhotoInput" style="display:none">
-      <button type="button" class="ai-photo-btn" id="woPhotoBtn">上傳動作照片,自動規劃</button>
+      <div class="wo-quick-title">📷 看到喜歡的動作?拍照/截圖上傳(可多張,如影片的多個畫面),幫你認出來並排組數與強度</div>
+      <input type="file" accept="image/*" id="woPhotoInput" multiple style="display:none">
+      <button type="button" class="ai-photo-btn" id="woPhotoBtn">上傳動作照片,自動規劃(可多張)</button>
       <div class="ai-photo-status" id="woPhotoStatus"></div>
     </div>
     <div class="wo-adv-toggle" id="woAdvToggle">＋ 自己細調(部位・器材・組數)</div>
@@ -696,8 +696,8 @@
 
     <div class="ai-photo-box" id="aiPhotoBox">
       <div class="ai-photo-title">📷 拍照估熱量</div>
-      <input type="file" accept="image/*" id="aiPhotoInput" style="display:none">
-      <button type="button" class="ai-photo-btn" id="aiPhotoBtn">上傳食物照片,自動估熱量</button>
+      <input type="file" accept="image/*" id="aiPhotoInput" multiple style="display:none">
+      <button type="button" class="ai-photo-btn" id="aiPhotoBtn">上傳食物照片,自動估熱量(可多張)</button>
       <div class="ai-photo-status" id="aiPhotoStatus"></div>
       <div class="ai-key-line">
         <span class="ai-key-toggle" id="aiKeyToggle">🔑 AI 金鑰設定</span>
@@ -1910,8 +1910,8 @@
   async function geminiJSON(prompt, extraParts, temp){
     const key = cleanKey(geminiKey);
     if(!key) throw new Error("尚未設定 API 金鑰");
-    let b64=null; if(extraParts) extraParts.forEach(p=>{ if(p&&p.inline_data&&p.inline_data.data) b64=p.inline_data.data; });
-    if(key.slice(0,4)==="gsk_") return await groqJSON(prompt, b64, key, temp);
+    const b64s=[]; if(extraParts) extraParts.forEach(p=>{ if(p&&p.inline_data&&p.inline_data.data) b64s.push(p.inline_data.data); });
+    if(key.slice(0,4)==="gsk_") return await groqJSON(prompt, b64s, key, temp);
     return await googleJSON(prompt, extraParts, temp, key);
   }
   let groqModelsCache = null;
@@ -1923,11 +1923,16 @@
     }catch(e){}
     return groqModelsCache||[];
   }
-  async function groqJSON(prompt, b64, key, temp){
-    const content = b64 ? [{type:"text",text:prompt},{type:"image_url",image_url:{url:"data:image/jpeg;base64,"+b64}}] : [{type:"text",text:prompt}];
+  async function groqJSON(prompt, b64s, key, temp){
+    if(typeof b64s==="string") b64s=[b64s];
+    const imgs=(b64s||[]).filter(Boolean);
+    const hasImg=imgs.length>0;
+    const content = hasImg
+      ? [{type:"text",text:prompt}].concat(imgs.map(b=>({type:"image_url",image_url:{url:"data:image/jpeg;base64,"+b}})))
+      : [{type:"text",text:prompt}];
     const avail = await groqModelList(key);   // 問這把金鑰實際有哪些模型
     let models;
-    if(b64){
+    if(hasImg){
       models = avail.filter(id=>GROQ_VISION_RE.test(id) && !/guard|whisper|tts/i.test(id));
       GROQ_VISION.forEach(m=>{ if(models.indexOf(m)<0) models.push(m); });   // 一律附上已知看圖模型當備援
       if(groqGoodVision) models = [groqGoodVision].concat(models.filter(m=>m!==groqGoodVision));
@@ -1941,14 +1946,14 @@
       let res;
       try{ res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:mdl,messages:[{role:"user",content}],temperature:temp==null?0.3:temp})}); }
       catch(netErr){ lastMsg="無法連線到 Groq(可能是瀏覽器限制)"; continue; }
-      if(res.ok){ const data=await res.json(); const txt=(((data.choices||[])[0]||{}).message||{}).content||""; const o=parseLooseJSON(txt); if(o!=null){ if(b64) groqGoodVision=mdl; else groqGoodText=mdl; return o; } throw new Error("AI 回傳格式看不懂,請再試一次"); }
+      if(res.ok){ const data=await res.json(); const txt=(((data.choices||[])[0]||{}).message||{}).content||""; const o=parseLooseJSON(txt); if(o!=null){ if(hasImg) groqGoodVision=mdl; else groqGoodText=mdl; return o; } throw new Error("AI 回傳格式看不懂,請再試一次"); }
       let msg="錯誤 "+res.status; const st=res.status; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
       lastMsg=msg;
       if(st===401||st===403) throw new Error("Groq 金鑰無效,請確認是 gsk_ 開頭的金鑰(到 console.groq.com/keys 申請)。");
       if(st===429) quota=true;
     }
     if(quota) throw new Error("Groq 額度滿了,稍等再試。");
-    if(b64){
+    if(hasImg){
       const listStr = avail.length ? avail.join("、") : "(抓不到清單)";
       throw new Error("Groq 看圖失敗。你帳號可用模型:"+listStr+"。原始:"+lastMsg);
     }
@@ -1985,9 +1990,16 @@
     if(quotaHit) throw new Error("Google 免費額度又滿了 😥 這是 Google 對免費金鑰的限制(很小氣)。強烈建議改用 Groq 免費金鑰(gsk_ 開頭、額度高很多):到「AI 金鑰設定」旁的 Groq 連結申請,貼上就會自動切換。");
     throw new Error(lastMsg);
   }
-  async function analyzeFoodPhoto(b64){
-    const prompt = '看這張食物照片,用繁體中文判斷是什麼餐點並估計整份總熱量(大卡)。重要:多數人會低估份量,請把烹調用油、醬料、糖、隱藏配料都算進去,寧可估高也不要估低,以餐廳/外食的實際份量為準。只回 JSON:{"name":"餐點名不超過12字","kcal":整數,"note":"一句話依據"}。看不出是食物就 name 回空字串。';
-    return await geminiJSON(prompt, [{inline_data:{mime_type:"image/jpeg", data:b64}}], 0.2);
+  async function analyzeFoodPhoto(b64s){
+    if(typeof b64s==="string") b64s=[b64s];
+    const many=b64s.length>1;
+    const prompt = (many
+        ? '這裡有'+b64s.length+'張食物照片,可能是同一餐的不同角度、或是一桌的多道菜。請綜合所有照片,判斷這一「整餐」是什麼、估計加起來的總熱量(大卡),不要重複計算同一道菜。'
+        : '看這張食物照片,用繁體中文判斷是什麼餐點並估計整份總熱量(大卡)。')
+      + '照片可能是手機截圖或外送/菜單畫面,忽略介面與文字浮水印,只看食物本身。重要:多數人會低估份量,請把烹調用油、醬料、糖、隱藏配料都算進去,寧可估高也不要估低,以餐廳/外食的實際份量為準。'
+      + '用繁體中文,只回 JSON:{"name":"餐點名不超過12字","kcal":整數,"note":"一句話依據"}。看不出是食物就 name 回空字串。';
+    const parts=b64s.map(b=>({inline_data:{mime_type:"image/jpeg", data:b}}));
+    return await geminiJSON(prompt, parts, 0.2);
   }
   function initAIPhotoModule(){
     const box=document.getElementById("aiPhotoBox"); if(!box) return;
@@ -2012,16 +2024,16 @@
       input.click();
     });
     input.addEventListener("change", async ()=>{
-      const file=input.files[0]; input.value=""; if(!file) return;
+      const files=Array.from(input.files||[]); input.value=""; if(!files.length) return;
       btn.disabled=true;
-      status.innerHTML='<span class="ai-spin"></span>分析中…(約幾秒)';
+      status.innerHTML='<span class="ai-spin"></span>分析中…'+(files.length>1?'('+files.length+' 張綜合分析,約幾秒)':'(約幾秒)');
       try{
-        const big=await resizeImageToBase64(file,448);
-        const thumb=await resizeImageToBase64(file,220);
-        const obj=await analyzeFoodPhoto(big.split(",")[1]);
+        const bigs=await Promise.all(files.map(f=>resizeImageToBase64(f,512)));
+        const thumb=await resizeImageToBase64(files[0],220);
+        const obj=await analyzeFoodPhoto(bigs.map(b=>b.split(",")[1]));
         const name=(obj.name||"").trim();
         const kcal=Math.round(Number(obj.kcal)||0);
-        if(!name || !kcal){ status.innerHTML='<span class="err">看不太出來是什麼食物,換個角度拍清楚一點再試 🙏</span>'; btn.disabled=false; return; }
+        if(!name || !kcal){ status.innerHTML='<span class="err">看不太出來是什麼食物,換個角度拍清楚一點、或多拍幾張再試 🙏</span>'; btn.disabled=false; return; }
         const addedMeal=selectedMeal;
         const entry={ id:Date.now().toString(), date:isoDate(today), meal:addedMeal, name:name, kcal:kcal, thumb:thumb };
         foodLog.push(entry); await saveFoodLog(); renderFoodLog();
@@ -2421,18 +2433,24 @@
     }
     btn.disabled=false; btn.textContent=oldT;
   }
-  // 拍照分析動作 → 認出動作 + 排組數/強度,產生一週計畫
-  async function analyzeWorkoutPhoto(b64){
+  // 拍照分析動作 → 認出動作 + 排組數/強度,產生一週計畫(可多張綜合)
+  async function analyzeWorkoutPhoto(b64s){
+    if(typeof b64s==="string") b64s=[b64s];
+    const many=b64s.length>1;
     const sex=document.getElementById("pfSex")?.value==="male"?"男":"女";
     const w=document.getElementById("pfWeight")?.value||"", tw=document.getElementById("pfTargetW")?.value||"";
     const days=parseInt(document.getElementById("woDays").value,10)||4;
     const cardio=parseInt(document.getElementById("woCardio").value,10)||20;
     const eq=[]; if(strengthSel.length) eq.push("重訓器材:"+strengthSel.join("、")); if(cardioSel.length) eq.push("有氧:"+cardioSel.join("、"));
-    const prompt='看這張健身/運動照片,用繁體中文判斷這是什麼「動作」(例:深蹲、棒式、二頭彎舉)並認出主要訓練部位。'
-      +'再以這個動作為主軸,幫'+sex+'性'+(w?(" "+w+"kg"):"")+(tw?("→"+tw+"kg"):"")+'設計一週7天計畫(新手做得到、減脂+線條),每週'+days+'天、有氧'+cardio+'分。'
-      +(eq.length?eq.join(";")+"。":"")+'每個動作都要寫清楚「組數×次數」或「時間(秒)」與強度。'
-      +'只回 JSON:{"move":"動作名(看不出就空字串)","target":"主要部位","summary":"一句話說明","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["動作 組數×次數"]}](共7天),"tips":[""]}。';
-    return await geminiJSON(prompt, [{inline_data:{mime_type:"image/jpeg", data:b64}}], 0.3);
+    const prompt=(many
+        ? '這裡有'+b64s.length+'張健身/運動照片,通常是「同一段影片或同一組訓練的多個畫面」。請綜合所有畫面判斷裡面示範了哪些「動作」(例:深蹲、開合跳、棒式、登山者),認出主要訓練部位。'
+        : '看這張健身/運動照片,用繁體中文判斷這是什麼「動作」(例:深蹲、棒式、二頭彎舉)並認出主要訓練部位。')
+      + '照片可能是手機截圖或影片畫面,會有介面、按鈕、浮水印、留言,請忽略那些,只看人物的動作;畫面若有文字說明(例:針對哪個部位、幾個動作)可作為判斷依據。動作模糊時就依姿勢與器材合理推測,盡量不要回空字串。'
+      + '再以這些動作為主軸,幫'+sex+'性'+(w?(" "+w+"kg"):"")+(tw?("→"+tw+"kg"):"")+'設計一週7天計畫(新手做得到、減脂+線條),每週'+days+'天、有氧'+cardio+'分。'
+      + (eq.length?eq.join(";")+"。":"") + '每個動作都要寫清楚「組數×次數」或「時間(秒)」與強度。'
+      + '只回 JSON:{"move":"認出的動作(多個用、分隔,看不出才空字串)","target":"主要部位","summary":"一句話說明","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["動作 組數×次數"]}](共7天),"tips":[""]}。';
+    const parts=b64s.map(b=>({inline_data:{mime_type:"image/jpeg", data:b}}));
+    return await geminiJSON(prompt, parts, 0.3);
   }
   function initWorkoutPhoto(){
     const input=document.getElementById("woPhotoInput");
@@ -2445,12 +2463,12 @@
       input.click();
     });
     input.addEventListener("change", async ()=>{
-      const file=input.files[0]; input.value=""; if(!file) return;
-      btn.disabled=true; status.innerHTML='<span class="ai-spin"></span>分析動作中…(約幾秒)';
+      const files=Array.from(input.files||[]); input.value=""; if(!files.length) return;
+      btn.disabled=true; status.innerHTML='<span class="ai-spin"></span>分析動作中…'+(files.length>1?'('+files.length+' 張綜合)':'(約幾秒)');
       box.innerHTML='<div class="advice"><span class="ai-spin"></span>正在認出動作並排計畫…</div>';
       try{
-        const big=await resizeImageToBase64(file,448);
-        const obj=await analyzeWorkoutPhoto(big.split(",")[1]);
+        const bigs=await Promise.all(files.map(f=>resizeImageToBase64(f,512)));
+        const obj=await analyzeWorkoutPhoto(bigs.map(b=>b.split(",")[1]));
         if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
         const move=(obj.move||"").trim(), target=(obj.target||"").trim();
         if(move){ obj.summary="偵測到的動作:"+move+(target?"(主要練"+target+")":"")+"。"+(obj.summary||""); }
@@ -2458,7 +2476,7 @@
         status.innerHTML = move ? '<span class="ok">認出「'+esc(move)+'」,已排入計畫 ✅</span>' : '<span class="ok">已排入計畫 ✅</span>';
       }catch(e){
         box.innerHTML='';
-        status.innerHTML='<span class="err">分析失敗:'+esc(e.message||e)+'。換個清楚一點的角度再試 🙏</span>';
+        status.innerHTML='<span class="err">分析失敗:'+esc(e.message||e)+'。可多拍/多截幾張、或換清楚一點的畫面再試 🙏</span>';
       }
       btn.disabled=false;
     });
