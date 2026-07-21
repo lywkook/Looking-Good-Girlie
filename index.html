@@ -487,6 +487,11 @@
   .wo-datepick input{ padding:8px 10px; border-radius:12px; border:2px solid var(--line);
     font-size:var(--fs-label); background:#FFFDFA; color:var(--ink); font-family:inherit; }
   .day-card.flash{ box-shadow:0 0 0 3px var(--pink); }
+  .wo-plan-head{ display:flex; align-items:center; justify-content:space-between; gap:8px;
+    margin-top:12px; padding:10px 14px; background:var(--pink-soft); border-radius:14px; cursor:pointer; }
+  .wo-plan-title{ font-size:var(--fs-body); font-weight:900; color:var(--ink); }
+  .wo-plan-caret{ font-size:var(--fs-label); color:var(--pink); font-weight:800; white-space:nowrap; }
+  .wo-plan-body{ margin-top:4px; }
   .wo-week{ margin-top:12px; }
   .wo-day{ background:#FFFBF6; border:2px solid var(--line); border-radius:14px; padding:11px 13px; margin-bottom:9px; }
   .wo-day-h{ font-size:var(--fs-body); margin-bottom:5px; }
@@ -2337,6 +2342,7 @@
 
   // ---------- 運動計畫 · 客製化 ----------
   let workoutPlan = null;
+  let woPlanCollapsed = false;
   const FOCUS_PRESET = ["腿","臀","腹部/核心","胸","背","肩","手臂","全身"];
   const STRENGTH_PRESET = ["徒手/自體重量","啞鈴","槓鈴","壺鈴","彈力帶/阻力帶","史密斯機","滑輪纜繩機","腿推機","胸推機","高位下拉機","坐姿划船機","蝴蝶機","腿彎舉/腿伸機","引體向上桿","TRX 懸吊","健身球","腹肌輪"];
   const CARDIO_PRESET = ["跑步機","橢圓機/滑步機","划船機","飛輪車","室內腳踏車","登階機","戶外跑步/快走","跳繩","飛輪課","有氧課程"];
@@ -2420,7 +2426,10 @@
   function renderWorkout(plan){
     const box=document.getElementById("woResult"); if(!box) return;
     if(!plan){ box.innerHTML=""; return; }
-    let h='<div class="advice">'+esc(plan.summary||"")+'</div><div class="wo-week">';
+    const collapsed=woPlanCollapsed;
+    let h='<div class="wo-plan-head" id="woPlanToggle"><span class="wo-plan-title">📋 你的運動計畫</span><span class="wo-plan-caret">'+(collapsed?'展開 ▸':'收起 ▾')+'</span></div>';
+    h+='<div class="wo-plan-body" id="woPlanBody"'+(collapsed?' style="display:none;"':'')+'>';
+    h+='<div class="advice">'+esc(plan.summary||"")+'</div><div class="wo-week">';
     (plan.week||[]).forEach(d=>{
       const t=d.type||""; const tag = /重訓|肌力/.test(t)?"tag-lift":(/有氧|燃脂|跑/.test(t)?"tag-cardio":"tag-rest");
       h+='<div class="wo-day"><div class="wo-day-h"><b>'+esc(d.day||"")+'</b> <span class="day-tag '+tag+'">'+esc(t)+(d.focus?" · "+esc(d.focus):"")+'</span></div>';
@@ -2428,10 +2437,16 @@
     });
     h+='</div>';
     if(plan.tips&&plan.tips.length) h+='<div class="advice"><b>提醒</b><br>'+plan.tips.map(t=>"· "+esc(t)).join("<br>")+'</div>';
+    h+='</div>';
     box.innerHTML=h;
+    const tog=document.getElementById("woPlanToggle");
+    if(tog) tog.addEventListener("click", async ()=>{ woPlanCollapsed=!woPlanCollapsed;
+      try{ await window.storage.set(K("woplancollapsed"), woPlanCollapsed?"1":"0", false); }catch(e){}
+      renderWorkout(workoutPlan); });
   }
   async function loadWorkout(){
-    workoutPlan=null; focusSel.length=0; strengthSel.length=0; cardioSel.length=0;
+    workoutPlan=null; woPlanCollapsed=false; focusSel.length=0; strengthSel.length=0; cardioSel.length=0;
+    try{ const c=await window.storage.get(K("woplancollapsed"),false); if(c&&c.value==="1") woPlanCollapsed=true; }catch(e){}
     const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=(v==null?"":v); };
     set("woDays",""); set("woCardio",""); set("woNote",""); set("woSets",""); set("woReps",""); set("woWeight",""); set("woSecs",""); set("woGoal","");
     try{ const r=await window.storage.get(K("workout"),false); if(r&&r.value){ const p=JSON.parse(r.value);
