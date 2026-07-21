@@ -61,19 +61,19 @@
     background: var(--cream);
     color:var(--ink);
     font-family:var(--font-main), "Noto Sans TC", -apple-system, sans-serif;
-    padding-bottom:82px;
+    padding-bottom:100px;
     -webkit-font-smoothing:antialiased;
   }
-  #bottomNav{ position:fixed; left:0; right:0; bottom:0; height:64px; background:var(--card);
+  #bottomNav{ position:fixed; left:0; right:0; bottom:0; height:82px; background:var(--card);
     border-top:1px solid var(--line); display:flex; z-index:200; box-shadow:0 -2px 10px rgba(94,85,76,0.06); }
   .nav-btn{ flex:1; border:none; background:none; font-family:inherit; cursor:pointer; color:var(--ink);
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:23px; }
-  .nav-btn span{ font-size:var(--fs-hint); color:var(--ink-soft); }
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:30px; }
+  .nav-btn span{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
   .nav-btn:active{ opacity:0.6; }
-  .nav-jump-menu{ position:fixed; right:12px; bottom:74px; background:var(--card); border-radius:16px;
-    box-shadow:var(--shadow); border:2px solid var(--pink-soft); padding:8px; display:none; z-index:201; max-height:62vh; overflow:auto; }
+  .nav-jump-menu{ position:fixed; right:12px; bottom:92px; background:var(--card); border-radius:16px;
+    box-shadow:var(--shadow); border:2px solid var(--pink-soft); padding:10px; display:none; z-index:201; max-height:62vh; overflow:auto; }
   .nav-jump-menu.show{ display:block; }
-  .nav-jump-item{ padding:11px 20px; border-radius:10px; font-size:var(--fs-body); color:var(--ink); cursor:pointer; white-space:nowrap; }
+  .nav-jump-item{ padding:14px 24px; border-radius:12px; font-size:var(--fs-title); color:var(--ink); cursor:pointer; white-space:nowrap; }
   .nav-jump-item:active{ background:var(--pink-soft); }
   .cute{ font-family:var(--font-main), "ZCOOL KuaiLe", "Noto Sans TC", sans-serif; }
 
@@ -341,6 +341,7 @@
   .rm-row{ display:flex; align-items:center; flex-wrap:wrap; gap:10px; font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:12px; }
   .rm-row input[type=time]{ padding:8px 10px; border-radius:12px; border:2px solid var(--line); font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
   .rm-item{ display:inline-flex; align-items:center; gap:6px; color:var(--ink); }
+  .rm-items{ display:flex; flex-wrap:wrap; gap:8px 14px; }
   .rm-preview-label{ font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:6px; }
   .rm-preview{ background:var(--pink-soft); border-radius:14px; padding:12px 14px; font-size:var(--fs-body);
     line-height:1.7; color:var(--ink); white-space:pre-wrap; margin-bottom:10px; }
@@ -712,10 +713,16 @@
   <div class="weight-box">
     <label class="rm-check"><input type="checkbox" id="rmOn"> 開啟提醒</label>
     <div class="rm-row">提醒時間 <input type="time" id="rmTime" value="16:20"></div>
-    <div class="rm-row">提醒內容:
-      <label class="rm-item"><input type="checkbox" id="rmDinner" checked> 今晚晚餐</label>
-      <label class="rm-item"><input type="checkbox" id="rmLunch" checked> 明日午餐</label>
-      <label class="rm-item"><input type="checkbox" id="rmWorkout" checked> 今日運動</label>
+    <div class="rm-row" style="align-items:flex-start;">提醒內容:
+      <div class="rm-items">
+        <label class="rm-item"><input type="checkbox" id="rmBreakfast"> 今日早餐</label>
+        <label class="rm-item"><input type="checkbox" id="rmLunch"> 今日午餐</label>
+        <label class="rm-item"><input type="checkbox" id="rmDinner" checked> 今晚晚餐</label>
+        <label class="rm-item"><input type="checkbox" id="rmSnack"> 點心</label>
+        <label class="rm-item"><input type="checkbox" id="rmTmrLunch" checked> 明日午餐</label>
+        <label class="rm-item"><input type="checkbox" id="rmWorkout" checked> 今日運動</label>
+        <label class="rm-item"><input type="checkbox" id="rmBody" checked> 量體重/身體數據</label>
+      </div>
     </div>
     <div class="rm-preview-label">內容預覽(會即時反映你在 App 裡的更動)</div>
     <div class="rm-preview" id="rmPreview"></div>
@@ -2456,14 +2463,19 @@
   }
 
   // ---------- 提醒(內容即時反映 App 內的更動;可設定時間/內容) ----------
-  let reminderCfg = { on:false, time:"16:20", dinner:true, lunch:true, workout:true };
+  const RM_DEFAULT = { on:false, time:"16:20", breakfast:false, lunch:false, dinner:true, snack:false, tmrLunch:true, workout:true, body:true };
+  let reminderCfg = Object.assign({}, RM_DEFAULT);
   function reminderLines(){
     const iso=isoDate(today); const te=days.find(d=>d.iso===iso)||days[0];
     const tmr=new Date(today.getTime()+86400000); const tm=days.find(d=>d.iso===isoDate(tmr));
     const lines=[];
+    if(reminderCfg.breakfast && te) lines.push("🍳 今日早餐:"+te.diet.breakfast);
+    if(reminderCfg.lunch && te) lines.push("🍱 今日午餐:"+te.diet.lunch);
     if(reminderCfg.dinner && te) lines.push("🍽 今晚晚餐:"+te.diet.dinner);
-    if(reminderCfg.lunch) lines.push("🥗 明日午餐:"+(tm?tm.diet.lunch:"(超出計畫範圍)"));
+    if(reminderCfg.snack && te) lines.push("🍎 點心:"+te.diet.fruit);
+    if(reminderCfg.tmrLunch) lines.push("🥗 明日午餐:"+(tm?tm.diet.lunch:"(超出計畫範圍)"));
     if(reminderCfg.workout && te) lines.push("🏋 今日運動:"+te.workout.title);
+    if(reminderCfg.body) lines.push("⚖️ 記得量體重/體脂並登錄身體數據");
     return lines;
   }
   function renderReminder(){
@@ -2484,25 +2496,26 @@
     if(persist){ try{ window.storage.set(K("rmcollapsed"), c?"1":"0", false); }catch(e){} }
   }
   async function loadReminder(){
-    reminderCfg={ on:false, time:"16:20", dinner:true, lunch:true, workout:true };
+    reminderCfg=Object.assign({}, RM_DEFAULT);
     try{ const r=await window.storage.get(K("reminder"),false); if(r&&r.value){ reminderCfg=Object.assign(reminderCfg, JSON.parse(r.value)||{}); } }catch(e){}
     const on=document.getElementById("rmOn"); if(on) on.checked=reminderCfg.on;
     const tm=document.getElementById("rmTime"); if(tm) tm.value=reminderCfg.time||"16:20";
-    const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.checked=v; };
-    set("rmDinner",reminderCfg.dinner); set("rmLunch",reminderCfg.lunch); set("rmWorkout",reminderCfg.workout);
+    const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.checked=!!v; };
+    set("rmBreakfast",reminderCfg.breakfast); set("rmLunch",reminderCfg.lunch); set("rmDinner",reminderCfg.dinner);
+    set("rmSnack",reminderCfg.snack); set("rmTmrLunch",reminderCfg.tmrLunch); set("rmWorkout",reminderCfg.workout); set("rmBody",reminderCfg.body);
     renderReminder();
     let stored=null; try{ const c=await window.storage.get(K("rmcollapsed"),false); if(c&&c.value!=null&&c.value!=="") stored=c.value; }catch(e){}
     setReminderCollapsed(stored!=null? stored==="1" : true, false);
   }
   async function saveReminder(){ try{ await window.storage.set(K("reminder"), JSON.stringify(reminderCfg), false); }catch(e){} }
   function initReminderModule(){
-    ["rmOn","rmTime","rmDinner","rmLunch","rmWorkout"].forEach(id=>{ const el=document.getElementById(id);
+    ["rmOn","rmTime","rmBreakfast","rmLunch","rmDinner","rmSnack","rmTmrLunch","rmWorkout","rmBody"].forEach(id=>{ const el=document.getElementById(id);
       if(el) el.addEventListener("change", ()=>{
-        reminderCfg.on=document.getElementById("rmOn").checked;
+        const g=x=>{ const e=document.getElementById(x); return e?e.checked:false; };
+        reminderCfg.on=g("rmOn");
         reminderCfg.time=document.getElementById("rmTime").value||"16:20";
-        reminderCfg.dinner=document.getElementById("rmDinner").checked;
-        reminderCfg.lunch=document.getElementById("rmLunch").checked;
-        reminderCfg.workout=document.getElementById("rmWorkout").checked;
+        reminderCfg.breakfast=g("rmBreakfast"); reminderCfg.lunch=g("rmLunch"); reminderCfg.dinner=g("rmDinner");
+        reminderCfg.snack=g("rmSnack"); reminderCfg.tmrLunch=g("rmTmrLunch"); reminderCfg.workout=g("rmWorkout"); reminderCfg.body=g("rmBody");
         saveReminder(); renderReminder();
       });
     });
