@@ -252,7 +252,10 @@
   .food-card .fc-kcal{ font-size:var(--fs-label); color:var(--pink); font-weight:900; }
   .food-card .fc-macro{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; }
   .food-card .fc-note{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:3px; }
-  .food-card .fc-del{ align-self:center; font-size:var(--fs-label); color:var(--ink-soft); cursor:pointer; padding:2px 6px; }
+  .food-card .fc-right{ display:flex; flex-direction:column; align-items:flex-end; justify-content:space-between; align-self:stretch; gap:8px; }
+  .food-card .fc-del{ font-size:var(--fs-label); color:var(--ink-soft); cursor:pointer; padding:2px 6px; }
+  .fc-qtytoggle{ font-size:var(--fs-label); color:var(--pink); cursor:pointer; white-space:nowrap; }
+  .fc-qtytoggle:active{ opacity:0.6; }
   .food-card.dragging{ opacity:0.4; }
   .drag-ghost{ position:fixed; transform:translate(-50%,-50%); z-index:999; pointer-events:none;
     opacity:0.95; box-shadow:0 8px 24px rgba(94,85,76,0.25); margin:0 !important; }
@@ -1651,14 +1654,17 @@
           ${f.thumb?`<img src="${f.thumb}">`:''}
           <div class="fc-main">
             <div class="fc-name" data-fid="${f.id}">${esc(f.name)}</div>
-            <div class="fc-qtyrow">
+            <div class="fc-kcal">${Math.round(unit*qty)} kcal${qty>1?`(×${qty})`:''}</div>
+            <div class="fc-qtyrow" data-fid="${f.id}" style="display:none;">
               <button type="button" class="fc-q" data-fid="${f.id}" data-d="-1">−</button>
               <span class="fc-qty">×${qty}</span>
               <button type="button" class="fc-q" data-fid="${f.id}" data-d="1">＋</button>
-              <span class="fc-kcal">${Math.round(unit*qty)} kcal</span>
             </div>
           </div>
-          <span class="fc-del" data-fid="${f.id}">刪除</span>
+          <div class="fc-right">
+            <span class="fc-del" data-fid="${f.id}">刪除</span>
+            <span class="fc-qtytoggle" data-fid="${f.id}">更改數量</span>
+          </div>
         </div>`;
       }).join("") : '<div class="mg-empty">拖食物到這裡,或按「＋ 補食材」</div>';
       const addBtn = base.includes(m) ? `<span class="mg-add" data-meal="${esc(m)}">＋ 補食材</span>` : '';
@@ -1690,6 +1696,12 @@
         el.contentEditable="false";
         const f = foodLog.find(x=>x.id===el.dataset.fid); if(!f) return;
         const v = el.textContent.trim(); if(v){ f.name = v; await saveFoodLog(); } else { renderFoodLog(); }
+      });
+    });
+    area.querySelectorAll(".fc-qtytoggle").forEach(t=>{
+      t.addEventListener("click", (e)=>{ e.stopPropagation();
+        const row=area.querySelector('.fc-qtyrow[data-fid="'+t.dataset.fid+'"]');
+        if(row) row.style.display = (row.style.display==="none") ? "flex" : "none";
       });
     });
     area.querySelectorAll(".fc-drag").forEach(h=>{
