@@ -589,6 +589,9 @@
   .dish .d-kcal{ font-size:var(--fs-label); color:var(--pink); font-weight:900; white-space:nowrap; }
   .menu-regen-box{ display:none; margin-top:12px; padding:14px; background:var(--pink-soft); border-radius:16px; }
   .menu-regen-box.show{ display:block; }
+  #menuRegenBtn{ display:flex; flex-direction:column; align-items:center; gap:2px; }
+  #menuRegenBtn .mrb-main{ font-size:var(--fs-body); font-weight:800; }
+  #menuRegenBtn .mrb-sub{ font-size:var(--fs-hint); font-weight:600; opacity:.85; }
   .menu-regen-hint{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.55; margin-bottom:10px; }
   .menu-regen-box input + input{ margin-top:8px; }
   .menu-regen-sub{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.5; margin-top:6px; }
@@ -784,7 +787,7 @@
   <div class="weight-box" id="todayMenuBox" style="border-style:solid;">
     <!-- filled by JS -->
   </div>
-  <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;width:100%;padding:14px 18px;font-size:var(--fs-body);font-weight:700;">讓 AI 幫我換一餐</button>
+  <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;width:100%;padding:14px 18px;font-weight:700;line-height:1.4;"><span class="mrb-main">更改菜單</span><span class="mrb-sub">上傳餐廳菜單,推薦適合我的</span></button>
   <div class="menu-regen-box" id="menuRegenBox">
     <div class="menu-regen-hint">選一餐,AI 會依你的熱量目標重新配好。下面全部都可以留空,直接按也會推薦。</div>
     <div class="meal-tabs" id="regenMealTabs">
@@ -1248,6 +1251,7 @@
     "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
     "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
     "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
+    "更改菜單":"Change the menu","上傳餐廳菜單,推薦適合我的":"Upload a restaurant menu for a pick that suits you",
     "選一餐,AI 會依你的熱量目標重新配好。下面全部都可以留空,直接按也會推薦。":"Pick a meal and AI re-plans it to your calorie target. Everything below is optional — just tap and it still recommends.",
     "口味喜好(可選,可複選)":"Taste preferences (optional, pick any)",
     "高蛋白":"High protein","少油清爽":"Light / low oil","低碳水":"Low carb","多蔬菜":"More veg","吃辣":"Spicy OK","不吃牛":"No beef","海鮮":"Seafood","素食":"Vegetarian",
