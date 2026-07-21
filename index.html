@@ -2331,6 +2331,22 @@
   function spreadDays(n){ const out=[]; for(let i=0;i<n;i++) out.push(Math.min(6, Math.round(i*7/n))); return out; }
   function woPrefs(){ const g=id=>{ const e=document.getElementById(id); return e?(e.value||"").trim():""; };
     return { sets:g("woSets"), reps:g("woReps"), weight:g("woWeight"), secs:g("woSecs") }; }
+  // 器材硬限制:只用使用者「有選」的器材,沒選=沒有=絕不加進計畫;都沒選就只做徒手
+  function equipConstraint(){
+    const strength=strengthSel.slice(), cardio=cardioSel.slice();
+    if(!strength.length && !cardio.length){
+      return "【器材限制·務必遵守】使用者沒有勾選任何器材,代表家裡沒有任何器材:整份計畫只能用徒手(自身體重)動作,絕對不要出現任何需要器材的動作(啞鈴、槓鈴、彈力帶、壺鈴、機械、跑步機、飛輪等一律不行)。";
+    }
+    return "【器材限制·務必遵守】使用者只有這些器材,只能用這些:重訓["+(strength.join("、")||"無")+"]、有氧["+(cardio.join("、")||"無")+"]。"
+      + "沒有列在上面的器材一律當作使用者沒有、絕對不要出現在計畫裡;若某個動作原本需要沒列出的器材,請改成徒手版本或用現有器材的替代動作。";
+  }
+  // 把強度偏好(組數/次數/重量/秒數)整理成一句
+  function intensityLine(){
+    const pf=woPrefs(); const a=[];
+    if(pf.sets) a.push("每個動作約 "+pf.sets+" 組"); if(pf.reps) a.push("每組約 "+pf.reps+" 下");
+    if(pf.weight) a.push("重量約 "+pf.weight); if(pf.secs) a.push("計時動作每個約 "+pf.secs+" 秒");
+    return a.length ? ("強度偏好:"+a.join("、")+"。") : "";
+  }
   function localWorkoutPlan(days, cardioMin, note){
     days = Math.min(7, Math.max(1, days||4)); cardioMin = cardioMin||20;
     const pf = woPrefs();
@@ -2415,20 +2431,10 @@
     const btn=document.getElementById("woGenBtn"); const oldT=btn.textContent; btn.disabled=true; btn.textContent="產生中…";
     box.innerHTML='<div class="advice"><span class="ai-spin"></span>正在依你的需求規劃…</div>';
     try{
-      const pf=woPrefs();
-      const eqParts=[];
-      if(focusSel.length) eqParts.push("想練的部位/分類:"+focusSel.join("、")+"(請以這些安排分部訓練日,如練腿日、練胸日、全身日)");
-      if(strengthSel.length) eqParts.push("重訓器材:"+strengthSel.join("、"));
-      if(cardioSel.length) eqParts.push("有氧器材/方式:"+cardioSel.join("、"));
-      const intensity=[];
-      if(pf.sets) intensity.push("每個動作約 "+pf.sets+" 組");
-      if(pf.reps) intensity.push("每組約 "+pf.reps+" 下");
-      if(pf.weight) intensity.push("重量約 "+pf.weight);
-      if(pf.secs) intensity.push("計時動作每個約 "+pf.secs+" 秒");
-      if(intensity.length) eqParts.push("強度偏好:"+intensity.join("、"));
-      const eqStr = eqParts.join(";") || "一般居家,小啞鈴 + 跑步機";
-      const prompt='你是健身教練,用繁體中文設計一週7天運動計畫(減脂+保留肌肉)。只用使用者有的器材、依想練部位排分部訓練、遵守組數/次數/重量/秒數。'
-        +sex+'性 '+(w||"?")+'→'+(tw||"?")+'kg,'+(dateStr||"")+'前。每週'+days+'天、每次有氧'+cardio+'分。'+eqStr+'。偏好:'+(note||"無")+'。'
+      const focusStr = focusSel.length ? ("想練的部位/分類:"+focusSel.join("、")+"(以這些安排分部訓練日,如練腿日、練胸日、全身日)。") : "";
+      const prompt='你是健身教練,用繁體中文設計一週7天運動計畫(減脂+保留肌肉),依想練部位排分部訓練、遵守組數/次數/重量/秒數。'
+        +sex+'性 '+(w||"?")+'→'+(tw||"?")+'kg,'+(dateStr||"")+'前。每週'+days+'天、每次有氧'+cardio+'分。'
+        +focusStr+intensityLine()+equipConstraint()+'偏好:'+(note||"無")+'。'
         +'每個動作寫清楚「組數×次數」或「時間」。只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
       const obj=await geminiJSON(prompt, null, 0.3);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
@@ -2462,9 +2468,8 @@
     try{
       const sex=document.getElementById("pfSex").value==="male"?"男":"女";
       const w=document.getElementById("pfWeight").value, tw=document.getElementById("pfTargetW").value;
-      const eq=[]; if(strengthSel.length) eq.push("重訓器材:"+strengthSel.join("、")); if(cardioSel.length) eq.push("有氧器材/方式:"+cardioSel.join("、"));
       const prompt='你是健身教練。使用者只說目標:「'+goal+'」。用繁體中文設計一週7天、新手也做得到的計畫,針對目標部位加強+全身+有氧,減脂。'
-        +sex+'性'+(w?(","+w+"kg"):"")+(tw?("→"+tw+"kg"):"")+'。每週'+days+'天、有氧'+cardio+'分。'+(eq.length?eq.join(";")+"。":"")
+        +sex+'性'+(w?(","+w+"kg"):"")+(tw?("→"+tw+"kg"):"")+'。每週'+days+'天、有氧'+cardio+'分。'+intensityLine()+equipConstraint()
         +'動作寫組數×次數或時間。只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
       const obj=await geminiJSON(prompt,null,0.4);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
@@ -2483,13 +2488,15 @@
     const w=document.getElementById("pfWeight")?.value||"", tw=document.getElementById("pfTargetW")?.value||"";
     const days=parseInt(document.getElementById("woDays").value,10)||4;
     const cardio=parseInt(document.getElementById("woCardio").value,10)||20;
-    const eq=[]; if(strengthSel.length) eq.push("重訓器材:"+strengthSel.join("、")); if(cardioSel.length) eq.push("有氧:"+cardioSel.join("、"));
+    const focusStr = focusSel.length ? ("想加強的部位:"+focusSel.join("、")+"(以這些安排分部訓練日)。") : "";
     const prompt=(many
         ? '這裡有'+b64s.length+'張健身/運動照片,通常是「同一段影片或同一組訓練的多個畫面」。請綜合所有畫面判斷裡面示範了哪些「動作」(例:深蹲、開合跳、棒式、登山者),認出主要訓練部位。'
         : '看這張健身/運動照片,用繁體中文判斷這是什麼「動作」(例:深蹲、棒式、二頭彎舉)並認出主要訓練部位。')
-      + '照片可能是手機截圖或影片畫面,會有介面、按鈕、浮水印、留言,請忽略那些,只看人物的動作;畫面若有文字說明(例:針對哪個部位、幾個動作)可作為判斷依據。動作模糊時就依姿勢與器材合理推測,盡量不要回空字串。'
-      + '再以這些動作為主軸,幫'+sex+'性'+(w?(" "+w+"kg"):"")+(tw?("→"+tw+"kg"):"")+'設計一週7天計畫(新手做得到、減脂+線條),每週'+days+'天、有氧'+cardio+'分。'
-      + (eq.length?eq.join(";")+"。":"") + '每個動作都要寫清楚「組數×次數」或「時間(秒)」與強度。'
+      + '照片可能是手機截圖或影片畫面,會有介面、按鈕、浮水印、留言,請忽略那些,只看人物的動作;畫面若有文字說明(例:針對哪個部位、幾個動作)可作為判斷依據。動作模糊時就依姿勢合理推測,盡量不要回空字串。'
+      + '請「結合」照片裡的動作與使用者下面選的器材/部位/強度,綜合設計一週7天計畫(新手做得到、減脂+線條),幫'+sex+'性'+(w?(" "+w+"kg"):"")+(tw?("→"+tw+"kg"):"")+',每週'+days+'天、有氧'+cardio+'分。'
+      + focusStr + intensityLine()
+      + equipConstraint()
+      + '注意:如果照片裡的動作需要使用者沒有的器材,請把它換成徒手或現有器材能做的同部位替代動作,但仍以照片想練的目標為主。每個動作都要寫清楚「組數×次數」或「時間(秒)」。'
       + '只回 JSON:{"move":"認出的動作(多個用、分隔,看不出才空字串)","target":"主要部位","summary":"一句話說明","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["動作 組數×次數"]}](共7天),"tips":[""]}。';
     const parts=b64s.map(b=>({inline_data:{mime_type:"image/jpeg", data:b}}));
     return await geminiJSON(prompt, parts, 0.3);
