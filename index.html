@@ -586,6 +586,11 @@
   .menu-regen-hint{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.55; margin-bottom:10px; }
   .menu-regen-box input + input{ margin-top:8px; }
   .menu-regen-sub{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.5; margin-top:6px; }
+  .pref-label{ font-size:var(--fs-hint); color:var(--ink-soft); margin:2px 0 8px; }
+  .pref-chips{ margin-bottom:10px; }
+  .menu-regen-photo-row{ display:flex; align-items:center; gap:10px; margin-top:8px; flex-wrap:wrap; }
+  .menu-photo-preview{ font-size:var(--fs-hint); color:var(--ink-soft); }
+  .menu-photo-preview .clear{ color:var(--ink-soft); text-decoration:underline; cursor:pointer; margin-left:6px; }
   .menu-regen-box input{ width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px;
     padding:11px 13px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); }
   .wo-quick{ background:var(--pink-soft); border-radius:16px; padding:14px; margin-bottom:16px; }
@@ -775,16 +780,32 @@
   </div>
   <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;width:100%;padding:14px 18px;font-size:var(--fs-body);font-weight:700;">讓 AI 幫我換一餐</button>
   <div class="menu-regen-box" id="menuRegenBox">
-    <div class="menu-regen-hint">選一餐,AI 會依你的熱量目標重新配好。下面兩欄都可以留空。</div>
+    <div class="menu-regen-hint">選一餐,AI 會依你的熱量目標重新配好。下面全部都可以留空,直接按也會推薦。</div>
     <div class="meal-tabs" id="regenMealTabs">
       <button type="button" class="meal-tab" data-rmeal="breakfast">早餐</button>
       <button type="button" class="meal-tab active" data-rmeal="lunch">午餐</button>
       <button type="button" class="meal-tab" data-rmeal="dinner">晚餐</button>
       <button type="button" class="meal-tab" data-rmeal="fruit">點心/水果</button>
     </div>
-    <input id="menuWish" placeholder="想吃什麼?(可留空,AI 幫你決定)" autocomplete="off">
+    <div class="pref-label">口味喜好(可選,可複選)</div>
+    <div class="fridge-chips pref-chips" id="menuPrefChips">
+      <span class="fchip" data-pref="高蛋白">高蛋白</span>
+      <span class="fchip" data-pref="少油清爽">少油清爽</span>
+      <span class="fchip" data-pref="低碳水">低碳水</span>
+      <span class="fchip" data-pref="多蔬菜">多蔬菜</span>
+      <span class="fchip" data-pref="吃辣">吃辣</span>
+      <span class="fchip" data-pref="不吃牛">不吃牛</span>
+      <span class="fchip" data-pref="海鮮">海鮮</span>
+      <span class="fchip" data-pref="素食">素食</span>
+    </div>
+    <input id="menuWish" placeholder="還想吃什麼?(可留空,AI 幫你決定)" autocomplete="off">
     <input id="menuRestaurant" placeholder="要外食?貼餐廳 Google Maps 或官網連結" autocomplete="off" inputmode="url">
-    <div class="menu-regen-sub">貼上餐廳連結,AI 會讀那間店的菜單、幫你挑一道最適合減重的餐點(讀連結建議用 Google 金鑰)。</div>
+    <div class="menu-regen-photo-row">
+      <input type="file" accept="image/*" id="menuPhotoInput" multiple style="display:none">
+      <button type="button" class="mini-btn" id="menuPhotoBtn">上傳菜單照片</button>
+      <span class="menu-photo-preview" id="menuPhotoPreview"></span>
+    </div>
+    <div class="menu-regen-sub">貼餐廳連結、或上傳菜單照片,AI 會讀那份菜單、幫你挑一道最適合減重的餐點(讀連結建議用 Google 金鑰)。</div>
     <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">讓 AI 換這一餐</button>
     <div class="ai-photo-status" id="menuRegenStatus"></div>
   </div>
@@ -1206,12 +1227,17 @@
     "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
     "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
     "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
-    "選一餐,AI 會依你的熱量目標重新配好。下面兩欄都可以留空。":"Pick a meal and AI re-plans it to your calorie target. Both fields below are optional.",
+    "選一餐,AI 會依你的熱量目標重新配好。下面全部都可以留空,直接按也會推薦。":"Pick a meal and AI re-plans it to your calorie target. Everything below is optional — just tap and it still recommends.",
+    "口味喜好(可選,可複選)":"Taste preferences (optional, pick any)",
+    "高蛋白":"High protein","少油清爽":"Light / low oil","低碳水":"Low carb","多蔬菜":"More veg","吃辣":"Spicy OK","不吃牛":"No beef","海鮮":"Seafood","素食":"Vegetarian",
     "想吃什麼?(可留空)":"Craving anything? (optional)",
     "想吃什麼?(可留空,AI 幫你決定)":"Craving anything? (optional — AI decides if blank)",
+    "還想吃什麼?(可留空,AI 幫你決定)":"Anything else you fancy? (optional — AI decides if blank)",
     "要外食?貼餐廳 Google Maps 或官網連結":"Eating out? Paste the restaurant's Google Maps or website link",
-    "讀取餐廳連結需要一把免費 AI 金鑰(建議用 Google)。到下方「飲食紀錄」的 🔑 貼上金鑰即可。":"Reading a restaurant link needs a free AI key (Google recommended). Paste one at the 🔑 in Food log below.",
-    "貼上餐廳連結,AI 會讀那間店的菜單、幫你挑一道最適合減重的餐點(讀連結建議用 Google 金鑰)。":"Paste a restaurant link and AI reads its menu to pick the best dish for your goal (reading links works best with a Google key).",
+    "上傳菜單照片":"Upload menu photo",
+    "上傳菜單照片需要一把免費 AI 金鑰(建議 Google)。到下方「飲食紀錄」的 🔑 貼上即可。":"Uploading a menu photo needs a free AI key (Google recommended). Paste one at the 🔑 in Food log below.",
+    "讀取餐廳連結或菜單照片需要一把免費 AI 金鑰(建議用 Google)。到下方「飲食紀錄」的 🔑 貼上金鑰即可。":"Reading a restaurant link or menu photo needs a free AI key (Google recommended). Paste one at the 🔑 in Food log below.",
+    "貼餐廳連結、或上傳菜單照片,AI 會讀那份菜單、幫你挑一道最適合減重的餐點(讀連結建議用 Google 金鑰)。":"Paste a restaurant link or upload a menu photo — AI reads the menu and picks the best dish for your goal (reading links works best with a Google key).",
     "清空今天,重新記錄":"Clear today & restart","存進今天的紀錄":"Save to today's log","清空今日所有紀錄":"Clear today's records","清空運動計劃,重新選取":"Clear workout & reselect",
     // 拍照 / AI 金鑰
     "拍照估熱量":"Photo calories","加照片(選填)":"Add photo (optional)",
@@ -2029,6 +2055,13 @@
     if(arr[altIdx[field]] === cur) altIdx[field] = (altIdx[field]+1) % arr.length;  // 避免換到一樣的
     return arr[altIdx[field]];
   }
+  // 把「口味喜好」勾選的 chip + 手打的想吃,合成一句偏好(全部可留空)
+  let menuPhotos = [];   // 使用者上傳的菜單照片(base64,不含 data: 前綴)
+  function getMenuPrefs(){
+    const chips = Array.from(document.querySelectorAll("#menuPrefChips .fchip.on")).map(c=>c.dataset.pref);
+    const wish = (document.getElementById("menuWish").value||"").trim();
+    return [wish].concat(chips).filter(Boolean).join("、");
+  }
   // 讀餐廳連結(Google Maps 或官網)→ 讀那間店的菜單 → 挑一道適合減重的
   async function restaurantPick(url, wish, label, target){
     const key = cleanKey(geminiKey);
@@ -2044,15 +2077,36 @@
     if(key.slice(0,4)==="gsk_") return await groqBrowseJSON(prompt, key);
     return await googleBrowseJSON(prompt, key, 0.4);
   }
+  // 讀菜單照片(可多張)→ 認出菜單上的餐點 → 挑一道適合減重的
+  async function menuPhotoPick(b64s, wish, label, target){
+    const prompt =
+      '你是減重營養教練。這是一份餐廳菜單的照片(共 '+b64s.length+' 張),使用者想從這份菜單點「'+label+'」。\n'
+      + '請看懂菜單上有哪些餐點(含品名、若有價格/份量也參考),從「菜單上實際有的餐點」裡挑 1 道最適合減重的。\n'
+      + '條件:這一餐盡量控制在約 '+target+' 大卡上下、蛋白質足夠、少油炸勾芡與含糖飲料。'
+      + (wish ? ('使用者偏好:'+wish+',在此偏好內挑。') : '')
+      + '\n只回 JSON、不要多餘文字:{"text":"菜單上的餐點名稱+簡短吃法建議(例:去醬、飲料換無糖),不超過25字","why":"為什麼推薦這道,不超過30字"}。'
+      + '\n若照片看不清楚、看不出是菜單,text 請回空字串。';
+    const parts = b64s.map(b=>({inline_data:{mime_type:"image/jpeg", data:b}}));
+    return await geminiJSON(prompt, parts, 0.4);
+  }
+  function updateMenuPhotoPreview(){
+    const el = document.getElementById("menuPhotoPreview"); if(!el) return;
+    el.innerHTML = menuPhotos.length
+      ? '已附上 '+menuPhotos.length+' 張菜單 <span class="clear" id="menuPhotoClear">清除</span>'
+      : '';
+    const c = document.getElementById("menuPhotoClear");
+    if(c) c.addEventListener("click", ()=>{ menuPhotos=[]; updateMenuPhotoPreview(); });
+  }
   async function regenMenu(){
     const status = document.getElementById("menuRegenStatus");
-    const wish = (document.getElementById("menuWish").value||"").trim();
+    const wish = getMenuPrefs();
     const restEl = document.getElementById("menuRestaurant");
     const rest = ((restEl&&restEl.value)||"").trim();
+    const hasPhoto = menuPhotos.length>0;
     const field = regenField, label = MEAL_LABEL[field];
     if(!anyKey()){
-      if(rest){
-        status.innerHTML = '<span class="err">讀取餐廳連結需要一把免費 AI 金鑰(建議用 Google)。到下方「飲食紀錄」的 🔑 貼上金鑰即可。</span>';
+      if(rest || hasPhoto){
+        status.innerHTML = '<span class="err">讀取餐廳連結或菜單照片需要一把免費 AI 金鑰(建議用 Google)。到下方「飲食紀錄」的 🔑 貼上金鑰即可。</span>';
         return;
       }
       applyMeal(field, localNewMeal(field));
@@ -2063,7 +2117,15 @@
     btn.disabled = true; btn.textContent = "產生中…";
     try{
       const target = parseInt(document.getElementById("inKcalTarget").value,10) || kcalTarget || 1500;
-      if(rest){
+      if(hasPhoto){
+        status.innerHTML = '<span class="ai-spin"></span>正在讀菜單照片、幫你挑'+label+'…';
+        const m = await menuPhotoPick(menuPhotos, wish, label, target);
+        const text = (m && m.text) || "";
+        if(!text) throw new Error("菜單照片看不清楚");
+        applyMeal(field, text);
+        const why = (m && m.why) ? ' <span style="color:var(--ink-soft);font-size:var(--fs-hint)">'+esc(m.why)+'</span>' : '';
+        status.innerHTML = '<span class="ok">從你的菜單照片挑了 ✅ 已套用到上面</span>'+why;
+      } else if(rest){
         status.innerHTML = '<span class="ai-spin"></span>正在讀取餐廳菜單、幫你挑'+label+'…';
         const m = await restaurantPick(rest, wish, label, target);
         const text = (m && m.text) || "";
@@ -2084,7 +2146,9 @@
         status.innerHTML = '<span class="ok">新的'+label+'好了 ✅ 已套用到上面</span>';
       }
     }catch(e){
-      if(rest){
+      if(hasPhoto){
+        status.innerHTML = '<span class="err">讀不出這份菜單('+esc(e.message||e)+')。拍近一點、光線亮一點、字清楚一點再試 🙏</span>';
+      } else if(rest){
         status.innerHTML = '<span class="err">讀不到這間餐廳的菜單('+esc(e.message||e)+')。試試改貼餐廳「官網或菜單頁」的網址,通常比 Google Maps 更容易讀到。</span>';
       } else {
         applyMeal(field, localNewMeal(field));
@@ -2103,6 +2167,29 @@
         document.querySelectorAll("#regenMealTabs .meal-tab").forEach(x=> x.classList.toggle("active", x===b));
       });
     });
+    document.querySelectorAll("#menuPrefChips .fchip").forEach(c=>{
+      c.addEventListener("click", ()=> c.classList.toggle("on"));
+    });
+    const photoBtn = document.getElementById("menuPhotoBtn");
+    const photoInput = document.getElementById("menuPhotoInput");
+    if(photoBtn && photoInput){
+      photoBtn.addEventListener("click", ()=>{
+        if(!anyKey()){ document.getElementById("menuRegenStatus").innerHTML='<span class="err">上傳菜單照片需要一把免費 AI 金鑰(建議 Google)。到下方「飲食紀錄」的 🔑 貼上即可。</span>'; return; }
+        photoInput.click();
+      });
+      photoInput.addEventListener("change", async ()=>{
+        const files = Array.from(photoInput.files||[]); photoInput.value="";
+        if(!files.length) return;
+        const st = document.getElementById("menuRegenStatus");
+        st.innerHTML = '<span class="ai-spin"></span>讀取照片中…';
+        try{
+          const bigs = await Promise.all(files.map(f=>resizeImageToBase64(f, 900)));   // 菜單字多,存大一點才看得清
+          menuPhotos = bigs.map(b=>b.split(",")[1]);
+          updateMenuPhotoPreview();
+          st.innerHTML = '<span class="ok">已附上 '+menuPhotos.length+' 張菜單,按下方「讓 AI 換這一餐」就幫你挑</span>';
+        }catch(e){ st.innerHTML='<span class="err">照片讀取失敗:'+esc(e.message||e)+'</span>'; }
+      });
+    }
     const gen = document.getElementById("menuGenBtn");
     if(gen) gen.addEventListener("click", regenMenu);
   }
