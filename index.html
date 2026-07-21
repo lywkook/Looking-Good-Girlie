@@ -2123,6 +2123,16 @@
     const wish = (document.getElementById("menuWish").value||"").trim();
     return [wish].concat(chips).filter(Boolean).join("、");
   }
+  // 把技術錯誤轉成使用者看得懂的短原因(不提「AI」)
+  function browseReason(msg){
+    msg = String(msg||"");
+    if(/金鑰|驗證|401|403|API[_ ]?key|invalid|通過不了|無法通過/i.test(msg)) return {zh:"金鑰有問題", en:"key problem"};
+    if(/額度|429|quota|滿了/i.test(msg)) return {zh:"額度用完", en:"quota reached"};
+    if(/讀不到網頁|compound/i.test(msg)) return {zh:"這把金鑰不能讀網頁", en:"key can't read web"};
+    if(/連線|網路|network|connect/i.test(msg)) return {zh:"連不上網路", en:"network"};
+    if(/回傳格式|看不懂|沒有回覆|沒回/i.test(msg)) return {zh:"這次沒讀到內容", en:"nothing readable"};
+    return {zh:"讀不到", en:"couldn't read"};
+  }
   // 餐廳推薦:foods 有值時「只從使用者說有的餐點挑」,沒值時用 google_search 找真實菜單(找不到就回空,不虛構)
   async function restaurantPick(url, wish, label, target, foods){
     const sel = keyFor("browse");   // 讀網頁連結:優先 Google(url_context 較穩),沒有才用 Groq compound
@@ -2260,9 +2270,15 @@
         showRegenResult(text, m.why);
       }
     }catch(e){
-      if(hasPhoto) status.innerHTML = '<span class="err">'+RP('讀取失敗,換張更清楚的菜單照片再試,或直接打想吃什麼。','Read failed — try a clearer menu photo, or just type a craving.')+'</span>';
-      else if(rest) status.innerHTML = '<span class="err">'+RP('讀取失敗,可改貼官網 / 菜單頁,或用「上傳菜單照片」。','Read failed — try the official/menu page, or upload a menu photo.')+'</span>';
-      else status.innerHTML = '<span class="err">'+RP('這次沒成功,再按一次試試。','That didn\'t work — tap again.')+'</span>';
+      const reason = browseReason(e && (e.message||e));
+      if(hasPhoto) status.innerHTML = '<span class="err">'+RP('讀取失敗('+reason.zh+')。換張更清楚的菜單照片再試,或直接打想吃什麼。','Read failed ('+reason.en+'). Try a clearer menu photo, or just type a craving.')+'</span>';
+      else if(rest){
+        const needGoogle = !googleKey;   // 沒 Google 金鑰是讀連結/店名失敗最常見主因
+        status.innerHTML = '<span class="err">'+RP('讀取失敗('+reason.zh+')。','Read failed ('+reason.en+'). ')
+          + (needGoogle ? RP('讀連結或店名需要一把 Google 金鑰(你目前這把讀不了網頁);到 ⚙️ 設定加一把免費 Google 金鑰會穩很多。也可','Reading links or store names needs a Google key (your current key can\'t read web pages); add a free Google key in ⚙️ Settings. Or ') : RP('可','You can '))
+          + RP('改貼官網 / 菜單頁,或用「上傳菜單照片」。','use the official/menu page, or upload a menu photo.')+'</span>';
+      }
+      else status.innerHTML = '<span class="err">'+RP('這次沒成功('+reason.zh+'),再按一次試試。','That didn\'t work ('+reason.en+') — tap again.')+'</span>';
     }
     btn.disabled = false; btn.textContent = old;
   }
@@ -3542,31 +3558,34 @@
   // 讓 Gemini 讀網址(url_context)+ 搜尋(google_search),用來讀餐廳菜單。用文字回 JSON、再容錯解析。
   const GEMINI_BROWSE_MODELS = ["gemini-2.5-flash","gemini-flash-latest","gemini-2.0-flash"];
   async function googleBrowseJSON(prompt, key, temp){
-    const body = {
-      contents:[{ parts:[{text:prompt}] }],
-      tools:[{ url_context:{} },{ google_search:{} }],
-      generationConfig:{ temperature: temp==null?0.4:temp }
-    };
+    // 工具由強到弱逐步退讓:兩個工具 → 只讀網址 → 不用工具(靠模型本身知識)。
+    // 有些免費金鑰不支援 google_search 搜尋工具,會整個 400;降級後就能用。
+    const toolSets = [ [{url_context:{}},{google_search:{}}], [{url_context:{}}], null ];
+    const models = GEMINI_BROWSE_MODELS.concat([GEMINI_BROWSE_MODELS[0]]);   // 最佳模型多試一次
     let lastMsg="連線失敗", quota=false, parseFail=false;
-    const models = GEMINI_BROWSE_MODELS.concat([GEMINI_BROWSE_MODELS[0]]);   // 最佳模型多試一次,提高穩定度
     for(const mdl of models){
-      let res;
-      try{ res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+mdl+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(body)}); }
-      catch(netErr){ lastMsg="無法連線到 Google,請檢查網路"; continue; }
-      if(res.ok){
-        const d = await res.json();
-        const parts = ((((d.candidates||[])[0]||{}).content||{}).parts)||[];
-        const txt = parts.map(p=>p.text||"").join("").trim();
-        const obj = parseLooseJSON(txt);
-        if(obj!=null) return obj;
-        parseFail=true; continue;   // 這次回的不是乾淨 JSON → 換下一個模型再試,不要直接放棄
+      for(const tools of toolSets){
+        const body = { contents:[{ parts:[{text:prompt}] }], generationConfig:{ temperature: temp==null?0.4:temp } };
+        if(tools) body.tools = tools;
+        let res;
+        try{ res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+mdl+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(body)}); }
+        catch(netErr){ lastMsg="無法連線到 Google,請檢查網路"; break; }
+        if(res.ok){
+          const d = await res.json();
+          const parts = ((((d.candidates||[])[0]||{}).content||{}).parts)||[];
+          const txt = parts.map(p=>p.text||"").join("").trim();
+          const obj = parseLooseJSON(txt);
+          if(obj!=null) return obj;
+          parseFail=true; break;   // 有回應但不是乾淨 JSON → 換下一個模型
+        }
+        let msg="錯誤 "+res.status; const st=res.status;
+        try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
+        lastMsg=msg;
+        if(st===401||st===403 || (st===400 && /API[_ ]?key|API_KEY_INVALID/i.test(msg))) throw new Error("Google 金鑰無法通過驗證,請重新複製整把金鑰、或改用 Groq 金鑰。");
+        if(st===429){ quota=true; break; }
+        if(st===400 && tools){ continue; }   // 工具造成的 400 → 減少工具再試同一個模型
+        break;   // 其他錯誤 → 換下一個模型
       }
-      let msg="錯誤 "+res.status; const st=res.status;
-      try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
-      lastMsg=msg;
-      if(st===401||st===403 || (st===400 && /API[_ ]?key|API_KEY_INVALID/i.test(msg))) throw new Error("Google 金鑰無法通過驗證,請重新複製整把金鑰、或改用 Groq 金鑰。");
-      if(st===400) continue;   // 有些模型不支援讀網址工具,換下一個模型再試
-      if(st===429) quota=true;
     }
     if(quota) throw new Error("Google 免費額度滿了,稍等再試。");
     if(parseFail) throw new Error("回傳格式看不懂,請再試一次");
