@@ -58,6 +58,9 @@
   }
   *{box-sizing:border-box;}
   input, textarea, select, button{ font-family: var(--font-main), "Noto Sans TC", -apple-system, sans-serif; }
+  /* 固定在手機畫面的背景圖層:position:fixed 不受內容捲動影響(iOS 上比 background-attachment:fixed 可靠) */
+  #bgLayer{ position:fixed; inset:0; z-index:-1; background-size:cover; background-position:center;
+    background-repeat:no-repeat; pointer-events:none; }
   body{
     margin:0;
     background: var(--cream);
@@ -378,6 +381,10 @@
   .home-new{ margin-top:24px; background:var(--card); border-radius:18px; padding:16px; box-shadow:var(--shadow);
     display:flex; flex-direction:column; gap:8px; }
   .home-new-title{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
+  .home-appearance-btn{ display:block; width:100%; max-width:560px; margin:20px auto 0; box-sizing:border-box;
+    background:var(--card); border:2px solid var(--pink-soft); border-radius:16px; padding:14px;
+    font-size:var(--fs-body); font-weight:800; color:var(--ink); cursor:pointer; box-shadow:var(--shadow); font-family:inherit; }
+  .home-appearance-btn:active{ transform:scale(0.99); }
   .home-bg{ max-width:560px; margin:16px auto 0; background:var(--card); border-radius:18px; padding:16px; box-shadow:var(--shadow); }
   .bg-swatches{ display:flex; flex-wrap:wrap; gap:10px; margin:10px 0; }
   .bg-sw{ width:38px; height:38px; border-radius:50%; border:2px solid var(--line); cursor:pointer; }
@@ -513,6 +520,7 @@
 </head>
 <body>
 
+<div id="bgLayer"></div>
 <div id="homeScreen">
   <div class="home-head">
     <div class="home-title cute">我的計畫</div>
@@ -528,7 +536,8 @@
     </select>
     <button id="homeAddBtn" class="save-btn cute">＋ 建立新計畫</button>
   </div>
-  <div class="home-sub" style="margin-top:20px;">背景、主題色、個人資料 → 進入計畫後點下方「⚙️ 設定」</div>
+  <button type="button" class="home-appearance-btn" id="homeAppearanceBtn">🎨 主畫面外觀(背景・主題色)</button>
+  <div class="home-sub" style="margin-top:10px;">每個計畫的外觀 → 進入計畫後點下方「⚙️ 設定」各自設定</div>
 </div>
 
 <div id="appView" style="display:none;">
@@ -814,10 +823,10 @@
 
 <div class="modal" id="settingsModal">
   <div class="modal-inner">
-    <div class="modal-head"><span class="modal-title cute">設定 ⚙️</span><button type="button" class="modal-close" id="setClose">✕</button></div>
+    <div class="modal-head"><span class="modal-title cute"><span id="setModalTitle">設定</span> ⚙️</span><button type="button" class="modal-close" id="setClose">✕</button></div>
 
     <div class="set-block">
-      <div class="set-title">主題色(這個計畫)</div>
+      <div class="set-title">主題色</div>
       <div class="bg-swatches" id="accentSwatches"></div>
       <div class="color-row"><input type="color" id="accentPicker" class="color-pick"><input type="text" id="accentHex" class="hex-in" placeholder="#CDC3DB" maxlength="7" autocomplete="off"><button type="button" class="mini-btn" id="accentApply">套用</button></div>
     </div>
@@ -2857,7 +2866,8 @@
     const pl=plans.find(p=>p.id===id); if(!pl) return;
     PLAN=pl; try{ await window.storage.set("currentplan", id, false); }catch(e){}
     updatePlanBar(); renderPlanList(); applyPlanView();
-    await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile(); await loadWorkout(); await loadFridge(); await loadReminder(); await loadThemeColor();
+    await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile(); await loadWorkout(); await loadFridge(); await loadReminder();
+    await applyScopeTheme(id);   // 套用「這個計畫」自己的主題色 + 背景
   }
   async function addPlan(){
     const nameEl=document.getElementById("newPlanName");
@@ -2896,12 +2906,21 @@
     box.innerHTML = ACCENT_PRESETS.map(c=> '<span class="bg-sw'+(c.toLowerCase()===themeColor.toLowerCase()?' on':'')+'" data-c="'+c+'" style="background:'+c+'"></span>').join("");
     box.querySelectorAll(".bg-sw").forEach(sw=> sw.addEventListener("click", async ()=>{ themeColor=sw.dataset.c; applyAccent(themeColor); await saveThemeColor(); renderAccentSwatches(); }));
   }
+  // 外觀範圍:"home"=主畫面自己的;其餘=各計畫(default 用無前綴、其他用 p:<id>:)
+  let themeScope = "home";
+  function tkey(base){ return themeScope==="home" ? ("home:"+base) : (themeScope==="default" ? base : ("p:"+themeScope+":"+base)); }
   async function loadThemeColor(){
     themeColor="#CDC3DB";
-    try{ const r=await window.storage.get(K("themecolor"),false); if(r&&r.value) themeColor=r.value; }catch(e){}
+    try{ const r=await window.storage.get(tkey("themecolor"),false); if(r&&r.value) themeColor=r.value; }catch(e){}
     applyAccent(themeColor); renderAccentSwatches();
   }
-  async function saveThemeColor(){ try{ await window.storage.set(K("themecolor"), themeColor, false); }catch(e){} }
+  async function saveThemeColor(){ try{ await window.storage.set(tkey("themecolor"), themeColor, false); }catch(e){} }
+  // 切換外觀範圍並套用(主畫面 or 某個計畫各自的主題色+背景)
+  async function applyScopeTheme(scope){
+    themeScope = scope;
+    await loadThemeColor();
+    await loadTheme();
+  }
 
   // ---------- 主畫面(顯示所有計畫,點選進入) ----------
   const DEL_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6M10 11v6M14 11v6"/></svg>';
@@ -2921,17 +2940,21 @@
     box.querySelectorAll(".home-card").forEach(c=> c.addEventListener("click", (e)=>{ if(e.target.closest(".home-trash")) return; enterPlan(c.dataset.id); }));
   }
   function openSettings(){
+    const isHome = themeScope==="home";
     const t = PLAN ? PLAN.type : "";
-    const pb=document.getElementById("setProfileBlock"); if(pb) pb.style.display=(t==='full'||t==='origin')?"":"none";
+    // 主畫面只調外觀(主題色/背景/字體);個人資料、刪除計畫只在計畫內出現
+    const pb=document.getElementById("setProfileBlock"); if(pb) pb.style.display=(!isHome && (t==='full'||t==='origin'))?"":"none";
     const ah=document.getElementById("accentHex"), ap=document.getElementById("accentPicker");
     if(ah) ah.value=themeColor; if(ap) ap.value=themeColor;
     const bh=document.getElementById("bgHex"), bp=document.getElementById("bgPicker");
     if(bh) bh.value=bgImage?"":bgColor; if(bp) bp.value=bgColor;
     const db=document.getElementById("setDangerBlock");
-    if(db) db.style.display=PLAN?"":"none";
+    if(db) db.style.display=(!isHome && PLAN)?"":"none";
+    const ttl=document.getElementById("setModalTitle"); if(ttl) ttl.textContent = isHome ? "主畫面外觀" : "設定";
     renderAccentSwatches(); renderSwatches();
     document.getElementById("settingsModal").classList.add("show");
   }
+  function openHomeSettings(){ themeScope="home"; openSettings(); }
   async function enterPlan(id){
     await switchPlan(id);
     document.getElementById("homeScreen").style.display="none";
@@ -2943,6 +2966,7 @@
     document.getElementById("appView").style.display="none";
     document.getElementById("homeScreen").style.display="";
     const pp=document.getElementById("planPanel"); if(pp) pp.classList.remove("show");
+    applyScopeTheme("home");   // 回到主畫面 → 套用主畫面自己的外觀
     window.scrollTo(0,0);
   }
   async function addPlanHome(){
@@ -2958,6 +2982,7 @@
   function initHomeModule(){
     renderHome();
     const add=document.getElementById("homeAddBtn"); if(add) add.addEventListener("click", addPlanHome);
+    const ha=document.getElementById("homeAppearanceBtn"); if(ha) ha.addEventListener("click", openHomeSettings);
     const hb=document.getElementById("homeBtn"); if(hb) hb.addEventListener("click", goHome);
     const setC=document.getElementById("setClose"), sm=document.getElementById("settingsModal");
     if(setC) setC.addEventListener("click", ()=> sm.classList.remove("show"));
@@ -3022,15 +3047,9 @@
   const BG_PRESETS = ["#F5F1EB","#EDE6DA","#E6E9E4","#ECE4E6","#E3E9EE","#EAE6EE","#F3E8E2","#DED7CB"];
   let bgColor="#F5F1EB", bgImage="";
   function applyTheme(){
-    if(bgImage){
-      document.body.style.backgroundImage="url('"+bgImage+"')";
-      document.body.style.backgroundSize="cover";
-      document.body.style.backgroundAttachment="fixed";
-      document.body.style.backgroundPosition="center";
-    } else {
-      document.body.style.backgroundImage="none";
-      document.documentElement.style.setProperty("--cream", bgColor);
-    }
+    const layer=document.getElementById("bgLayer");
+    document.documentElement.style.setProperty("--cream", bgColor);
+    if(layer) layer.style.backgroundImage = bgImage ? ("url('"+bgImage+"')") : "none";
     renderSwatches();
   }
   function renderSwatches(){
@@ -3039,11 +3058,12 @@
     box.querySelectorAll(".bg-sw").forEach(s=> s.addEventListener("click", async ()=>{ bgColor=s.dataset.c; bgImage=""; applyTheme(); await saveTheme(); }));
   }
   async function loadTheme(){
-    try{ const r=await window.storage.get("bgcolor",false); if(r&&r.value) bgColor=r.value; }catch(e){}
-    try{ const r=await window.storage.get("bgimage",false); if(r&&r.value) bgImage=r.value; }catch(e){}
+    bgColor="#F5F1EB"; bgImage="";
+    try{ const r=await window.storage.get(tkey("bgcolor"),false); if(r&&r.value) bgColor=r.value; }catch(e){}
+    try{ const r=await window.storage.get(tkey("bgimage"),false); if(r&&r.value) bgImage=r.value; }catch(e){}
     applyTheme();
   }
-  async function saveTheme(){ try{ await window.storage.set("bgcolor", bgColor, false); await window.storage.set("bgimage", bgImage, false); }catch(e){} }
+  async function saveTheme(){ try{ await window.storage.set(tkey("bgcolor"), bgColor, false); await window.storage.set(tkey("bgimage"), bgImage, false); }catch(e){} }
   function initThemeModule(){
     const up=document.getElementById("bgUpload"), upBtn=document.getElementById("bgUploadBtn"), clr=document.getElementById("bgClear");
     if(upBtn) upBtn.addEventListener("click", ()=> up.click());
