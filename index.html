@@ -4895,7 +4895,7 @@
   const SECTION_LABELS = { menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", reminderSection:"提醒", workoutSection:"運動計畫", checkinSection:"每日打卡" };
   function buildJumpMenu(){
     const box=document.getElementById("navJumpMenu"); if(!box) return;
-    const ids=["menuSection","foodSection","waterSection","metricsSection","fridgeSection","reminderSection","workoutSection","checkinSection"];
+    const ids=["menuSection","foodSection","waterSection","metricsSection","fridgeSection","checkinSection","workoutSection","reminderSection"];
     box.innerHTML = ids.filter(id=>{ const el=document.getElementById(id); return el && el.style.display!=="none"; })
       .map(id=>`<div class="nav-jump-item" data-sec="${id}">${SECTION_LABELS[id]}</div>`).join("");
     box.querySelectorAll(".nav-jump-item").forEach(it=> it.addEventListener("click", ()=> jumpToSection(it.dataset.sec)));
