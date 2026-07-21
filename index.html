@@ -127,8 +127,11 @@
   .date-bar{ display:flex; align-items:center; gap:8px; margin:0 0 10px; padding:8px 10px; background:var(--card); border-radius:16px; box-shadow:var(--shadow); border:2px solid var(--pink-soft); }
   .date-nav{ width:36px; height:36px; border:none; border-radius:11px; background:var(--pink-soft); color:var(--pink-shadow); font-size:22px; font-weight:900; cursor:pointer; flex:none; line-height:1; }
   .date-nav:active{ transform:scale(0.93); }
-  .date-mid{ flex:1; position:relative; display:flex; align-items:center; justify-content:center; min-width:0; }
+  .date-mid{ flex:1; position:relative; display:flex; align-items:center; justify-content:center; gap:5px; min-width:0;
+    background:var(--pink-soft); border-radius:12px; padding:6px 10px; cursor:pointer; }
+  .date-mid:active{ transform:scale(0.98); }
   .date-display{ font-family:inherit; font-size:var(--fs-body); color:var(--ink); font-weight:900; text-align:center; }
+  .date-caret{ color:var(--pink-shadow); font-size:var(--fs-label); flex:none; }
   .date-overlay{ position:absolute; inset:0; width:100%; height:100%; opacity:0; border:none; padding:0; margin:0; cursor:pointer; }
   .date-today-btn{ border:none; border-radius:11px; background:var(--pink); color:#fff; font-family:inherit; font-weight:700; font-size:var(--fs-label); padding:8px 12px; cursor:pointer; flex:none; }
   .date-today-btn:active{ transform:scale(0.95); }
@@ -704,8 +707,9 @@
 </div>
 <div class="date-bar" id="dateBar">
   <button type="button" class="date-nav" id="datePrev" aria-label="前一天">‹</button>
-  <div class="date-mid">
+  <div class="date-mid" id="dateMid">
     <div class="date-display" id="dateDisplay"></div>
+    <span class="date-caret" aria-hidden="true">▾</span>
     <input type="date" id="datePicker" class="date-overlay" aria-label="選擇日期">
   </div>
   <button type="button" class="date-nav" id="dateNext" aria-label="後一天">›</button>
@@ -851,7 +855,7 @@
       </div>
       <div class="ai-photo-status" id="woAdjustStatus"></div>
     </div>
-    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearWorkoutBtn">清除運動計畫,重新選取</button></div>
+    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearWorkoutBtn">清除所有內容</button></div>
   </div>
 </div>
 
@@ -918,7 +922,7 @@
     <div id="kcalSummary"></div>
     <div id="foodAdvice"></div>
     <div id="foodLogArea"></div>
-    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearFoodBtn">清空今天,重新記錄</button></div>
+    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearFoodBtn">清除所有內容</button></div>
   </div>
 </div>
 
@@ -964,7 +968,7 @@
     <div id="chartArea"><div class="chart-empty">尚無紀錄,填入體重後會顯示趨勢曲線。</div></div>
     <div id="snapshotArea"></div>
     <div class="history" id="historyArea"></div>
-    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearMetricsBtn">清除所有身體數據紀錄</button></div>
+    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearMetricsBtn">清除所有內容</button></div>
   </div>
 </div>
 
@@ -1168,7 +1172,7 @@
     "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
     "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
     "想吃什麼?(可留空)":"Craving anything? (optional)",
-    "清空今天,重新記錄":"Clear today & restart","存進今天的紀錄":"Save to today's log","清除所有身體數據紀錄":"Clear all body-data records",
+    "清空今天,重新記錄":"Clear today & restart","存進今天的紀錄":"Save to today's log","清除所有內容":"Clear all content",
     // 拍照 / AI 金鑰
     "拍照估熱量":"Photo calories","加照片(選填)":"Add photo (optional)",
     "上傳食物照片估熱量(可多張)":"Upload food photos to auto-estimate calories (multiple ok)",
@@ -1893,6 +1897,9 @@
   function initDateBar(){
     const dp=document.getElementById("datePicker"), prev=document.getElementById("datePrev"), next=document.getElementById("dateNext"), tb=document.getElementById("dateTodayBtn");
     if(dp) dp.addEventListener("change", ()=>{ const v=dp.value; if(v){ const a=v.split("-").map(Number); setViewDate(new Date(a[0],a[1]-1,a[2])); } });
+    // 點日期直接開啟日曆選取(showPicker 支援的瀏覽器);透明日期輸入為後備
+    const mid=document.getElementById("dateMid");
+    if(mid && dp) mid.addEventListener("click", ()=>{ if(typeof dp.showPicker==="function"){ try{ dp.showPicker(); }catch(_){} } });
     if(prev) prev.addEventListener("click", ()=>{ const d=new Date(viewDate); d.setDate(d.getDate()-1); setViewDate(d); });
     if(next) next.addEventListener("click", ()=>{ const d=new Date(viewDate); d.setDate(d.getDate()+1); setViewDate(d); });
     if(tb) tb.addEventListener("click", ()=> setViewDate(new Date(today)));
@@ -2496,10 +2503,12 @@
   (function(){
     const cm=document.getElementById("clearMetricsBtn"); if(!cm) return;
     cm.addEventListener("click", async ()=>{
-      const orig = cm.textContent;
-      if(!log.length){ cm.textContent = lang==="en"?"No records yet":"目前沒有紀錄"; setTimeout(()=>{ cm.textContent=orig; }, 1500); return; }
-      if(!confirm(lang==="en"?("Clear all "+log.length+" body-data records? This cannot be undone."):("確定清除全部 "+log.length+" 筆身體數據紀錄?此動作無法復原"))) return;
-      log = [];
+      const orig = cm.textContent, cur = curIso();
+      const has = log.some(p=>p.date===cur);
+      const anyInput = ["inWeight","inFat","inBmi","inMuscle"].some(id=>{ const el=document.getElementById(id); return el && el.value!==""; });
+      if(!has && !anyInput){ cm.textContent = lang==="en"?"No data this day":"這天沒有紀錄"; setTimeout(()=>{ cm.textContent=orig; }, 1500); return; }
+      if(!confirm(lang==="en"?"Clear this day's body data?":"清除這天的身體數據?")) return;
+      log = log.filter(p=>p.date!==cur);   // 只清除當天的那一筆
       await saveLog();
       ["inWeight","inFat","inBmi","inMuscle"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
       renderMetrics();
@@ -3272,7 +3281,7 @@
     const clearFood=document.getElementById("clearFoodBtn");
     if(clearFood) clearFood.addEventListener("click", async ()=>{
       const iso=curIso(); const todays=foodLog.filter(f=>f.date===iso);
-      if(!todays.length){ clearFood.textContent="今天還沒有紀錄"; setTimeout(()=>{ clearFood.textContent="清空今天,重新記錄"; },1500); return; }
+      if(!todays.length){ const _o=clearFood.textContent; clearFood.textContent=lang==="en"?"No records today":"今天還沒有紀錄"; setTimeout(()=>{ clearFood.textContent=_o; },1500); return; }
       if(!confirm("清空今天已記錄的 "+todays.length+" 項食物?可以重新記錄")) return;
       foodLog=foodLog.filter(f=>f.date!==iso); await saveFoodLog(); renderFoodLog();
     });
