@@ -160,6 +160,9 @@
   .nav-jump-item{ padding:14px 24px; border-radius:12px; font-size:var(--fs-title); color:var(--ink); cursor:pointer; white-space:nowrap; }
   .nav-jump-item:active{ background:var(--pink-soft); }
   .cute{ font-family:var(--font-main), "ZCOOL KuaiLe", "Noto Sans TC", sans-serif; }
+  /* 字重微調:粗線體本來很粗 → 取消合成粗體、看起來細一點;紅豆奶霜體較細 → 加一點描邊、看起來粗一點 */
+  :root[data-font="cu"] *{ font-weight:400 !important; }
+  :root[data-font="redbean"] body{ -webkit-text-stroke:0.3px currentColor; }
 
   .stamp-row{
     display:flex; align-items:center; justify-content:space-between;
@@ -873,6 +876,14 @@
   </div>
 </div>
 
+<div class="section" id="checkinSection">
+  <h2 class="cute" id="checkinToggle"><span class="dot"></span>每日打卡 <span class="pf-caret" id="checkinCaret">▾</span></h2>
+  <div class="pf-mini" id="checkinMini"></div>
+  <div id="checkinBody">
+    <div id="dayList"></div>
+  </div>
+</div>
+
 <!-- 個人資料改為 modal,移到 appView 外(見下方) -->
 
 <div class="section" id="workoutSection">
@@ -940,14 +951,6 @@
       <div class="ai-photo-status" id="woAdjustStatus"></div>
     </div>
     <div class="clear-row"><button type="button" class="clear-all-btn" id="clearWorkoutBtn">清空運動計劃,重新選取</button></div>
-  </div>
-</div>
-
-<div class="section" id="checkinSection">
-  <h2 class="cute" id="checkinToggle"><span class="dot"></span>每日打卡 <span class="pf-caret" id="checkinCaret">▾</span></h2>
-  <div class="pf-mini" id="checkinMini"></div>
-  <div id="checkinBody">
-    <div id="dayList"></div>
   </div>
 </div>
 
@@ -5001,6 +5004,7 @@
   let fontPref = "cu";   // 全域設定(不分計畫)
   function applyFont(){
     document.documentElement.style.setProperty("--font-main", fontPref==="cu" ? '"CuHsianTi"' : '"RedBeanCream"');
+    document.documentElement.setAttribute("data-font", fontPref==="cu" ? "cu" : "redbean");
     const txt = lang==="en"
       ? (fontPref==="cu" ? "CuHsian (tap for RedBean)" : "RedBean (tap for CuHsian)")
       : (fontPref==="cu" ? "粗線體(點我換紅豆奶霜體)" : "紅豆奶霜體(點我換粗線體)");
