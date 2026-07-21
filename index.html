@@ -1723,7 +1723,9 @@
   const endDate = new Date(2026,7,28);
   // 今天 = 手機的實際日期(取當地日期、歸零時分秒),打卡/今天標示都依實際日期
   const _now = new Date();
-  const today = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate());
+  let today = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate());
+  // 重新取得手機當下的實際日期(歸零時分),讓「今天」不會因 App 一直開著而過期
+  function refreshToday(){ const n=new Date(); today = new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
   // 目前檢視的日期(可用最上方日期選擇器切換);各日的菜單/飲食/喝水/體重都依這個日期
   let viewDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   function curIso(){ return isoDate(viewDate); }
@@ -1927,6 +1929,15 @@
     if(prev) prev.addEventListener("click", ()=>{ const d=new Date(viewDate); d.setDate(d.getDate()-1); setViewDate(d); });
     if(next) next.addEventListener("click", ()=>{ const d=new Date(viewDate); d.setDate(d.getDate()+1); setViewDate(d); });
     if(tb) tb.addEventListener("click", ()=> setViewDate(new Date(today)));
+    // App 重新回到前景時,若日期已跨天且原本正在看「今天」,自動跟著換到新的今天
+    document.addEventListener("visibilitychange", ()=>{
+      if(document.visibilityState!=="visible") return;
+      const av=document.getElementById("appView"); if(!av || av.style.display==="none") return;
+      const wasToday = curIso()===isoDate(today);
+      refreshToday();
+      if(wasToday) viewDate = new Date(today);
+      syncDateBar(); refreshDateViews();
+    });
     syncDateBar();
   }
 
@@ -4254,10 +4265,11 @@
     setTimeout(()=>{ try{ window.print(); }catch(e){ alert("匯出失敗:"+(e.message||e)); } }, 200);
   }
   async function enterPlan(id){
+    refreshToday();               // 點開計畫時,先抓當下的實際日期
     await switchPlan(id);
-    viewDate = new Date(today);   // 進入計畫時預設看「今天」
+    viewDate = new Date(today);   // 進入計畫時自動顯示「今天」那一天
     if(typeof syncDateBar==="function") syncDateBar();
-    if(typeof updateStripForDate==="function") updateStripForDate();
+    if(typeof refreshDateViews==="function") refreshDateViews();
     document.getElementById("homeScreen").style.display="none";
     document.getElementById("appView").style.display="";
     window.scrollTo(0,0);
