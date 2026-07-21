@@ -619,6 +619,9 @@
   .rr-use, .rr-again{ flex:1; padding:11px 8px; border-radius:12px; font-size:var(--fs-label); font-weight:800; font-family:inherit; cursor:pointer; }
   .rr-use{ background:var(--pink); color:#fff; border:none; }
   .rr-again{ background:#fff; border:2px solid var(--line); color:var(--ink); }
+  .rr-refine{ margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); }
+  .rr-refine-label{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.5; margin-bottom:6px; }
+  .rr-foods{ width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px; padding:10px 12px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); }
   .pref-label{ font-size:var(--fs-hint); color:var(--ink-soft); margin:2px 0 8px; }
   .pref-chips{ margin-bottom:10px; }
   .menu-regen-photo-row{ display:flex; align-items:center; gap:10px; margin-top:8px; flex-wrap:wrap; }
@@ -2125,22 +2128,25 @@
     const wish = (document.getElementById("menuWish").value||"").trim();
     return [wish].concat(chips).filter(Boolean).join("、");
   }
-  // 讀餐廳連結(Google Maps 或官網)→ 讀那間店的菜單 → 挑一道適合減重的
-  async function restaurantPick(url, wish, label, target){
+  // 餐廳推薦:foods 有值時「只從使用者說有的餐點挑」,沒值時用 google_search 找真實菜單(找不到就回空,不虛構)
+  async function restaurantPick(url, wish, label, target, foods){
     const sel = keyFor("browse");   // 讀網頁連結:優先 Google(url_context 較穩),沒有才用 Groq compound
     if(!sel) throw new Error("尚未設定 AI 金鑰");
-    const prompt =
-      '你是減重營養教練。使用者今天想在這間餐廳吃「'+label+'」。\n'
-      + '餐廳(可能是連結,也可能直接是店名):'+url+'\n'
-      + '重要:如果是 Google Maps 連結(maps.app.goo.gl),它「只有靜態頁面沒有菜單分頁內容」,不要期待讀到菜單。請改用以下方法,並「務必實際使用 google_search 搜尋」:\n'
-      + '1. 先確定「餐廳名稱、所在地區、料理類型」(從連結標題或直接就是店名)。\n'
-      + '2. 用 google_search 搜「餐廳名稱 + 菜單 / menu」以及外送平台(Uber Eats、foodpanda)、官網、部落格食記,盡量找出這間店的實際菜色或招牌菜。\n'
-      + '3. 依你找到的菜色(或這種料理類型常見的餐點)推薦 1 道最適合減重的;不必逐字對到菜單,只要是這間店合理會有的即可。\n'
-      + '條件:這一餐盡量約 '+target+' 大卡上下、蛋白質足夠、少油炸勾芡與含糖飲料。'
-      + (wish ? ('使用者偏好:'+wish+',在此偏好內挑。') : '')
-      + '\n只回 JSON、不要多餘文字:{"text":"餐點名稱+簡短吃法建議(例:去醬、飲料換無糖),不超過25字","why":"店名+為什麼推薦,不超過30字"}。'
-      + '\n只有「連是哪間店、哪種料理都完全查不出來」時,text 才回空字串;只要知道店名或料理類型,就大膽推薦,不要因為「讀不到完整菜單」就放棄。';
-    const run=async s=> s.provider==="groq" ? await groqBrowseJSON(prompt, s.key) : await googleBrowseJSON(prompt, s.key, 0.4);
+    const prompt = foods
+      ? ('你是減重營養教練。使用者今天在「'+url+'」想吃「'+label+'」,並告訴你這間店有賣:'+foods+'。\n'
+        + '請「只」從使用者列的這些餐點裡,挑 1 道最適合減重的(可加吃法建議,如去醬、飲料換無糖)。絕對不要超出這個清單、不要虛構其他品項。\n'
+        + '條件:約 '+target+' 大卡上下、蛋白質足夠、少油炸勾芡與含糖飲料。'
+        + (wish ? ('其他偏好:'+wish+'。') : '')
+        + '\n只回 JSON:{"text":"從清單挑的餐點+吃法建議,不超過25字","why":"為什麼推薦,不超過30字"}。')
+      : ('你是減重營養教練。使用者今天想在「'+url+'」吃「'+label+'」。\n'
+        + '請「務必用 google_search」找出「這間餐廳真實的菜單/餐點」(搜 店名+菜單/menu、Uber Eats、foodpanda、官網、食記)。\n'
+        + '只從「你有查到、這間店真的有賣」的餐點裡,挑 1 道最適合減重的。\n'
+        + '★最重要:絕對不要虛構這間店沒有的餐點。如果查不到、無法確認他們實際賣什麼(例如它是飲料店、你卻不確定有沒有餐點),text 就回「空字串」,不要亂猜、不要用「這類店常見的菜」來填。\n'
+        + '條件:約 '+target+' 大卡上下、蛋白質足夠、少油炸勾芡與含糖飲料。'
+        + (wish ? ('使用者偏好:'+wish+',在此偏好內挑。') : '')
+        + '\n只回 JSON:{"text":"這間店真的有的餐點+吃法建議,不超過25字","why":"店名+為什麼推薦,不超過30字"}。'
+        + '\n查不到真實菜單、或無法確認就 text 回空字串。');
+    const run=async s=> s.provider==="groq" ? await groqBrowseJSON(prompt, s.key) : await googleBrowseJSON(prompt, s.key, foods?0.3:0.35);
     try{ return await run(sel); }
     catch(e){ const alt=otherSel(sel); if(alt) return await run(alt); throw e; }
   }
@@ -2177,18 +2183,36 @@
   let regenCtx = null;   // { field, wish, rest, hasPhoto, photos, target, last }
   const RP=(zh,en)=> (typeof lang!=="undefined"&&lang==="en")?en:zh;
   async function pickMeal(avoid){
-    const { field, wish, rest, hasPhoto, photos, target } = regenCtx;
+    const { field, wish, rest, hasPhoto, photos, target, foods } = regenCtx;
     const label = MEAL_LABEL[field];
     const avoidTxt = avoid ? ('。請不要再推薦「'+avoid+'」,換一道明顯不一樣的') : '';
     const wish2 = (wish||'') + avoidTxt;
     if(!anyKey()) return { text: localNewMeal(field), why:"" };   // 沒金鑰:用內建替代清單輪替
     if(hasPhoto) return await menuPhotoPick(photos, wish2, label, target);
-    if(rest) return await restaurantPick(rest, wish2, label, target);
+    if(rest || foods) return await restaurantPick(rest||foods, wish2, label, target, foods);
     const prompt = '幫減重的人設計今天的「'+label+'」,每日約 '+target+' 大卡,原型食物、好準備。'
       + '想吃:'+(wish2 || '清爽的')+'。'
       + (fridgeHave.length ? ('冰箱有:'+fridgeHave.join("、")+'(優先用)。') : '')
       + '只回 JSON:{"text":"吃什麼不超過25字","why":"為什麼推薦不超過30字"}。';
     return await geminiJSON(prompt, null, avoid?0.85:0.6);
+  }
+  // 不滿意/查不到菜單時,讓使用者「直接輸入這間店有賣什麼」,AI 只從裡面挑
+  function refineHTML(){
+    if(!(regenCtx && (regenCtx.rest || regenCtx.foods))) return '';
+    return '<div class="rr-refine">'
+      + '<div class="rr-refine-label">'+RP('不滿意?打上這間店「實際有賣」的餐點,只從裡面挑:','Not right? Type what this place actually serves — it\'ll pick from these:')+'</div>'
+      + '<input id="rrFoods" class="rr-foods" placeholder="'+RP('例:珍奶、烤吐司、雞排飯、沙拉(用、分隔)','e.g. milk tea, toast, chicken rice, salad')+'" autocomplete="off" value="'+esc(regenCtx.foods||'')+'">'
+      + '<button type="button" class="rr-again" id="rrFoodsGo" style="width:100%;margin-top:8px">'+RP('依這些幫我挑','Pick from these')+'</button>'
+      + '</div>';
+  }
+  function wireRefine(){
+    const go=document.getElementById("rrFoodsGo");
+    if(go) go.addEventListener("click", ()=>{
+      const v=((document.getElementById("rrFoods")||{}).value||"").trim();
+      if(!v) return;
+      regenCtx.foods = v;
+      runPick(null);
+    });
   }
   // 把推薦顯示在換餐區下方(尚未套到今日菜單),附「採用這個 / 換一個」
   function showRegenResult(text, why){
@@ -2202,12 +2226,25 @@
       + '<div class="rr-btns">'
       +   '<button type="button" class="rr-use" id="rrUse">'+RP('採用這個','Use this')+'</button>'
       +   '<button type="button" class="rr-again" id="rrAgain">'+RP('換一個','Try another')+'</button>'
-      + '</div></div>';
+      + '</div>'
+      + refineHTML()
+      + '</div>';
     document.getElementById("rrUse").addEventListener("click", ()=>{
       applyMeal(regenCtx.field, text);
       status.innerHTML = '<span class="ok">'+RP('已套用到上面的今日菜單 ✅','Applied to your menu above ✅')+'</span>';
     });
     document.getElementById("rrAgain").addEventListener("click", ()=> runPick(text));
+    wireRefine();
+  }
+  // 查不到真實菜單:不虛構,改請使用者輸入這間店有賣什麼
+  function showFoodsPrompt(intro){
+    const status = document.getElementById("menuRegenStatus");
+    status.innerHTML = '<div class="regen-result">'
+      + '<div class="rr-why" style="margin-bottom:8px">'+intro+'</div>'
+      + '<input id="rrFoods" class="rr-foods" placeholder="'+RP('這間店有賣什麼?例:珍奶、烤吐司、雞排飯、沙拉','What does it serve? e.g. milk tea, toast, chicken rice, salad')+'" autocomplete="off">'
+      + '<button type="button" class="rr-use" id="rrFoodsGo" style="width:100%;margin-top:8px">'+RP('依這些幫我挑','Pick from these')+'</button>'
+      + '</div>';
+    wireRefine();
   }
   async function runPick(avoid){
     const status = document.getElementById("menuRegenStatus");
@@ -2221,7 +2258,7 @@
       const text = (m && (m.text || m[field])) || "";
       if(!text){
         if(hasPhoto) status.innerHTML = '<span class="err">'+RP('這張真的認不太出來 🙏 靠近菜名「分區拍幾張」通常更讀得到;或直接打「想吃什麼」讓 AI 配。','Couldn\'t read this one 🙏 Close-up shots of menu sections read better; or just type a craving.')+'</span>';
-        else if(rest) status.innerHTML = '<span class="err">'+RP('查不到這間店 🙏 Google Maps 連結 AI 讀不到菜單。試試「直接打店名」(最有效)、貼官網 / 菜單頁網址,或用「上傳菜單照片」。','Couldn\'t find this place 🙏 AI can\'t read menus from a Maps link. Try typing the store name (most effective), its official/menu page, or upload a menu photo.')+'</span>';
+        else if(rest || regenCtx.foods) showFoodsPrompt(RP('查不到「'+esc(regenCtx.rest||'')+'」的真實菜單,我不亂猜 🙏 直接告訴我這間店有賣什麼,我從裡面幫你挑:','Couldn\'t confirm this place\'s real menu — I won\'t guess 🙏 Tell me what it actually serves and I\'ll pick from those:'));
         else status.innerHTML = '<span class="err">'+RP('AI 沒給出建議,再按一次試試','No suggestion this time — tap again.')+'</span>';
       } else {
         regenCtx.last = text;
@@ -2246,7 +2283,7 @@
       return;
     }
     const target = parseInt(document.getElementById("inKcalTarget").value,10) || kcalTarget || 1500;
-    regenCtx = { field, wish, rest, hasPhoto, photos: menuPhotos.slice(), target, last:null };
+    regenCtx = { field, wish, rest, hasPhoto, photos: menuPhotos.slice(), target, foods:null, last:null };
     await runPick(null);
   }
   function initMenuModule(){
