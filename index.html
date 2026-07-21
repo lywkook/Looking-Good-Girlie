@@ -256,6 +256,7 @@
   .fc-qty{ font-size:var(--fs-label); font-weight:900; color:var(--ink); min-width:26px; text-align:center; }
   .food-card .fc-kcal{ font-size:var(--fs-label); color:var(--pink); font-weight:900; }
   .food-card .fc-kcal-num{ border-bottom:1.5px dashed var(--pink); padding:0 1px; min-width:14px; display:inline-block; outline:none; }
+  .wo-photo-clear{ color:var(--ink-soft); text-decoration:underline; cursor:pointer; margin-left:6px; font-size:var(--fs-hint); }
   .clear-row{ display:flex; justify-content:center; margin-top:12px; }
   .clear-all-btn{ font-size:var(--fs-label); color:#9E5A5A; background:#F7ECEC; border:1px solid #E4CFCF;
     border-radius:20px; padding:7px 16px; font-weight:700; cursor:pointer; font-family:inherit; }
@@ -617,17 +618,16 @@
   <div class="pf-mini" id="woMini"></div>
   <div class="weight-box">
     <div class="wo-quick">
-      <div class="wo-quick-title">不知道怎麼練?直接說你想瘦的部位、或想要的身材 ✨</div>
-      <input id="woGoal" placeholder="例:想瘦肚子和大腿 / 想要馬甲線 / 蜜桃臀 + 直角肩" autocomplete="off">
-      <button type="button" class="ai-photo-btn" id="woGoalBtn">幫我規劃</button>
-    </div>
-    <div class="wo-quick" style="margin-top:10px;">
-      <div class="wo-quick-title">📷 看到喜歡的動作?拍照/截圖上傳(可多張,如影片的多個畫面),幫你認出來並排組數與強度</div>
+      <div class="wo-quick-title">① 看到喜歡的動作?可上傳照片(可多張,如影片的多個畫面),AI 會認出來一起排 · 沒有就跳過</div>
       <input type="file" accept="image/*" id="woPhotoInput" multiple style="display:none">
-      <button type="button" class="ai-photo-btn" id="woPhotoBtn">上傳動作照片,自動規劃(可多張)</button>
+      <button type="button" class="ai-photo-btn" id="woPhotoBtn">📷 上傳照片</button>
       <div class="ai-photo-status" id="woPhotoStatus"></div>
     </div>
-    <div class="wo-adv-toggle" id="woAdvToggle">＋ 自己細調(部位・器材・組數)</div>
+    <div class="wo-quick" style="margin-top:10px;">
+      <div class="wo-quick-title">② 想瘦哪裡、想要什麼身材?(可留空)</div>
+      <input id="woGoal" placeholder="例:想瘦肚子和大腿 / 馬甲線 / 蜜桃臀 + 直角肩" autocomplete="off">
+    </div>
+    <div class="wo-adv-toggle" id="woAdvToggle">＋ 細調:部位・器材・組數(可跳過)</div>
     <div id="woAdvanced" style="display:none;">
       <div class="metric-inputs">
         <div class="field"><label>一週練幾天</label><div class="wrap"><input type="number" id="woDays" placeholder="4" min="1" max="7"><span class="unit">天</span></div></div>
@@ -661,8 +661,8 @@
         <label>其他偏好(選填)</label>
         <textarea id="woNote" class="wo-textarea" placeholder="例:膝蓋不好、不想跳太吵的動作"></textarea>
       </div>
-      <button class="save-btn cute" id="woGenBtn">依細項產生計畫 ✨</button>
     </div>
+    <button class="save-btn cute" id="woGenBtn" style="margin-top:14px;">✨ 生成運動計劃</button>
     <div id="woResult"></div>
     <div class="clear-row"><button type="button" class="clear-all-btn" id="clearWorkoutBtn">🗑 清除運動計畫,重新選取</button></div>
 
@@ -2416,15 +2416,37 @@
     if(pf.weight) a.push("重量約 "+pf.weight); if(pf.secs) a.push("計時動作每個約 "+pf.secs+" 秒");
     return a.length ? ("強度偏好:"+a.join("、")+"。") : "";
   }
+  // 各部位的具體動作庫:bw=徒手版、eq=有器材版(讓內建計畫也寫得出「做什麼動作」)
+  const EX_LIB = {
+    腿:{ bw:["徒手深蹲","前後弓箭步","保加利亞分腿蹲","靠牆靜蹲"], eq:["高腳杯深蹲","啞鈴弓箭步","羅馬尼亞硬舉","啞鈴深蹲"] },
+    臀:{ bw:["臀橋","單腳臀橋","跪姿後踢腿","蚌殼式"], eq:["負重臀橋","相撲深蹲","啞鈴硬舉","彈力帶側走"] },
+    腹:{ bw:["捲腹","反向捲腹","棒式","登山者","俄羅斯轉體"], eq:["負重捲腹","懸吊抬腿","啞鈴側彎"] },
+    胸:{ bw:["伏地挺身","上斜伏地挺身","跪姿伏地挺身"], eq:["啞鈴臥推","啞鈴飛鳥","上斜啞鈴臥推"] },
+    背:{ bw:["俯身超人式","桌下反向划船","游泳划水式"], eq:["啞鈴單臂划船","啞鈴俯身划船","彈力帶下拉"] },
+    肩:{ bw:["下犬式撐肩","W-Y-T 肩胛","靠牆推肩"], eq:["啞鈴肩推","側平舉","前平舉","直立划船"] },
+    手臂:{ bw:["窄距伏地挺身","椅子撐體","鑽石伏地挺身"], eq:["啞鈴二頭彎舉","三頭臂屈伸","錘式彎舉","過頭三頭伸展"] },
+    全身:{ bw:["波比跳","深蹲加抬膝","伏地挺身接登山者","開合跳"], eq:["啞鈴深蹲推舉","啞鈴硬舉","農夫走路"] }
+  };
+  function focusKey(f){ f=String(f||"");
+    if(/腿|下半身|大腿/.test(f)) return "腿";
+    if(/臀|屁股|蜜桃|翹/.test(f)) return "臀";
+    if(/腹|核心|馬甲|腰|游泳圈/.test(f)) return "腹";
+    if(/胸/.test(f)) return "胸";
+    if(/背|虎背/.test(f)) return "背";
+    if(/肩|直角/.test(f)) return "肩";
+    if(/手臂|二頭|三頭|拜拜|掰掰|蝴蝶/.test(f)) return "手臂";
+    return "全身";
+  }
   function localWorkoutPlan(days, cardioMin, note){
     days = Math.min(7, Math.max(1, days||4)); cardioMin = cardioMin||20;
     const pf = woPrefs();
     const setsReps = (pf.sets||pf.reps) ? ((pf.sets||"3-4")+" 組 × "+(pf.reps||"12-15")+" 下") : "3-4 組 × 12-15 下";
+    const accReps = pf.reps || "12-15";
     const wt = pf.weight ? "("+pf.weight+")" : "";
     const secs = pf.secs || "40";
-    const parts = focusSel.length ? focusSel.slice() : ["肩 · 直角肩","大腿內側 · 翹臀","手臂 · 拜拜肉","背 · 核心"];
-    const gear = strengthSel.length ? strengthSel[0] : "啞鈴";
-    const cardioGear = cardioSel.length ? cardioSel[0] : "跑步機";
+    const hasGear = strengthSel.length>0;
+    const hasCardioGear = cardioSel.length>0;
+    const parts = focusSel.length ? focusSel.slice() : ["腿","臀","手臂","腹部/核心"];
     const dayNames = ["週一","週二","週三","週四","週五","週六","週日"];
     const trainDays = spreadDays(days); let li=0;
     const week=[];
@@ -2433,11 +2455,20 @@
       if(ti>=0){
         if(ti%2===0){
           const focus = parts[li%parts.length]; li++;
-          week.push({ day:dayNames[i], type:"重訓", focus,
-            items:["暖身 5 分鐘","主項:用「"+gear+"」"+wt+" 針對「"+focus+"」"+setsReps,"輔助動作 2-3 組 × "+(pf.reps||"12-15")+" 下","收操伸展 5 分鐘"] });
+          const lib = EX_LIB[focusKey(focus)] || EX_LIB["全身"];
+          const pool = (hasGear ? lib.eq : lib.bw);
+          const main = pool[0] || "徒手深蹲";
+          const acc = pool.slice(1,3);
+          const items = ["暖身 5 分鐘", main+" "+setsReps+(hasGear?wt:"")];
+          acc.forEach(a=> items.push(a+" 2-3 組 × "+accReps+" 下"));
+          items.push("收操伸展 5 分鐘");
+          week.push({ day:dayNames[i], type:"重訓", focus, items });
         } else {
+          const cardioMain = hasCardioGear
+            ? (cardioSel[0]+" 間歇 "+cardioMin+" 分鐘")
+            : ("徒手有氧間歇 "+cardioMin+" 分鐘(開合跳 / 高抬腿 / 波比跳 輪流)");
           week.push({ day:dayNames[i], type:"有氧", focus:"燃脂",
-            items:[cardioGear+" 間歇 "+cardioMin+" 分鐘","全身燃脂:開合跳 / 高抬腿 / 深蹲跳 各 "+secs+" 秒 × 3 輪"] });
+            items:[cardioMain,"全身燃脂:開合跳 / 高抬腿 / 深蹲跳 各 "+secs+" 秒 × 3 輪"] });
         }
       } else {
         week.push({ day:dayNames[i], type:"休息", focus:"", items:["休息 / 輕鬆散步 / 伸展放鬆"] });
@@ -2447,7 +2478,8 @@
     if(strengthSel.length||cardioSel.length) tips.unshift("你的器材:重訓["+(strengthSel.join("、")||"—")+"] · 有氧["+(cardioSel.join("、")||"—")+"]");
     if(focusSel.length) tips.unshift("鎖定部位:"+focusSel.join("、"));
     if(note) tips.unshift("你的偏好:"+note+"(貼上免費 AI 金鑰可產生更貼身的計畫)");
-    return { summary:"依你選的每週 "+days+" 天、每次有氧約 "+cardioMin+" 分鐘,套用你選的器材:重訓與有氧交替、其餘休息。", week, tips };
+    const gearDesc = hasGear ? ("器材:"+strengthSel.join("、")) : "全部徒手(自身體重)";
+    return { summary:"每週 "+days+" 天、每次有氧約 "+cardioMin+" 分鐘,"+gearDesc+",重訓與有氧交替、其餘休息。每個動作都寫了具體名稱與組數。", week, tips };
   }
   function renderWorkout(plan){
     const box=document.getElementById("woResult"); if(!box) return;
@@ -2513,7 +2545,7 @@
       const prompt='你是健身教練,用繁體中文設計一週7天運動計畫(減脂+保留肌肉),依想練部位排分部訓練、遵守組數/次數/重量/秒數。'
         +sex+'性 '+(w||"?")+'→'+(tw||"?")+'kg,'+(dateStr||"")+'前。每週'+days+'天、每次有氧'+cardio+'分。'
         +focusStr+intensityLine()+equipConstraint()+'偏好:'+(note||"無")+'。'
-        +'每個動作寫清楚「組數×次數」或「時間」。只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
+        +'每個動作都要寫「具體動作名稱」(例:深蹲、弓箭步、二頭彎舉、棒式),不要只寫「主項/輔助動作」這種空泛字眼,並附上「組數×次數」或「時間」。只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
       const obj=await geminiJSON(prompt, null, 0.3);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
       workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
@@ -2525,8 +2557,8 @@
   }
   // 一鍵清除運動計畫與所有選取,重新來
   async function clearWorkout(){
-    if(!confirm("清除目前的運動計畫,以及所有選取(器材、部位、強度、目標)?可以重新選")) return;
-    workoutPlan=null;
+    if(!confirm("清除目前的運動計畫,以及所有選取(器材、部位、強度、目標、照片)?可以重新選")) return;
+    workoutPlan=null; woPhotos=[]; { const st=document.getElementById("woPhotoStatus"); if(st) st.innerHTML=""; }
     focusSel.length=0; strengthSel.length=0; cardioSel.length=0;
     ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs","woGoal"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
     renderEquip("focusChips", FOCUS_PRESET, focusSel);
@@ -2554,14 +2586,14 @@
       box.insertAdjacentHTML("afterbegin",'<div class="wo-hint">已依「'+esc(goal)+'」用內建規則規劃(鎖定:'+esc(picked.join("、"))+')。貼上免費 AI 金鑰可更精準。</div>');
       return;
     }
-    const btn=document.getElementById("woGoalBtn"); const oldT=btn.textContent; btn.disabled=true; btn.textContent="規劃中…";
+    const btn=document.getElementById("woGenBtn"); const oldT=btn?btn.textContent:""; if(btn){ btn.disabled=true; btn.textContent="規劃中…"; }
     box.innerHTML='<div class="advice"><span class="ai-spin"></span>依你的目標規劃中…</div>';
     try{
       const sex=document.getElementById("pfSex").value==="male"?"男":"女";
       const w=document.getElementById("pfWeight").value, tw=document.getElementById("pfTargetW").value;
       const prompt='你是健身教練。使用者只說目標:「'+goal+'」。用繁體中文設計一週7天、新手也做得到的計畫,針對目標部位加強+全身+有氧,減脂。'
         +sex+'性'+(w?(","+w+"kg"):"")+(tw?("→"+tw+"kg"):"")+'。每週'+days+'天、有氧'+cardio+'分。'+intensityLine()+equipConstraint()
-        +'動作寫組數×次數或時間。只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
+        +'每個動作都要寫「具體動作名稱」(例:深蹲、弓箭步、二頭彎舉),不要只寫「主項/輔助動作」,並附組數×次數或時間。只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
       const obj=await geminiJSON(prompt,null,0.4);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
       workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
@@ -2569,10 +2601,10 @@
       workoutPlan=localWorkoutPlan(days,cardio,"目標:"+goal); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini(); syncWorkoutToCheckin();
       box.insertAdjacentHTML("afterbegin",'<div class="wo-hint err">AI 連線失敗('+esc(e.message||e)+'),先給你內建版。</div>');
     }
-    btn.disabled=false; btn.textContent=oldT;
+    if(btn){ btn.disabled=false; btn.textContent=oldT; }
   }
-  // 拍照分析動作 → 認出動作 + 排組數/強度,產生一週計畫(可多張綜合)
-  async function analyzeWorkoutPhoto(b64s){
+  // 拍照分析動作 → 認出動作 + 排組數/強度,產生一週計畫(可多張綜合,可帶入目標)
+  async function analyzeWorkoutPhoto(b64s, goal){
     if(typeof b64s==="string") b64s=[b64s];
     const many=b64s.length>1;
     const sex=document.getElementById("pfSex")?.value==="male"?"男":"女";
@@ -2580,46 +2612,76 @@
     const days=parseInt(document.getElementById("woDays").value,10)||4;
     const cardio=parseInt(document.getElementById("woCardio").value,10)||20;
     const focusStr = focusSel.length ? ("想加強的部位:"+focusSel.join("、")+"(以這些安排分部訓練日)。") : "";
+    const goalStr = (goal&&goal.trim()) ? ("使用者的目標:「"+goal.trim()+"」,請一併納入。") : "";
     const prompt=(many
         ? '這裡有'+b64s.length+'張健身/運動照片,通常是「同一段影片或同一組訓練的多個畫面」。請綜合所有畫面判斷裡面示範了哪些「動作」(例:深蹲、開合跳、棒式、登山者),認出主要訓練部位。'
         : '看這張健身/運動照片,用繁體中文判斷這是什麼「動作」(例:深蹲、棒式、二頭彎舉)並認出主要訓練部位。')
       + '照片可能是手機截圖或影片畫面,會有介面、按鈕、浮水印、留言,請忽略那些,只看人物的動作;畫面若有文字說明(例:針對哪個部位、幾個動作)可作為判斷依據。動作模糊時就依姿勢合理推測,盡量不要回空字串。'
       + '請「結合」照片裡的動作與使用者下面選的器材/部位/強度,綜合設計一週7天計畫(新手做得到、減脂+線條),幫'+sex+'性'+(w?(" "+w+"kg"):"")+(tw?("→"+tw+"kg"):"")+',每週'+days+'天、有氧'+cardio+'分。'
-      + focusStr + intensityLine()
+      + goalStr + focusStr + intensityLine()
       + equipConstraint()
-      + '注意:如果照片裡的動作需要使用者沒有的器材,請把它換成徒手或現有器材能做的同部位替代動作,但仍以照片想練的目標為主。每個動作都要寫清楚「組數×次數」或「時間(秒)」。'
+      + '注意:如果照片裡的動作需要使用者沒有的器材,請把它換成徒手或現有器材能做的同部位替代動作,但仍以照片想練的目標為主。每個動作都要寫出「具體動作名稱」(例:深蹲、弓箭步、二頭彎舉),不要只寫「主項/輔助動作」這種空泛字眼,並附上「組數×次數」或「時間(秒)」。'
       + '只回 JSON:{"move":"認出的動作(多個用、分隔,看不出才空字串)","target":"主要部位","summary":"一句話說明","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["動作 組數×次數"]}](共7天),"tips":[""]}。';
     const parts=b64s.map(b=>({inline_data:{mime_type:"image/jpeg", data:b}}));
     return await geminiJSON(prompt, parts, 0.3);
+  }
+  let woPhotos = [];   // 使用者附上的動作照片(base64),按「生成運動計劃」時一起分析
+  function updateWoPhotoStatus(){
+    const status=document.getElementById("woPhotoStatus"); if(!status) return;
+    status.innerHTML = woPhotos.length
+      ? '<span class="ok">已附上 '+woPhotos.length+' 張照片,填好下面(可跳過)再按「生成運動計劃」</span> <span class="wo-photo-clear" id="woPhotoClear">清除照片</span>'
+      : '';
+    const c=document.getElementById("woPhotoClear");
+    if(c) c.addEventListener("click", ()=>{ woPhotos=[]; updateWoPhotoStatus(); });
   }
   function initWorkoutPhoto(){
     const input=document.getElementById("woPhotoInput");
     const btn=document.getElementById("woPhotoBtn");
     const status=document.getElementById("woPhotoStatus");
-    const box=document.getElementById("woResult");
     if(!input||!btn) return;
-    btn.addEventListener("click", ()=>{
-      if(!anyKey()){ status.innerHTML='<span class="err">請先到下方「飲食紀錄」的 🔑 貼上免費 AI 金鑰,才能認出照片裡的動作</span>'; return; }
-      input.click();
-    });
+    btn.addEventListener("click", ()=> input.click());
     input.addEventListener("change", async ()=>{
       const files=Array.from(input.files||[]); input.value=""; if(!files.length) return;
-      btn.disabled=true; status.innerHTML='<span class="ai-spin"></span>分析動作中…'+(files.length>1?'('+files.length+' 張綜合)':'(約幾秒)');
-      box.innerHTML='<div class="advice"><span class="ai-spin"></span>正在認出動作並排計畫…</div>';
+      status.innerHTML='<span class="ai-spin"></span>處理照片中…';
       try{
         const bigs=await Promise.all(files.map(f=>resizeImageToBase64(f,512)));
-        const obj=await analyzeWorkoutPhoto(bigs.map(b=>b.split(",")[1]));
-        if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
-        const move=(obj.move||"").trim(), target=(obj.target||"").trim();
-        if(move){ obj.summary="偵測到的動作:"+move+(target?"(主要練"+target+")":"")+"。"+(obj.summary||""); }
-        workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
-        status.innerHTML = move ? '<span class="ok">認出「'+esc(move)+'」,已排入計畫 ✅</span>' : '<span class="ok">已排入計畫 ✅</span>';
-      }catch(e){
-        box.innerHTML='';
-        status.innerHTML='<span class="err">分析失敗:'+esc(e.message||e)+'。可多拍/多截幾張、或換清楚一點的畫面再試 🙏</span>';
-      }
-      btn.disabled=false;
+        woPhotos = bigs.map(b=>b.split(",")[1]);
+      }catch(e){ woPhotos=[]; }
+      updateWoPhotoStatus();
     });
+  }
+  // 唯一的「生成運動計劃」:有照片→結合照片綜合分析;否則用目標/細項;都空就用細項/預設
+  async function generateWorkoutUnified(){
+    const box=document.getElementById("woResult");
+    const status=document.getElementById("woPhotoStatus");
+    const goal=(document.getElementById("woGoal").value||"").trim();
+    const btn=document.getElementById("woGenBtn"); const oldT=btn?btn.textContent:""; if(btn){ btn.disabled=true; btn.textContent="生成中…"; }
+    try{
+      if(woPhotos.length){
+        // 有照片:結合照片 + 細項 + 目標,綜合規劃
+        if(!anyKey()){ if(status) status.innerHTML='<span class="err">看照片需要 AI 金鑰(下方 🔑 貼上免費金鑰)。沒有金鑰的話,先用下面的目標/細項也能排</span>'; }
+        else {
+          box.innerHTML='<div class="advice"><span class="ai-spin"></span>正在結合你的照片與細項規劃…</div>';
+          try{
+            const obj=await analyzeWorkoutPhoto(woPhotos, goal);
+            if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
+            const move=(obj.move||"").trim(), target=(obj.target||"").trim();
+            if(move){ obj.summary="偵測到的動作:"+move+(target?"(主要練"+target+")":"")+"。"+(obj.summary||""); }
+            workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
+            if(status) status.innerHTML = move ? '<span class="ok">認出「'+esc(move)+'」,已結合細項排入計畫 ✅</span>' : '<span class="ok">已結合照片排入計畫 ✅</span>';
+            if(btn){ btn.disabled=false; btn.textContent=oldT; }
+            return;
+          }catch(e){
+            if(status) status.innerHTML='<span class="err">看照片失敗:'+esc(e.message||e)+'。先用下面的目標/細項幫你排</span>';
+          }
+        }
+      }
+      // 沒照片(或看照片失敗):有目標就用目標,否則用細項
+      if(goal) await generateFromGoal();
+      else await generateWorkoutPlan();
+    } finally {
+      if(btn){ btn.disabled=false; btn.textContent=oldT; }
+    }
   }
   function updateWoMini(){
     const mini=document.getElementById("woMini"); if(!mini) return;
@@ -2635,9 +2697,8 @@
     if(persist){ try{ window.storage.set(K("wocollapsed"), collapsed?"1":"0", false); }catch(e){} }
   }
   function initWorkoutModule(){
-    const gen=document.getElementById("woGenBtn"); if(gen) gen.addEventListener("click", generateWorkoutPlan);
-    const gb=document.getElementById("woGoalBtn"); if(gb) gb.addEventListener("click", generateFromGoal);
-    const gi=document.getElementById("woGoal"); if(gi) gi.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); generateFromGoal(); } });
+    const gen=document.getElementById("woGenBtn"); if(gen) gen.addEventListener("click", generateWorkoutUnified);
+    const gi=document.getElementById("woGoal"); if(gi) gi.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); generateWorkoutUnified(); } });
     const cw=document.getElementById("clearWorkoutBtn"); if(cw) cw.addEventListener("click", clearWorkout);
     initWorkoutPhoto();
     ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs","woGoal"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
