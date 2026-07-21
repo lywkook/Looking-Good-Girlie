@@ -57,6 +57,7 @@
     font-display: swap;
   }
   *{box-sizing:border-box;}
+  input, textarea, select, button{ font-family: var(--font-main), "Noto Sans TC", -apple-system, sans-serif; }
   body{
     margin:0;
     background: var(--cream);
@@ -454,6 +455,9 @@
   .wo-quick-title{ font-size:var(--fs-body); font-weight:900; color:var(--ink); margin-bottom:10px; line-height:1.45; }
   .wo-quick input{ width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px;
     padding:11px 13px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); margin-bottom:8px; }
+  .wo-adv-toggle{ display:inline-block; margin:4px 0 10px; font-size:var(--fs-label); color:var(--pink);
+    font-weight:700; cursor:pointer; }
+  .wo-adv-toggle:active{ opacity:0.6; }
   .wo-field{ margin:12px 0; }
   .wo-field label{ display:block; font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:6px; }
   .wo-textarea{ width:100%; box-sizing:border-box; min-height:78px; border:1.5px solid var(--line); border-radius:14px;
@@ -598,39 +602,42 @@
       <input id="woGoal" placeholder="例:想瘦肚子和大腿 / 想要馬甲線 / 蜜桃臀 + 直角肩" autocomplete="off">
       <button type="button" class="ai-photo-btn" id="woGoalBtn">幫我規劃</button>
     </div>
-    <div class="metric-inputs">
-      <div class="field"><label>一週想練幾天</label><div class="wrap"><input type="number" id="woDays" placeholder="4" min="1" max="7"><span class="unit">天</span></div></div>
-      <div class="field"><label>每次有氧</label><div class="wrap"><input type="number" id="woCardio" placeholder="20"><span class="unit">分鐘</span></div></div>
-    </div>
-    <div class="wo-field">
-      <label>想練的部位 / 分類(可複選;沒有列到的用「其他」自己加)</label>
-      <div class="fridge-chips" id="focusChips"></div>
-      <div class="fridge-add-row" style="margin-top:8px;"><input id="focusAdd" placeholder="其他部位?打字加入" autocomplete="off"><button type="button" class="mini-btn" id="focusAddBtn">加入</button></div>
-    </div>
-    <div class="wo-field">
-      <label>重訓器材(可複選;沒有列到的用「其他」自己加)</label>
-      <div class="fridge-chips" id="strengthChips"></div>
-      <div class="fridge-add-row" style="margin-top:8px;"><input id="strengthAdd" placeholder="其他器材?打字加入" autocomplete="off"><button type="button" class="mini-btn" id="strengthAddBtn">加入</button></div>
-    </div>
-    <div class="wo-field">
-      <label>有氧器材 / 方式(可複選)</label>
-      <div class="fridge-chips" id="cardioChips"></div>
-      <div class="fridge-add-row" style="margin-top:8px;"><input id="cardioAdd" placeholder="其他有氧?打字加入" autocomplete="off"><button type="button" class="mini-btn" id="cardioAddBtn">加入</button></div>
-    </div>
-    <div class="wo-field">
-      <label>訓練強度偏好(選填,空白就讓系統幫你決定)</label>
+    <div class="wo-adv-toggle" id="woAdvToggle">＋ 自己細調(部位・器材・組數)</div>
+    <div id="woAdvanced" style="display:none;">
       <div class="metric-inputs">
-        <div class="field"><label>每個動作組數</label><div class="wrap"><input type="number" id="woSets" placeholder="3"><span class="unit">組</span></div></div>
-        <div class="field"><label>每組次數</label><div class="wrap"><input type="number" id="woReps" placeholder="12"><span class="unit">下</span></div></div>
-        <div class="field"><label>重量</label><div class="wrap"><input type="text" id="woWeight" placeholder="例:5-8 磅"></div></div>
-        <div class="field"><label>計時動作秒數</label><div class="wrap"><input type="number" id="woSecs" placeholder="40"><span class="unit">秒</span></div></div>
+        <div class="field"><label>一週練幾天</label><div class="wrap"><input type="number" id="woDays" placeholder="4" min="1" max="7"><span class="unit">天</span></div></div>
+        <div class="field"><label>每次有氧</label><div class="wrap"><input type="number" id="woCardio" placeholder="20"><span class="unit">分</span></div></div>
       </div>
+      <div class="wo-field">
+        <label>想練的部位(可複選)</label>
+        <div class="fridge-chips" id="focusChips"></div>
+        <div class="fridge-add-row" style="margin-top:8px;"><input id="focusAdd" placeholder="其他?打字加入" autocomplete="off"><button type="button" class="mini-btn" id="focusAddBtn">加入</button></div>
+      </div>
+      <div class="wo-field">
+        <label>重訓器材(可複選)</label>
+        <div class="fridge-chips" id="strengthChips"></div>
+        <div class="fridge-add-row" style="margin-top:8px;"><input id="strengthAdd" placeholder="其他?打字加入" autocomplete="off"><button type="button" class="mini-btn" id="strengthAddBtn">加入</button></div>
+      </div>
+      <div class="wo-field">
+        <label>有氧方式(可複選)</label>
+        <div class="fridge-chips" id="cardioChips"></div>
+        <div class="fridge-add-row" style="margin-top:8px;"><input id="cardioAdd" placeholder="其他?打字加入" autocomplete="off"><button type="button" class="mini-btn" id="cardioAddBtn">加入</button></div>
+      </div>
+      <div class="wo-field">
+        <label>強度(選填)</label>
+        <div class="metric-inputs">
+          <div class="field"><label>組數</label><div class="wrap"><input type="number" id="woSets" placeholder="3"><span class="unit">組</span></div></div>
+          <div class="field"><label>次數</label><div class="wrap"><input type="number" id="woReps" placeholder="12"><span class="unit">下</span></div></div>
+          <div class="field"><label>重量</label><div class="wrap"><input type="text" id="woWeight" placeholder="5-8 磅"></div></div>
+          <div class="field"><label>秒數</label><div class="wrap"><input type="number" id="woSecs" placeholder="40"><span class="unit">秒</span></div></div>
+        </div>
+      </div>
+      <div class="wo-field">
+        <label>其他偏好(選填)</label>
+        <textarea id="woNote" class="wo-textarea" placeholder="例:膝蓋不好、不想跳太吵的動作"></textarea>
+      </div>
+      <button class="save-btn cute" id="woGenBtn">依細項產生計畫 ✨</button>
     </div>
-    <div class="wo-field">
-      <label>想加強的部位 · 其他偏好(自由填)</label>
-      <textarea id="woNote" class="wo-textarea" placeholder="例:想練直角肩、大腿內側、手臂拜拜肉,不想跳太吵的動作,膝蓋不好"></textarea>
-    </div>
-    <button class="save-btn cute" id="woGenBtn">產生 / 重新調整運動計畫 ✨</button>
     <div id="woResult"></div>
 
     <div id="checkinBlock">
@@ -2295,10 +2302,9 @@
       if(pf.secs) intensity.push("計時動作每個約 "+pf.secs+" 秒");
       if(intensity.length) eqParts.push("強度偏好:"+intensity.join("、"));
       const eqStr = eqParts.join(";") || "一般居家,小啞鈴 + 跑步機";
-      const prompt='你是專業健身教練。根據以下資訊,用繁體中文設計「一週 7 天」的客製化運動計畫,兼顧減重減脂與保留肌肉。務必**只用使用者有的器材**、**依他想練的部位安排分部訓練**、**遵守他的組數/次數/重量/秒數偏好**,不要安排他沒有的器材或不想做的動作;有氧就用他選的器材/方式。'
-        +'使用者:'+sex+'性,目前 '+(w||"?")+' kg,目標 '+(tw||"?")+' kg,希望 '+(dateStr||"")+' 前達成。'
-        +'每週可運動 '+days+' 天,每次有氧約 '+cardio+' 分鐘。'+eqStr+'。其他偏好:'+(note||"無")+'。'
-        +'每個 items 動作要寫清楚「組數 × 次數」或「時間(秒/分鐘)」。只回傳 JSON,不要多餘文字。格式:{"summary":"一句話總結","week":[{"day":"週一","type":"重訓 或 有氧 或 休息","focus":"部位或重點(如 練腿、練胸、全身)","items":["動作 組數×次數 或 時間", "..."]}](剛好7天,週一到週日),"tips":["提醒", "..."]}。';
+      const prompt='你是健身教練,用繁體中文設計一週7天運動計畫(減脂+保留肌肉)。只用使用者有的器材、依想練部位排分部訓練、遵守組數/次數/重量/秒數。'
+        +sex+'性 '+(w||"?")+'→'+(tw||"?")+'kg,'+(dateStr||"")+'前。每週'+days+'天、每次有氧'+cardio+'分。'+eqStr+'。偏好:'+(note||"無")+'。'
+        +'每個動作寫清楚「組數×次數」或「時間」。只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
       const obj=await geminiJSON(prompt, null, 0.3);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
       workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini();
@@ -2332,9 +2338,9 @@
       const sex=document.getElementById("pfSex").value==="male"?"男":"女";
       const w=document.getElementById("pfWeight").value, tw=document.getElementById("pfTargetW").value;
       const eq=[]; if(strengthSel.length) eq.push("重訓器材:"+strengthSel.join("、")); if(cardioSel.length) eq.push("有氧器材/方式:"+cardioSel.join("、"));
-      const prompt='你是專業健身教練。使用者不太懂怎麼練,只說了目標:「'+goal+'」(想瘦的部位或想要的身材)。請用繁體中文,針對這個目標設計「一週 7 天」、循序漸進、新手也做得到的運動計畫,兼顧減重減脂;針對目標部位加強、其餘搭配全身與有氧。'
-        +'使用者:'+sex+'性'+(w?(",目前 "+w+" kg"):"")+(tw?(",目標 "+tw+" kg"):"")+'。每週約 '+days+' 天、每次有氧約 '+cardio+' 分鐘。'+(eq.length?eq.join(";")+"。":"")
-        +'每個 items 動作要寫清楚組數×次數或時間。只回傳 JSON,不要多餘文字。格式:{"summary":"一句話總結(點出如何達成目標)","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](剛好7天),"tips":["..."]}。';
+      const prompt='你是健身教練。使用者只說目標:「'+goal+'」。用繁體中文設計一週7天、新手也做得到的計畫,針對目標部位加強+全身+有氧,減脂。'
+        +sex+'性'+(w?(","+w+"kg"):"")+(tw?("→"+tw+"kg"):"")+'。每週'+days+'天、有氧'+cardio+'分。'+(eq.length?eq.join(";")+"。":"")
+        +'動作寫組數×次數或時間。只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
       const obj=await geminiJSON(prompt,null,0.4);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
       workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini();
@@ -2376,6 +2382,12 @@
     if(mini) mini.addEventListener("click", ()=> setWorkoutCollapsed(false, true));
     const wd=document.getElementById("woDate");
     if(wd) wd.addEventListener("change", ()=> jumpToDay(wd.value));
+    const advTog=document.getElementById("woAdvToggle"), adv=document.getElementById("woAdvanced");
+    if(advTog && adv) advTog.addEventListener("click", ()=>{
+      const open = adv.style.display==="none";
+      adv.style.display = open ? "" : "none";
+      advTog.textContent = open ? "－ 收起細項" : "＋ 自己細調(部位・器材・組數)";
+    });
   }
   function jumpToDay(iso){
     const card=document.querySelector('.day-card[data-iso="'+iso+'"]');
