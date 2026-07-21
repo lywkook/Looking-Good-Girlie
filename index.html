@@ -860,7 +860,7 @@
 </div>
 
 <div class="section" id="askSection">
-  <h2 class="cute" id="askToggle"><span class="dot"></span>不懂問 AI 🤖 <span class="pf-caret" id="askCaret">▾</span></h2>
+  <h2 class="cute" id="askToggle"><span class="dot"></span>不懂問 AI <span class="pf-caret" id="askCaret">▾</span></h2>
   <div class="weight-box">
     <div class="ask-hint">任何問題都可以問(飲食、運動、健康、生活…),AI 用中文回答你。需要先在「飲食紀錄」的 🔑 貼上免費金鑰。</div>
     <div id="askLog" class="ask-log"></div>
@@ -877,6 +877,7 @@
   <button type="button" class="nav-btn" id="navHome"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v9h14v-9"/></svg><span>主畫面</span></button>
   <button type="button" class="nav-btn" id="navNew"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>新增計畫</span></button>
   <button type="button" class="nav-btn" id="navJump"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M12 4v16"/><path d="M8 8l4-4 4 4"/><path d="M8 16l4 4 4-4"/></svg><span>跳到</span></button>
+  <button type="button" class="nav-btn" id="navAsk"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg><span>問AI</span></button>
   <button type="button" class="nav-btn" id="navSettings"><svg class="nav-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/></svg><span>設定</span></button>
 </nav>
 </div><!-- /appView -->
@@ -3159,6 +3160,12 @@
     const h=document.getElementById("navHome"); if(h) h.addEventListener("click", goHome);
     const n=document.getElementById("navNew"); if(n) n.addEventListener("click", ()=>{ goHome(); const el=document.getElementById("homeNewName"); if(el){ try{el.scrollIntoView({block:"center"});}catch(_){} el.focus(); } });
     const j=document.getElementById("navJump"); if(j) j.addEventListener("click", (e)=>{ e.stopPropagation(); buildJumpMenu(); document.getElementById("navJumpMenu").classList.toggle("show"); });
+    const ak=document.getElementById("navAsk"); if(ak) ak.addEventListener("click", ()=>{
+      const sec=document.getElementById("askSection"); if(!sec) return;
+      sec.classList.remove("collapsed"); const cr=document.getElementById("askCaret"); if(cr) cr.textContent="▾";
+      try{ sec.scrollIntoView({behavior:"smooth", block:"start"}); }catch(_){ sec.scrollIntoView(); }
+      const inp=document.getElementById("askInput"); if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 300);
+    });
     const s=document.getElementById("navSettings"); if(s) s.addEventListener("click", openSettings);
     document.addEventListener("click", (e)=>{ const menu=document.getElementById("navJumpMenu"); if(menu && menu.classList.contains("show") && !menu.contains(e.target) && e.target.id!=="navJump") menu.classList.remove("show"); });
   }
