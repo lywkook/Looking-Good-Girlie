@@ -705,7 +705,7 @@
       <p><b>怎麼開始?</b><br>① 點上方計畫卡片,或用「＋ 建立新計畫」<br>② 進入後記錄飲食、喝水、體重</p>
       <p><b>使用拍照估熱量與 AI 運動規劃前,先貼一把免費金鑰:</b></p>
       <ol>
-        <li>到 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a> 申請(推薦,額度高、也能看圖);或 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>。都是<b>免費、免信用卡</b></li>
+        <li>到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a> 申請(推薦:拍照估熱量、運動照片、讀餐廳連結都最穩);想要更高額度也可用 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>。都是<b>免費、免信用卡</b></li>
         <li>登入 → Create API key → 複製金鑰</li>
         <li>回到 App → 任一計畫 →「飲食紀錄」的『AI 金鑰設定』→ 貼上 → 儲存</li>
         <li>之後即可使用拍照估熱量、換菜單、運動規劃。</li>
@@ -1175,7 +1175,8 @@
     "換背景 / 顏色?":"Change background / colour?",
     "主畫面與各計畫外觀可在「⚙️ 設定」分別調整。":"Set the home and each plan's look separately in “⚙️ Settings”.",
     "資料只存在本機瀏覽器,不會上傳;換手機或清除瀏覽器資料會遺失。":"Data stays in this browser only, never uploaded; lost if you switch phones or clear browser data.",
-    "。都是":". Both are ","申請(推薦,額度高、也能看圖);或":" (recommended — high quota, reads photos too); or ","免費、免信用卡":"free, no credit card",
+    "。都是":". Both are ","免費、免信用卡":"free, no credit card",
+    "申請(推薦:拍照估熱量、運動照片、讀餐廳連結都最穩);想要更高額度也可用":" (recommended — most reliable for photo calories, workout photos and reading restaurant links); or, for higher quota, use",
     // 底部導覽
     "主畫面":"Home","跳到":"Jump","問AI":"Ask AI","設定":"Settings","主畫面外觀":"Home appearance",
     // 計畫列 / 標題
@@ -3060,9 +3061,9 @@
   function updateAIKeyHint(){
     const h=document.getElementById("aiKeyHint"); if(!h) return;
     if(cleanKey(geminiKey)){
-      h.innerHTML='✅ 金鑰已儲存(只存在這支手機)。拍照、換菜單、運動規劃都用這一把。';
+      h.innerHTML='✅ 金鑰已儲存(只存在這支手機)。拍照估熱量、運動照片、換菜單、讀餐廳連結,全都用這一把。';
     }
-    else { h.innerHTML='免費申請一把金鑰即可(拍照與文字都用它):<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a> 或 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>。免費、免信用卡。'; }
+    else { h.innerHTML='免費申請一把金鑰即可(拍照、運動照片、換菜單、讀餐廳連結都用它):建議 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>(拍照與讀連結最穩);想要更高額度也可用 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>。免費、免信用卡。'; }
   }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
   // 把 AI 常用的 Markdown(**粗體**、* 項目、#標題)轉成乾淨的 HTML(先跳脫再轉,安全)
@@ -3130,8 +3131,8 @@
     if(hasImg){
       models = avail.filter(id=>GROQ_VISION_RE.test(id) && !/guard|whisper|tts|orpheus|prompt-guard/i.test(id));
       if(!avail.length) GROQ_VISION.forEach(m=>{ if(models.indexOf(m)<0) models.push(m); });   // 只有抓不到清單時才附備援,避免試到帳號沒有的模型
-      // 看圖能力排序:compound(多模態)> pixtral > llama-4 > 其餘
-      const prio=m=>/compound/.test(m)?0:(/pixtral/.test(m)?1:(/llama-?4|scout|maverick/.test(m)?2:3));
+      // 看圖能力排序:優先用「專門的視覺模型」(一定吃得下圖片),compound 是代理式模型放最後備援
+      const prio=m=>/pixtral/.test(m)?0:(/llama-?4|scout|maverick/.test(m)?1:(/qwen|[-_]vl\b|vision|omni/i.test(m)?2:(/compound/.test(m)?4:3)));
       models.sort((a,b)=>prio(a)-prio(b));
       if(groqGoodVision) models = [groqGoodVision].concat(models.filter(m=>m!==groqGoodVision));
     }else{
@@ -3184,7 +3185,7 @@
       }
       if(status===429) quotaHit=true;
     }
-    if(quotaHit) throw new Error("Google 免費額度又滿了 😥 這是 Google 對免費金鑰的限制(很小氣)。強烈建議改用 Groq 免費金鑰(gsk_ 開頭、額度高很多):到「AI 金鑰設定」旁的 Groq 連結申請,貼上就會自動切換。");
+    if(quotaHit) throw new Error("Google 今天的免費額度用完了,休息幾分鐘再試通常就好。若你一天要用很多次,也可以到「AI 金鑰設定」旁的 Groq 連結申請一把額度更高的金鑰,貼上就會自動切換。");
     throw new Error(lastMsg);
   }
   // 讓 Gemini 讀網址(url_context)+ 搜尋(google_search),用來讀餐廳菜單。用文字回 JSON、再容錯解析。
