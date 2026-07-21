@@ -356,19 +356,16 @@
   .home-title{ font-size:32px; font-weight:400; color:var(--ink); }
   .home-sub{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:4px; }
   .home-list{ display:flex; flex-direction:column; gap:12px; }
-  .home-row{ position:relative; border-radius:20px; overflow:hidden; }
-  .home-del-bg{ position:absolute; top:0; right:0; bottom:0; width:88px; display:flex;
-    flex-direction:column; align-items:center; justify-content:center; gap:2px;
-    background:#D98C8C; color:#fff; cursor:pointer; }
-  .home-del-bg svg{ width:22px; height:22px; }
-  .home-del-bg span{ font-size:var(--fs-label); font-weight:700; }
-  .home-card{ position:relative; background:var(--card); border-radius:20px; padding:20px 22px; box-shadow:var(--shadow);
-    border:2px solid var(--pink-soft); cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px;
-    touch-action:pan-y; transition:transform .22s cubic-bezier(.22,.61,.36,1); will-change:transform; }
-  .home-card.dragging{ transition:none; }
+  .home-card{ background:var(--card); border-radius:20px; padding:20px 22px; box-shadow:var(--shadow);
+    border:2px solid var(--pink-soft); cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .home-card:active{ transform:scale(0.99); }
   .home-card-name{ font-size:var(--fs-title); font-weight:900; color:var(--ink); }
   .home-card-type{ font-size:var(--fs-label); color:#fff; background:var(--pink); border-radius:20px; padding:3px 12px; white-space:nowrap; }
   .home-card .home-arrow{ color:var(--pink); font-size:var(--fs-title); }
+  .home-trash{ display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px;
+    border-radius:50%; border:none; background:#F3E1E1; color:#B76E6E; cursor:pointer; flex:none; padding:0; }
+  .home-trash svg{ width:20px; height:20px; }
+  .home-trash:active{ background:#E9CFCF; }
   .danger-btn{ width:100%; border:1.5px solid #D9B3B3; background:#F7ECEC; color:#9E5A5A;
     border-radius:14px; padding:12px; font-size:var(--fs-body); font-weight:700; cursor:pointer; }
   .danger-btn:active{ opacity:0.7; }
@@ -2688,78 +2685,17 @@
     const box=document.getElementById("homeList"); if(!box) return;
     box.innerHTML = plans.map(p=>{
       const canDel = p.id!=="default";
-      return `<div class="home-row" data-id="${p.id}">
-        ${canDel?`<div class="home-del-bg" data-del="${p.id}">${DEL_SVG}<span>刪除</span></div>`:''}
-        <div class="home-card" data-id="${p.id}">
-          <div class="home-card-name">${esc(p.name)}</div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span class="home-card-type">${esc(PLAN_LABEL[p.type]||'')}</span>
-            <span class="home-arrow">›</span>
-          </div>
+      return `<div class="home-card" data-id="${p.id}">
+        <div class="home-card-name">${esc(p.name)}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="home-card-type">${esc(PLAN_LABEL[p.type]||'')}</span>
+          ${canDel?`<button type="button" class="home-trash" data-del="${p.id}" aria-label="刪除計畫">${DEL_SVG}</button>`:''}
+          <span class="home-arrow">›</span>
         </div>
       </div>`;
     }).join("");
-    box.querySelectorAll(".home-del-bg").forEach(d=> d.addEventListener("click", (e)=>{ e.stopPropagation(); deletePlan(d.dataset.del); }));
-    box.querySelectorAll(".home-row").forEach(row=> initSwipeCard(row));
-    hintSwipe();
-  }
-  // 進入主畫面時,把第一張可刪除的卡片輕輕往左推一下再彈回,讓使用者看到「往左滑有刪除」
-  function hintSwipe(){
-    if(hintSwipe._done) return;
-    const box=document.getElementById("homeList"); if(!box) return;
-    const bg=box.querySelector(".home-del-bg"); if(!bg) return;
-    hintSwipe._done=true;
-    const card=bg.parentElement.querySelector(".home-card");
-    setTimeout(()=>{ card.style.transform="translateX(-62px)";
-      setTimeout(()=>{ card.style.transform=""; }, 750); }, 450);
-  }
-  // 主畫面計畫卡:往左滑露出刪除鈕;輕點進入計畫(用 touch + mouse,手機最穩)
-  function initSwipeCard(row){
-    const card=row.querySelector(".home-card");
-    const canDel=!!row.querySelector(".home-del-bg");
-    const OPEN=-88, THRESH=40;
-    let startX=0, startY=0, base=0, cur=0, active=false, decided=false, horiz=false, moved=false;
-    const isOpen=()=> card.dataset.open==="1";
-    const setX=(x)=>{ cur=x; card.style.transform = x ? "translateX("+x+"px)" : ""; };
-    function closeSiblings(){ document.querySelectorAll("#homeList .home-card").forEach(c=>{ if(c!==card){ c.style.transform=""; c.dataset.open=""; } }); }
-    function openCard(){ closeSiblings(); card.classList.remove("dragging"); setX(OPEN); card.dataset.open="1"; }
-    function closeCard(){ card.classList.remove("dragging"); setX(0); card.dataset.open=""; }
-    function begin(x,y){ startX=x; startY=y; base=isOpen()?OPEN:0; active=true; decided=false; horiz=false; moved=false; }
-    function move(x,y,ev){
-      if(!active) return;
-      const dx=x-startX, dy=y-startY;
-      if(!decided){
-        if(Math.abs(dx)<6 && Math.abs(dy)<6) return;
-        decided=true; horiz=Math.abs(dx) > Math.abs(dy)+2;
-        if(horiz && canDel) card.classList.add("dragging");
-      }
-      if(horiz && canDel){
-        moved=true; if(ev && ev.cancelable) ev.preventDefault();
-        let nx=base+dx; if(nx>0)nx=0; if(nx<OPEN-24)nx=OPEN-24;
-        setX(nx);
-      }
-    }
-    function end(){
-      if(!active) return; active=false;
-      if(horiz && canDel){ if(cur <= -THRESH) openCard(); else closeCard(); }
-    }
-    // 觸控(手機)
-    card.addEventListener("touchstart",(e)=>{ const t=e.touches[0]; begin(t.clientX,t.clientY); }, {passive:true});
-    card.addEventListener("touchmove",(e)=>{ const t=e.touches[0]; move(t.clientX,t.clientY,e); }, {passive:false});
-    card.addEventListener("touchend", end);
-    card.addEventListener("touchcancel", end);
-    // 滑鼠(電腦)
-    card.addEventListener("mousedown",(e)=>{ if(e.button) return; begin(e.clientX,e.clientY);
-      const mm=(ev)=> move(ev.clientX,ev.clientY,ev);
-      const mu=()=>{ end(); document.removeEventListener("mousemove",mm); document.removeEventListener("mouseup",mu); };
-      document.addEventListener("mousemove",mm); document.addEventListener("mouseup",mu);
-    });
-    // 點一下:剛剛是滑動就忽略;卡片已開就收起;否則進入計畫
-    card.addEventListener("click",()=>{
-      if(moved){ moved=false; return; }
-      if(isOpen()){ closeCard(); return; }
-      enterPlan(card.dataset.id);
-    });
+    box.querySelectorAll(".home-trash").forEach(b=> b.addEventListener("click", (e)=>{ e.stopPropagation(); deletePlan(b.dataset.del); }));
+    box.querySelectorAll(".home-card").forEach(c=> c.addEventListener("click", (e)=>{ if(e.target.closest(".home-trash")) return; enterPlan(c.dataset.id); }));
   }
   function openSettings(){
     const t = PLAN ? PLAN.type : "";
