@@ -490,6 +490,10 @@
   .bg-sw.on{ outline:3px solid var(--pink); outline-offset:2px; }
   .bg-actions{ display:flex; gap:8px; flex-wrap:wrap; }
   .set-block{ margin-bottom:22px; }
+  .analysis-toggle{ cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:6px;
+    font-size:var(--fs-label); font-weight:700; color:var(--ink-soft); margin-top:12px; padding:8px 2px; }
+  .analysis-toggle .pf-caret{ color:var(--pink); }
+  #profileResult{ margin-top:6px; }
   .set-title{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:12px;
     background:var(--pink-soft); border-left:5px solid var(--pink); border-radius:8px; padding:8px 12px; }
   .color-row{ display:flex; align-items:center; gap:8px; margin:10px 0; }
@@ -1050,6 +1054,7 @@
         <label>希望達成日期</label>
         <div class="wrap"><input type="date" id="pfDate" value="2026-08-28"></div>
       </div>
+      <div class="analysis-toggle" id="analysisToggle">減重分析 <span class="pf-caret" id="analysisCaret">▸</span></div>
       <div id="profileResult" style="display:none;"></div>
     </div>
 
@@ -1155,7 +1160,7 @@
     "調整背景照片(縮放/移動)":"Adjust background (zoom / move)",
     "兩指縮放、單指拖曳調整位置,背景固定不隨畫面捲動。":"Pinch to zoom, drag to reposition. The background stays fixed while you scroll.",
     "兩指縮放 · 單指拖曳位置":"Pinch to zoom · drag to move","取消":"Cancel","儲存":"Save",
-    "個人資料 · 減重分析":"Profile · Analysis","個人資料":"Profile","目標":"Goal","減重目標":"Weight goal","匯出備份":"Export & backup","性別":"Sex","年齡":"Age","身高":"Height","男":"Male","女":"Female",
+    "個人資料 · 減重分析":"Profile · Analysis","個人資料":"Profile","目標":"Goal","減重目標":"Weight goal","減重分析":"Analysis","匯出備份":"Export & backup","性別":"Sex","年齡":"Age","身高":"Height","男":"Male","女":"Female",
     "目前體重":"Current weight","目標體重":"Goal weight","目標體脂":"Goal body fat","希望達成日期":"Target date",
     "刪除計畫":"Delete plan","🗑 刪除這個計畫":"🗑 Delete this plan","匯出 / 備份":"Export / Backup",
     "匯出成 PDF(可存手機/雲端/分享)":"Export as PDF (save to phone / cloud / share)",
@@ -3436,6 +3441,14 @@
       el.addEventListener(ev, ()=>{ analyzeProfile(); saveProfile(); });
       el.addEventListener("change", saveProfile);
     });
+    // 減重分析:可收合(預設收起),記住狀態
+    const at=document.getElementById("analysisToggle");
+    const setAnalysis=(open)=>{ const pr=document.getElementById("profileResult"); if(pr) pr.style.display=open?"":"none";
+      const c=document.getElementById("analysisCaret"); if(c) c.textContent=open?"▾":"▸"; };
+    if(at){
+      at.addEventListener("click", async ()=>{ const pr=document.getElementById("profileResult"); const open=pr && pr.style.display==="none"; setAnalysis(open); try{ await window.storage.set(K("analysisopen"), open?"1":"0", false); }catch(e){} });
+      (async()=>{ let st="0"; try{ const r=await window.storage.get(K("analysisopen"),false); if(r&&r.value!=null&&r.value!=="") st=r.value; }catch(e){} setAnalysis(st==="1"); })();
+    }
   }
 
   // ---------- 運動計畫 · 客製化 ----------
