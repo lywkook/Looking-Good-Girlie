@@ -584,6 +584,8 @@
   .menu-regen-box{ display:none; margin-top:12px; padding:14px; background:var(--pink-soft); border-radius:16px; }
   .menu-regen-box.show{ display:block; }
   .menu-regen-hint{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.55; margin-bottom:10px; }
+  .menu-regen-box input + input{ margin-top:8px; }
+  .menu-regen-sub{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.5; margin-top:6px; }
   .menu-regen-box input{ width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px;
     padding:11px 13px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); }
   .wo-quick{ background:var(--pink-soft); border-radius:16px; padding:14px; margin-bottom:16px; }
@@ -773,7 +775,7 @@
   </div>
   <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;width:100%;padding:14px 18px;font-size:var(--fs-body);font-weight:700;">讓 AI 幫我換一餐</button>
   <div class="menu-regen-box" id="menuRegenBox">
-    <div class="menu-regen-hint">選一餐,AI 會依熱量目標重新幫你配好。想吃什麼可以先寫,或留空讓 AI 決定。</div>
+    <div class="menu-regen-hint">選一餐,AI 會依你的熱量目標重新配好。下面兩欄都可以留空。</div>
     <div class="meal-tabs" id="regenMealTabs">
       <button type="button" class="meal-tab" data-rmeal="breakfast">早餐</button>
       <button type="button" class="meal-tab active" data-rmeal="lunch">午餐</button>
@@ -781,6 +783,8 @@
       <button type="button" class="meal-tab" data-rmeal="fruit">點心/水果</button>
     </div>
     <input id="menuWish" placeholder="想吃什麼?(可留空,AI 幫你決定)" autocomplete="off">
+    <input id="menuRestaurant" placeholder="要外食?貼餐廳 Google Maps 或官網連結" autocomplete="off" inputmode="url">
+    <div class="menu-regen-sub">貼上餐廳連結,AI 會讀那間店的菜單、幫你挑一道最適合減重的餐點(讀連結建議用 Google 金鑰)。</div>
     <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">讓 AI 換這一餐</button>
     <div class="ai-photo-status" id="menuRegenStatus"></div>
   </div>
@@ -1201,9 +1205,12 @@
     "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
     "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
     "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
-    "選一餐,AI 會依熱量目標重新幫你配好。想吃什麼可以先寫,或留空讓 AI 決定。":"Pick a meal and AI re-plans it to your calorie target. Add a craving, or leave blank and let AI decide.",
+    "選一餐,AI 會依你的熱量目標重新配好。下面兩欄都可以留空。":"Pick a meal and AI re-plans it to your calorie target. Both fields below are optional.",
     "想吃什麼?(可留空)":"Craving anything? (optional)",
     "想吃什麼?(可留空,AI 幫你決定)":"Craving anything? (optional — AI decides if blank)",
+    "要外食?貼餐廳 Google Maps 或官網連結":"Eating out? Paste the restaurant's Google Maps or website link",
+    "讀取餐廳連結需要一把免費 AI 金鑰(建議用 Google)。到下方「飲食紀錄」的 🔑 貼上金鑰即可。":"Reading a restaurant link needs a free AI key (Google recommended). Paste one at the 🔑 in Food log below.",
+    "貼上餐廳連結,AI 會讀那間店的菜單、幫你挑一道最適合減重的餐點(讀連結建議用 Google 金鑰)。":"Paste a restaurant link and AI reads its menu to pick the best dish for your goal (reading links works best with a Google key).",
     "清空今天,重新記錄":"Clear today & restart","存進今天的紀錄":"Save to today's log","清空今日所有紀錄":"Clear today's records","清空運動計劃,重新選取":"Clear workout & reselect",
     // 拍照 / AI 金鑰
     "拍照估熱量":"Photo calories","加照片(選填)":"Add photo (optional)",
@@ -2021,32 +2028,67 @@
     if(arr[altIdx[field]] === cur) altIdx[field] = (altIdx[field]+1) % arr.length;  // 避免換到一樣的
     return arr[altIdx[field]];
   }
+  // 讀餐廳連結(Google Maps 或官網)→ 讀那間店的菜單 → 挑一道適合減重的
+  async function restaurantPick(url, wish, label, target){
+    const key = cleanKey(geminiKey);
+    if(!key) throw new Error("尚未設定 AI 金鑰");
+    const prompt =
+      '你是減重營養教練。使用者今天想在這間餐廳吃「'+label+'」。\n'
+      + '餐廳連結:'+url+'\n'
+      + '請讀取這個連結(必要時搜尋這間餐廳的名稱與菜單),從「這間餐廳實際有的餐點」裡挑 1 道最適合減重的。\n'
+      + '條件:這一餐盡量控制在約 '+target+' 大卡上下、蛋白質足夠、少油炸勾芡與含糖飲料。'
+      + (wish ? ('使用者偏好:'+wish+',在此偏好內挑。') : '')
+      + '\n只回 JSON、不要多餘文字:{"text":"餐點名稱+簡短吃法建議(例:去醬、飲料換無糖),不超過25字","why":"為什麼推薦這道,不超過30字"}。'
+      + '\n若真的讀不到這間餐廳的菜單,text 請回空字串。';
+    if(key.slice(0,4)==="gsk_") return await groqBrowseJSON(prompt, key);
+    return await googleBrowseJSON(prompt, key, 0.4);
+  }
   async function regenMenu(){
     const status = document.getElementById("menuRegenStatus");
     const wish = (document.getElementById("menuWish").value||"").trim();
+    const restEl = document.getElementById("menuRestaurant");
+    const rest = ((restEl&&restEl.value)||"").trim();
     const field = regenField, label = MEAL_LABEL[field];
     if(!anyKey()){
+      if(rest){
+        status.innerHTML = '<span class="err">讀取餐廳連結需要一把免費 AI 金鑰(建議用 Google)。到下方「飲食紀錄」的 🔑 貼上金鑰即可。</span>';
+        return;
+      }
       applyMeal(field, localNewMeal(field));
       status.innerHTML = '<span class="ok">已換一份'+label+' ✅</span>' + (wish ? ' <span style="color:var(--ink-soft);font-size:var(--fs-hint)">想精準指定「'+esc(wish)+'」需到下方「飲食紀錄」貼上免費 AI 金鑰</span>' : '');
       return;
     }
     const btn = document.getElementById("menuGenBtn"); const old = btn.textContent;
     btn.disabled = true; btn.textContent = "產生中…";
-    status.innerHTML = '<span class="ai-spin"></span>重新設計'+label+'中…';
     try{
       const target = parseInt(document.getElementById("inKcalTarget").value,10) || kcalTarget || 1500;
-      const prompt = '幫減重的人設計今天的「'+label+'」,每日約 '+target+' 大卡,原型食物、好準備。'
-        + '想吃:'+(wish || '清爽的')+'。'
-        + (fridgeHave.length ? ('冰箱有:'+fridgeHave.join("、")+'(優先用)。') : '')
-        + '只回 JSON、只寫吃什麼不超過25字:{"text":"..."}。';
-      const m = await geminiJSON(prompt, null, 0.6);
-      const text = (m && (m.text || m[field])) || "";
-      if(!text) throw new Error("回傳格式看不懂");
-      applyMeal(field, text);
-      status.innerHTML = '<span class="ok">新的'+label+'好了 ✅ 已套用到上面</span>';
+      if(rest){
+        status.innerHTML = '<span class="ai-spin"></span>正在讀取餐廳菜單、幫你挑'+label+'…';
+        const m = await restaurantPick(rest, wish, label, target);
+        const text = (m && m.text) || "";
+        if(!text) throw new Error("讀不到這間餐廳的菜單");
+        applyMeal(field, text);
+        const why = (m && m.why) ? ' <span style="color:var(--ink-soft);font-size:var(--fs-hint)">'+esc(m.why)+'</span>' : '';
+        status.innerHTML = '<span class="ok">幫你從這間餐廳挑了 ✅ 已套用到上面</span>'+why;
+      } else {
+        status.innerHTML = '<span class="ai-spin"></span>重新設計'+label+'中…';
+        const prompt = '幫減重的人設計今天的「'+label+'」,每日約 '+target+' 大卡,原型食物、好準備。'
+          + '想吃:'+(wish || '清爽的')+'。'
+          + (fridgeHave.length ? ('冰箱有:'+fridgeHave.join("、")+'(優先用)。') : '')
+          + '只回 JSON、只寫吃什麼不超過25字:{"text":"..."}。';
+        const m = await geminiJSON(prompt, null, 0.6);
+        const text = (m && (m.text || m[field])) || "";
+        if(!text) throw new Error("回傳格式看不懂");
+        applyMeal(field, text);
+        status.innerHTML = '<span class="ok">新的'+label+'好了 ✅ 已套用到上面</span>';
+      }
     }catch(e){
-      applyMeal(field, localNewMeal(field));
-      status.innerHTML = '<span class="err">AI 失敗('+esc(e.message||e)+'),先幫你換一種現成的。</span>';
+      if(rest){
+        status.innerHTML = '<span class="err">讀不到這間餐廳的菜單('+esc(e.message||e)+')。試試改貼餐廳「官網或菜單頁」的網址,通常比 Google Maps 更容易讀到。</span>';
+      } else {
+        applyMeal(field, localNewMeal(field));
+        status.innerHTML = '<span class="err">AI 失敗('+esc(e.message||e)+'),先幫你換一種現成的。</span>';
+      }
     }
     btn.disabled = false; btn.textContent = old;
   }
@@ -3144,6 +3186,53 @@
     }
     if(quotaHit) throw new Error("Google 免費額度又滿了 😥 這是 Google 對免費金鑰的限制(很小氣)。強烈建議改用 Groq 免費金鑰(gsk_ 開頭、額度高很多):到「AI 金鑰設定」旁的 Groq 連結申請,貼上就會自動切換。");
     throw new Error(lastMsg);
+  }
+  // 讓 Gemini 讀網址(url_context)+ 搜尋(google_search),用來讀餐廳菜單。用文字回 JSON、再容錯解析。
+  const GEMINI_BROWSE_MODELS = ["gemini-2.5-flash","gemini-flash-latest","gemini-2.0-flash"];
+  async function googleBrowseJSON(prompt, key, temp){
+    const body = {
+      contents:[{ parts:[{text:prompt}] }],
+      tools:[{ url_context:{} },{ google_search:{} }],
+      generationConfig:{ temperature: temp==null?0.4:temp }
+    };
+    let lastMsg="連線失敗", quota=false;
+    for(const mdl of GEMINI_BROWSE_MODELS){
+      let res;
+      try{ res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+mdl+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(body)}); }
+      catch(netErr){ lastMsg="無法連線到 Google,請檢查網路"; continue; }
+      if(res.ok){
+        const d = await res.json();
+        const parts = ((((d.candidates||[])[0]||{}).content||{}).parts)||[];
+        const txt = parts.map(p=>p.text||"").join("").trim();
+        const obj = parseLooseJSON(txt);
+        if(obj!=null) return obj;
+        throw new Error("AI 回傳格式看不懂,請再試一次");
+      }
+      let msg="錯誤 "+res.status; const st=res.status;
+      try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
+      lastMsg=msg;
+      if(st===401||st===403 || (st===400 && /API[_ ]?key|API_KEY_INVALID/i.test(msg))) throw new Error("Google 金鑰無法通過驗證,請重新複製(AIza 開頭)、或改用 Groq 金鑰。");
+      if(st===400) continue;   // 有些模型不支援讀網址工具,換下一個模型再試
+      if(st===429) quota=true;
+    }
+    if(quota) throw new Error("Google 免費額度滿了,稍等再試。");
+    throw new Error(lastMsg);
+  }
+  // Groq 的 compound 模型內建網頁瀏覽,可讀餐廳連結;一般 llama 模型不行。
+  async function groqBrowseJSON(prompt, key){
+    const models = ["groq/compound","groq/compound-mini"];
+    let lastMsg="連線失敗";
+    for(const mdl of models){
+      let res;
+      try{ res = await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:mdl,messages:[{role:"user",content:prompt}],temperature:0.4})}); }
+      catch(netErr){ lastMsg="無法連線到 Groq"; continue; }
+      if(res.ok){ const d=await res.json(); const txt=(((d.choices||[])[0]||{}).message||{}).content||""; const o=parseLooseJSON(txt); if(o!=null) return o; throw new Error("AI 回傳格式看不懂,請再試一次"); }
+      let msg="錯誤 "+res.status; const st=res.status;
+      try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
+      lastMsg=msg;
+      if(st===401||st===403) throw new Error("Groq 金鑰無效,請確認是 gsk_ 開頭的金鑰。");
+    }
+    throw new Error("這把 Groq 金鑰讀不到網頁("+lastMsg+")。讀餐廳連結建議改用 Google 金鑰(AIza 開頭,到 Google AI Studio 免費申請)。");
   }
   // 圖片內容雜湊:同一張照片得到同一把 key,配合快取讓熱量估計每次一致
   function hashStr(s){
