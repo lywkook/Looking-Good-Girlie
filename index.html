@@ -1878,7 +1878,8 @@
   // 依序嘗試目前仍在免費額度內的模型(舊的 gemini-2.0-flash 免費額度已歸零,擺最後備援)
   const GEMINI_MODELS = ["gemini-2.5-flash-lite","gemini-2.0-flash-lite","gemini-2.5-flash","gemini-flash-latest"];
   let geminiLastGood = null;
-  const GROQ_VISION = ["meta-llama/llama-4-scout-17b-16e-instruct","meta-llama/llama-4-maverick-17b-128e-instruct"];
+  const GROQ_VISION = ["meta-llama/llama-4-scout-17b-16e-instruct","meta-llama/llama-4-maverick-17b-128e-instruct","llama-3.2-11b-vision-preview","llama-3.2-90b-vision-preview"];
+  const GROQ_VISION_RE = /scout|maverick|vision|llava|llama-?4|pixtral|[-_]vl\b|qwen.*vl|omni|gemini/i;
   const GROQ_TEXT = ["llama-3.3-70b-versatile","meta-llama/llama-4-scout-17b-16e-instruct"];
   // 依金鑰前綴自動選服務:gsk_ = Groq(免費額度高很多)、其他 = Google
   async function geminiJSON(prompt, extraParts, temp){
@@ -1902,7 +1903,7 @@
     const avail = await groqModelList(key);   // 問這把金鑰實際有哪些模型
     let models;
     if(b64){
-      models = avail.filter(id=>/scout|maverick|vision|llava|llama-4/i.test(id) && !/guard|whisper|tts/i.test(id));
+      models = avail.filter(id=>GROQ_VISION_RE.test(id) && !/guard|whisper|tts/i.test(id));
       if(!models.length) models = GROQ_VISION;
     }else{
       models = avail.filter(id=>/llama|gemma|qwen|mixtral|instant|versatile|gpt-oss|kimi/i.test(id) && !/vision|guard|whisper|tts/i.test(id));
@@ -1919,9 +1920,11 @@
       if(st===401||st===403) throw new Error("Groq 金鑰無效,請確認是 gsk_ 開頭的金鑰(到 console.groq.com/keys 申請)。");
       if(st===429) quota=true;
     }
-    if(b64 && avail.length && !avail.some(id=>/scout|maverick|vision|llava|llama-4/i.test(id)))
-      throw new Error("你的 Groq 帳號目前沒有可看圖的模型(可用的:"+avail.slice(0,6).join("、")+"…)。可改貼 Google 金鑰(AIza),或手動輸入熱量。");
     if(quota) throw new Error("Groq 額度滿了,稍等再試。");
+    if(b64){
+      const listStr = avail.length ? avail.join("、") : "(抓不到清單)";
+      throw new Error("Groq 看圖失敗。你帳號可用模型:"+listStr+"。原始:"+lastMsg);
+    }
     throw new Error(lastMsg);
   }
   async function googleJSON(prompt, extraParts, temp, key){
