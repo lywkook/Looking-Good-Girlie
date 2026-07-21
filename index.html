@@ -583,6 +583,7 @@
   .dish .d-kcal{ font-size:var(--fs-label); color:var(--pink); font-weight:900; white-space:nowrap; }
   .menu-regen-box{ display:none; margin-top:12px; padding:14px; background:var(--pink-soft); border-radius:16px; }
   .menu-regen-box.show{ display:block; }
+  .menu-regen-hint{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.55; margin-bottom:10px; }
   .menu-regen-box input{ width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px;
     padding:11px 13px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); }
   .wo-quick{ background:var(--pink-soft); border-radius:16px; padding:14px; margin-bottom:16px; }
@@ -770,16 +771,17 @@
   <div class="weight-box" id="todayMenuBox" style="border-style:solid;">
     <!-- filled by JS -->
   </div>
-  <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;width:100%;padding:14px 18px;font-size:var(--fs-body);font-weight:700;">不想吃這些?換一份</button>
+  <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;width:100%;padding:14px 18px;font-size:var(--fs-body);font-weight:700;">讓 AI 幫我換一餐</button>
   <div class="menu-regen-box" id="menuRegenBox">
+    <div class="menu-regen-hint">選一餐,AI 會依熱量目標重新幫你配好。想吃什麼可以先寫,或留空讓 AI 決定。</div>
     <div class="meal-tabs" id="regenMealTabs">
       <button type="button" class="meal-tab" data-rmeal="breakfast">早餐</button>
       <button type="button" class="meal-tab active" data-rmeal="lunch">午餐</button>
       <button type="button" class="meal-tab" data-rmeal="dinner">晚餐</button>
-      <button type="button" class="meal-tab" data-rmeal="fruit">水果</button>
+      <button type="button" class="meal-tab" data-rmeal="fruit">點心/水果</button>
     </div>
-    <input id="menuWish" placeholder="想吃什麼?(可留空)" autocomplete="off">
-    <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">換這一餐</button>
+    <input id="menuWish" placeholder="想吃什麼?(可留空,AI 幫你決定)" autocomplete="off">
+    <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">讓 AI 換這一餐</button>
     <div class="ai-photo-status" id="menuRegenStatus"></div>
   </div>
 </div>
@@ -1198,7 +1200,10 @@
     "份 / 顆 / 個(熱量會 ×數量)":"servings / pcs (kcal × qty)","加入這一餐":"Add this meal",
     "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
     "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
+    "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
+    "選一餐,AI 會依熱量目標重新幫你配好。想吃什麼可以先寫,或留空讓 AI 決定。":"Pick a meal and AI re-plans it to your calorie target. Add a craving, or leave blank and let AI decide.",
     "想吃什麼?(可留空)":"Craving anything? (optional)",
+    "想吃什麼?(可留空,AI 幫你決定)":"Craving anything? (optional — AI decides if blank)",
     "清空今天,重新記錄":"Clear today & restart","存進今天的紀錄":"Save to today's log","清空今日所有紀錄":"Clear today's records","清空運動計劃,重新選取":"Clear workout & reselect",
     // 拍照 / AI 金鑰
     "拍照估熱量":"Photo calories","加照片(選填)":"Add photo (optional)",
@@ -1962,7 +1967,7 @@
     const todayIso = curIso();
     const todayEntry = days.find(d=>d.iso===todayIso) || days[0];
     const box = document.getElementById("todayMenuBox");
-    const fields = [["breakfast","早餐"],["lunch","午餐"],["dinner","晚餐"],["fruit","水果點心"]];
+    const fields = [["breakfast","早餐"],["lunch","午餐"],["dinner","晚餐"],["fruit","點心/水果"]];
     box.innerHTML = fields.map(([f,label])=>`
       <div class="blk">
         <span class="blk-label">${label}</span>
@@ -1992,7 +1997,7 @@
 
   // ---------- 換今日菜單(選一餐、輸入想吃的,重新給那一餐) ----------
   let regenField = "lunch";
-  const MEAL_LABEL = { breakfast:"早餐", lunch:"午餐", dinner:"晚餐", fruit:"水果點心" };
+  const MEAL_LABEL = { breakfast:"早餐", lunch:"午餐", dinner:"晚餐", fruit:"點心/水果" };
   const MEAL_ALT = {
     breakfast: ["水煮蛋 1 顆","茶葉蛋 1 顆 + 無糖豆漿","希臘優格 + 一份水果","全麥吐司 1 片 + 荷包蛋","燕麥粥 + 水煮蛋"],
     lunch: ["雞胸肉(或雞腿) + 白飯一碗 + 炒青菜","清蒸鱸魚 + 白飯 + 燙青菜","燙牛肉片 + 白飯一碗 + 青菜","蒜炒蝦仁 + 白飯 + 蔬菜","煎牛排一片 + 白飯一碗 + 大量蔬菜","韓式嫩豆腐鍋 + 白飯"],
