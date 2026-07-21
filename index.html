@@ -197,6 +197,11 @@
   #profileSection{ order:7; }
   #workoutSection{ order:8; }
   #checkinSection{ order:9; }
+  .scroll-top-btn{ position:fixed; right:18px; bottom:98px; width:46px; height:46px; border-radius:50%; border:none;
+    background:var(--pink); color:#fff; font-size:24px; font-weight:900; line-height:1; box-shadow:0 4px 14px rgba(94,85,76,0.28);
+    cursor:pointer; z-index:150; display:none; align-items:center; justify-content:center; }
+  .scroll-top-btn.show{ display:flex; }
+  .scroll-top-btn:active{ transform:scale(0.92); }
   .section{ padding:22px 20px 0; }
   .section h2{
     font-size:var(--fs-title); margin:0 0 12px; font-weight:400;
@@ -1011,6 +1016,7 @@
   <button type="button" class="nav-btn" id="navAsk"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg><span>問AI</span></button>
   <button type="button" class="nav-btn" id="navSettings"><svg class="nav-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/></svg><span>設定</span></button>
 </nav>
+<button type="button" class="scroll-top-btn" id="scrollTopBtn" aria-label="回到最上面">↑</button>
 </div><!-- /appView -->
 
 <div class="modal" id="settingsModal">
@@ -1859,13 +1865,15 @@
     const dp=document.getElementById("datePicker"); if(dp) dp.value=curIso();
     const dd=document.getElementById("dateDisplay"); if(dd) dd.textContent=dateBarText();
   }
-  // 頂部總覽:剩餘天數、最新體重 依「目前檢視的日期」變動
+  // 頂部總覽:剩餘天數、完成天數、最新體重 都依「目前檢視的日期」變動
   function updateStripForDate(){
-    const ms=86400000;
+    const ms=86400000, cur=curIso();
     const dl=document.getElementById("daysLeft");
     if(dl) dl.textContent = Math.max(0, Math.round((endDate - viewDate)/ms));
+    const dc=document.getElementById("doneCount");
+    if(dc && typeof doneState!=="undefined"){ const doneN=Object.keys(doneState).filter(iso=>doneState[iso]&&iso<=cur).length; dc.textContent = doneN + "/" + days.length; }
     const lw=document.getElementById("latestWeight");
-    if(lw){ const upto=(typeof log!=="undefined"&&log?log:[]).filter(e=>e.weight!=null&&e.date<=curIso()).slice().sort((a,b)=>a.date.localeCompare(b.date));
+    if(lw){ const upto=(typeof log!=="undefined"&&log?log:[]).filter(e=>e.weight!=null&&e.date<=cur).slice().sort((a,b)=>a.date.localeCompare(b.date));
       lw.textContent = upto.length ? (upto[upto.length-1].weight+"kg") : "--"; }
   }
   function refreshDateViews(){
@@ -2298,8 +2306,7 @@
   }
 
   function updateDoneCount(){
-    const doneN = Object.values(doneState).filter(Boolean).length;
-    document.getElementById("doneCount").textContent = doneN + "/" + days.length;
+    if(typeof updateStripForDate==="function") updateStripForDate();
   }
 
   async function loadOverrides(){
@@ -4199,6 +4206,7 @@
     document.getElementById("appView").style.display="none";
     document.getElementById("homeScreen").style.display="";
     const pp=document.getElementById("planPanel"); if(pp) pp.classList.remove("show");
+    const stb=document.getElementById("scrollTopBtn"); if(stb) stb.classList.remove("show");
     applyScopeTheme("home");   // 回到主畫面 → 套用主畫面自己的外觀
     window.scrollTo(0,0);
   }
@@ -4242,6 +4250,14 @@
     const caret=el.querySelector(".pf-caret"); if(caret) caret.textContent="▾";
     document.getElementById("navJumpMenu").classList.remove("show");
     try{ el.scrollIntoView({behavior:"smooth", block:"start"}); }catch(_){}
+  }
+  function initScrollTop(){
+    const btn=document.getElementById("scrollTopBtn"); if(!btn) return;
+    const onScroll=()=>{ const inPlan=document.getElementById("appView").style.display!=="none";
+      btn.classList.toggle("show", inPlan && window.scrollY>280); };
+    window.addEventListener("scroll", onScroll, {passive:true});
+    btn.addEventListener("click", ()=>{ try{ window.scrollTo({top:0, behavior:"smooth"}); }catch(_){ window.scrollTo(0,0); } });
+    onScroll();
   }
   function initBottomNav(){
     const h=document.getElementById("navHome"); if(h) h.addEventListener("click", goHome);
@@ -4539,6 +4555,7 @@
     await initSimpleCollapse();
     initHomeModule();
     initBottomNav();
+    initScrollTop();
     initDateBar();
     initThemeModule();
     initSettingsInputs();
