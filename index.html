@@ -444,8 +444,8 @@
   .rm-check input, .rm-item input{ width:20px; height:20px; accent-color:var(--pink); }
   .rm-row{ display:flex; align-items:center; flex-wrap:wrap; gap:10px; font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:12px; }
   .rm-row input[type=time]{ padding:8px 10px; border-radius:12px; border:2px solid var(--line); font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
-  .rm-actions{ display:flex; gap:8px; flex-wrap:wrap; }
-  .rm-actions .mini-btn{ flex:1; min-width:130px; }
+  .rm-actions{ display:flex; flex-direction:column; gap:8px; }
+  .rm-actions .mini-btn{ width:100%; line-height:1.5; word-break:keep-all; }
   .rm-item{ display:inline-flex; align-items:center; gap:6px; color:var(--ink); }
   .rm-items{ display:flex; flex-wrap:wrap; gap:8px 14px; }
   .rm-preview-label{ font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:6px; }
@@ -4514,9 +4514,8 @@
   // ---------- 提醒(內容即時反映 App 內的更動;可設定時間/內容) ----------
   const RM_DEFAULT = { on:false, time:"16:20", breakfast:false, lunch:false, dinner:true, snack:false, tmrLunch:true, workout:true, body:true };
   let reminderCfg = Object.assign({}, RM_DEFAULT);
-  function reminderLines(){
-    const iso=isoDate(today); const te=days.find(d=>d.iso===iso)||days[0];
-    const tmr=new Date(today.getTime()+86400000); const tm=days.find(d=>d.iso===isoDate(tmr));
+  function dayEntryFor(iso){ return days.find(d=>d.iso===iso) || (typeof resolveDay==="function"?resolveDay(iso):null); }
+  function reminderLinesForDay(te, tm){
     const lines=[];
     if(reminderCfg.breakfast && te) lines.push("🍳 今日早餐:"+te.diet.breakfast);
     if(reminderCfg.lunch && te) lines.push("🍱 今日午餐:"+te.diet.lunch);
@@ -4527,6 +4526,11 @@
     if(reminderCfg.body) lines.push("⚖️ 記得量體重/體脂並登錄身體數據");
     return lines;
   }
+  function reminderLines(){
+    const te=dayEntryFor(isoDate(today));
+    const tmr=new Date(today.getTime()+86400000); const tm=dayEntryFor(isoDate(tmr));
+    return reminderLinesForDay(te, tm);
+  }
   function renderReminder(){
     const prev=document.getElementById("rmPreview"); if(!prev) return;
     const lines=reminderLines();
@@ -4534,38 +4538,51 @@
     const note=document.getElementById("rmNote");
     if(note) note.innerHTML = reminderCfg.on
       ? (lang==="en"
-        ? 'On. This is a web app, so it can\'t push notifications on its own. To get a real daily alert: tap <b>“Add to phone calendar”</b> → open the file to add it — your phone will remind you at '+reminderCfg.time+' every day to open the app. (To paste today\'s exact menu/workout into Reminders, use <b>“Copy”</b>.)'
-        : '已開啟。這是網頁 App,沒辦法自己跳通知。想要每天自動提醒:按 <b>「加入手機行事曆」</b> → 開啟檔案加入,手機每天 '+reminderCfg.time+' 就會自動通知你打開 App。(想把當天的菜單/運動貼進「提醒事項」,可用 <b>「複製內容」</b>。)')
+        ? 'On. A web app can\'t push notifications by itself (that needs a server). Best free option: tap <b>“Add to phone calendar”</b> → open the file to add it. Your phone will then notify you at '+reminderCfg.time+' every day for the next 30 days, showing that day\'s actual content (dinner / workout, etc.). When the menu or workout changes, tap it again to refresh.'
+        : '已開啟。網頁 App 沒辦法自己推播通知(那需要伺服器)。免費最佳做法:按 <b>「加入手機行事曆」</b> → 開啟檔案加入。手機接下來 30 天,每天 '+reminderCfg.time+' 就會自動跳通知,並顯示<b>當天實際的內容</b>(晚餐/運動等)。菜單或運動有改,再按一次重新加入即可。')
       : (lang==="en" ? 'Turn on to set time and content; the preview reflects your app changes live.' : '打開後可設定時間與內容;預覽內容會即時反映你在 App 裡改的菜單/運動。');
     updateRmMini();
   }
-  // 產生每天重複的行事曆事件(.ics),手機加入後由行事曆發原生通知(免後端)
+  // 產生未來 30 天、每天一則、帶「當天實際內容」的行事曆事件(.ics),手機加入後由行事曆發原生通知(免後端)
   function buildReminderICS(){
     const time=(reminderCfg.time||"16:20"); const p=time.split(":"); const hh=parseInt(p[0],10)||16, mm=parseInt(p[1],10)||20;
     const pad=n=>String(n).padStart(2,"0");
-    const d=new Date();
-    const dtstart=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"T"+pad(hh)+pad(mm)+"00";
-    const n=new Date();
-    const stamp=n.getUTCFullYear()+pad(n.getUTCMonth()+1)+pad(n.getUTCDate())+"T"+pad(n.getUTCHours())+pad(n.getUTCMinutes())+pad(n.getUTCSeconds())+"Z";
-    const uid="weightplan-"+n.getTime()+"@app";
-    const summary = lang==="en" ? "Weight plan reminder" : "減重計畫提醒";
-    const desc = lang==="en" ? "Open the app to log today's food, workout and weight." : "打開 App 記錄今天的飲食、運動與體重。";
     const esc=s=>String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n");
-    return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//WeightPlan//Reminder//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH",
-      "BEGIN:VEVENT","UID:"+uid,"DTSTAMP:"+stamp,"DTSTART:"+dtstart,"DURATION:PT10M","RRULE:FREQ=DAILY",
-      "SUMMARY:"+esc(summary),"DESCRIPTION:"+esc(desc),
-      "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+esc(summary),"TRIGGER:PT0M","END:VALARM",
-      "END:VEVENT","END:VCALENDAR"].join("\r\n");
+    const now=new Date();
+    const stamp=now.getUTCFullYear()+pad(now.getUTCMonth()+1)+pad(now.getUTCDate())+"T"+pad(now.getUTCHours())+pad(now.getUTCMinutes())+pad(now.getUTCSeconds())+"Z";
+    const out=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//WeightPlan//Reminder//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH"];
+    let count=0;
+    for(let i=0;i<30;i++){
+      const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+i);
+      const iso=isoDate(d);
+      const te=dayEntryFor(iso);
+      const nd=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1); const tm=dayEntryFor(isoDate(nd));
+      const lines=reminderLinesForDay(te,tm);
+      if(!lines.length) continue;
+      const dtstart=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"T"+pad(hh)+pad(mm)+"00";
+      const uid="wp-"+iso+"-"+now.getTime()+"@app";
+      // 標題放內容(去掉開頭 emoji),讓通知橫幅直接看到要提醒的東西
+      const titleBody=lines.map(s=>s.replace(/^\S+\s+/,"")).join(" · ");
+      const summary=(lang==="en"?"Reminder: ":"減重提醒:")+titleBody;
+      out.push("BEGIN:VEVENT","UID:"+uid,"DTSTAMP:"+stamp,"DTSTART:"+dtstart,"DURATION:PT10M",
+        "SUMMARY:"+esc(summary),"DESCRIPTION:"+esc(lines.join("\n")),
+        "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+esc(summary),"TRIGGER:PT0M","END:VALARM","END:VEVENT");
+      count++;
+    }
+    out.push("END:VCALENDAR");
+    return {ics:out.join("\r\n"), count};
   }
   function downloadReminderICS(){
     try{
-      const ics=buildReminderICS();
-      const blob=new Blob([ics],{type:"text/calendar;charset=utf-8"});
+      const r=buildReminderICS();
+      if(!r.count){ alert(lang==="en"?"Select at least one reminder item first.":"請先勾選要提醒的內容(晚餐、運動等)。"); return false; }
+      const blob=new Blob([r.ics],{type:"text/calendar;charset=utf-8"});
       const url=URL.createObjectURL(blob);
       const a=document.createElement("a"); a.href=url; a.download="reminder.ics"; a.rel="noopener";
       document.body.appendChild(a); a.click();
       setTimeout(()=>{ try{ URL.revokeObjectURL(url); a.remove(); }catch(e){} }, 1500);
-    }catch(e){ alert((lang==="en"?"Failed: ":"產生失敗:")+(e.message||e)); }
+      return true;
+    }catch(e){ alert((lang==="en"?"Failed: ":"產生失敗:")+(e.message||e)); return false; }
   }
   function updateRmMini(){ const m=document.getElementById("rmMini"); if(!m) return;
     m.innerHTML = reminderCfg.on ? ('提醒 '+reminderCfg.time+' 已開 <span class="pf-hint">(點開設定)</span>') : '<span class="pf-hint">點這裡展開,設定提醒</span>';
@@ -4599,7 +4616,7 @@
       });
     });
     const cal=document.getElementById("rmCal");
-    if(cal) cal.addEventListener("click", ()=>{ downloadReminderICS();
+    if(cal) cal.addEventListener("click", ()=>{ const ok=downloadReminderICS(); if(!ok) return;
       const o=cal.textContent; cal.textContent=lang==="en"?"Calendar file created ✅":"已產生行事曆檔 ✅"; setTimeout(()=>cal.textContent=o,1800); });
     const cp=document.getElementById("rmCopy");
     if(cp) cp.addEventListener("click", async ()=>{ const txt=reminderLines().join("\n");
