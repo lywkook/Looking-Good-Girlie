@@ -228,6 +228,8 @@
     font-size:var(--fs-body); background:#FFFDFA; color:var(--ink);
   }
   .field input:focus{ outline:none; border-color:var(--pink); }
+  .field{ min-width:0; }
+  .field input[type=date], .field input[type=time]{ width:100%; box-sizing:border-box; min-width:0; max-width:100%; -webkit-appearance:none; appearance:none; }
   .field .unit{
     position:absolute; right:10px; top:50%; transform:translateY(-50%);
     font-size:var(--fs-label); color:var(--ink-soft);
@@ -492,10 +494,12 @@
   .bg-sw.on{ outline:3px solid var(--pink); outline-offset:2px; }
   .bg-actions{ display:flex; gap:8px; flex-wrap:wrap; }
   .set-block{ margin-bottom:22px; }
-  .analysis-toggle{ cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:6px;
-    font-size:var(--fs-label); font-weight:700; color:var(--ink-soft); margin-top:12px; padding:8px 2px; }
-  .analysis-toggle .pf-caret{ color:var(--pink); }
-  #profileResult{ margin-top:6px; }
+  .analysis-toggle{ cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px;
+    font-size:var(--fs-label); font-weight:900; color:var(--pink-shadow); margin-top:14px;
+    background:var(--pink-soft); border:1.5px solid var(--pink); border-radius:12px; padding:12px 15px; }
+  .analysis-toggle:active{ transform:scale(0.98); }
+  .analysis-toggle .pf-caret{ color:var(--pink-shadow); font-size:var(--fs-body); font-weight:900; }
+  #profileResult{ margin-top:8px; }
   .set-title{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:12px;
     background:var(--pink-soft); border-left:5px solid var(--pink); border-radius:8px; padding:8px 12px; }
   .color-row{ display:flex; align-items:center; gap:8px; margin:10px 0; }
@@ -3449,7 +3453,7 @@
     // 減重分析:可收合(預設收起),記住狀態
     const at=document.getElementById("analysisToggle");
     const setAnalysis=(open)=>{ const pr=document.getElementById("profileResult"); if(pr) pr.style.display=open?"":"none";
-      const c=document.getElementById("analysisCaret"); if(c) c.textContent=open?"▾":"▸"; };
+      const c=document.getElementById("analysisCaret"); if(c) c.textContent = open ? (lang==="en"?"Hide ▾":"收起 ▾") : (lang==="en"?"Show ▸":"點開 ▸"); };
     if(at){
       at.addEventListener("click", async ()=>{ const pr=document.getElementById("profileResult"); const open=pr && pr.style.display==="none"; setAnalysis(open); try{ await window.storage.set(K("analysisopen"), open?"1":"0", false); }catch(e){} });
       (async()=>{ let st="0"; try{ const r=await window.storage.get(K("analysisopen"),false); if(r&&r.value!=null&&r.value!=="") st=r.value; }catch(e){} setAnalysis(st==="1"); })();
