@@ -850,7 +850,7 @@
       <span class="fchip" data-pref="湯品">湯品</span>
     </div>
     <input id="menuWish" placeholder="還想吃什麼?(可留空)" autocomplete="off">
-    <input id="menuRestaurant" placeholder="要外食?打店名、或貼餐廳連結(官網最準)" autocomplete="off">
+    <input id="menuRestaurant" placeholder="要外食?貼餐廳官網連結,幫你從菜單挑" autocomplete="off">
     <div class="menu-regen-photo-row">
       <input type="file" accept="image/*" id="menuPhotoInput" multiple style="display:none">
       <button type="button" class="mini-btn" id="menuPhotoBtn">上傳菜單照片</button>
@@ -1297,7 +1297,7 @@
     "高蛋白":"High protein","少油清爽":"Light / low oil","低卡":"Low calorie","低碳水":"Low carb","多蔬菜":"More veg","吃辣":"Spicy OK","不辣":"Not spicy","不吃牛":"No beef","不吃豬":"No pork","海鮮":"Seafood","素食":"Vegetarian","飯類":"Rice dishes","麵食":"Noodles","湯品":"Soup",
     "想吃什麼?(可留空)":"Craving anything? (optional)",
     "還想吃什麼?(可留空)":"Anything else you fancy? (optional)",
-    "要外食?打店名、或貼餐廳連結(官網最準)":"Eating out? Type the store name, or paste a link (official site works best)",
+    "要外食?貼餐廳官網連結,幫你從菜單挑":"Eating out? Paste the restaurant's website link and we'll pick from its menu",
     "上傳菜單照片":"Upload menu photo",
     "上傳菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(Google / Groq 都行)。":"Uploading a menu photo needs a free AI key. Paste one under “AI key” at the top of ⚙️ Settings (works on Google or Groq).",
     "讀取餐廳連結或菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(菜單照片 Google / Groq 都行)。":"Reading a restaurant link or menu photo needs a free AI key. Paste one under “AI key” at the top of ⚙️ Settings (menu photos work on Google or Groq).",
@@ -2149,14 +2149,12 @@
         + '條件:約 '+target+' 大卡上下、蛋白質足夠、少油炸勾芡與含糖飲料。'
         + (wish ? ('其他偏好:'+wish+'。') : '')
         + '\n只回 JSON:{"text":"從清單挑的餐點+吃法建議,不超過25字","why":"為什麼推薦,不超過30字"}。')
-      : ('你是減重營養教練。使用者今天想在「'+url+'」吃「'+label+'」。那串可能是網址,也可能就是店名。\n'
-        + '網址常常讀不到內容,所以請「務必先用 google_search 搜尋店名」,查出:①這是什麼「類型」的店 ②招牌與常見餐點。\n'
-        + '接著從「這種類型的店合理會賣、你也查到或知道的餐點/飲品」裡,挑 1 道最適合減重的。\n'
-        + '★一定要「符合這間店的類型」:飲料店就推較健康的飲品做法(無糖/微糖、少冰、可換鮮奶);便當/自助餐推均衡便當;麵店推湯麵去油;火鍋推清湯多菜;速食推烤雞或沙拉。絕對不要推薦這種店根本不會賣的東西(例如飲料店不要推沙拉排餐)。\n'
-        + '請「盡量給出一個建議」。只有「連這是什麼店、什麼類型都完全查不出來」時,text 才回空字串。\n'
-        + '條件:約 '+target+' 大卡上下、少糖少油、盡量有蛋白質或蔬菜。'
-        + (wish ? ('使用者偏好:'+wish+',在此偏好內挑。') : '')
-        + '\n只回 JSON:{"text":"餐點/飲品名稱+吃法建議,不超過25字","why":"店名或類型+為什麼,不超過30字"}。');
+      : ('你是減重營養教練。使用者提供了一個餐廳的官網 / 菜單網址:「'+url+'」,想吃「'+label+'」。\n'
+        + '請「讀取這個網址」的內容,找出這間店菜單上實際有的餐點,從中挑 1 道最適合減重的(可加吃法建議,如去醬、飲料換無糖)。\n'
+        + '★只能推薦你在這個頁面上「實際讀到」的餐點,絕對不要虛構、不要憑空猜測。若頁面讀不到菜單內容,text 就回空字串。\n'
+        + '條件:約 '+target+' 大卡上下、蛋白質足夠、少油炸勾芡與含糖飲料。'
+        + (wish ? ('其他偏好:'+wish+'。') : '')
+        + '\n只回 JSON:{"text":"菜單上的餐點+吃法建議,不超過25字","why":"為什麼推薦,不超過30字"}。');
     const run=async s=> s.provider==="groq" ? await groqBrowseJSON(prompt, s.key) : await googleBrowseJSON(prompt, s.key, foods?0.3:0.35);
     try{ return await run(sel); }
     catch(e){ const alt=otherSel(sel); if(alt) return await run(alt); throw e; }
@@ -2279,10 +2277,10 @@
       const reason = browseReason(e && (e.message||e));
       if(hasPhoto) status.innerHTML = '<span class="err">'+RP('讀取失敗('+reason.zh+')。換張更清楚的菜單照片再試,或直接打想吃什麼。','Read failed ('+reason.en+'). Try a clearer menu photo, or just type a craving.')+'</span>';
       else if(rest){
-        const needGoogle = !googleKey;   // 沒 Google 金鑰是讀連結/店名失敗最常見主因
+        const needGoogle = !googleKey;   // 沒 Google 金鑰是讀連結失敗最常見主因
         status.innerHTML = '<span class="err">'+RP('讀取失敗('+reason.zh+')。','Read failed ('+reason.en+'). ')
-          + (needGoogle ? RP('讀連結或店名需要一把 Google 金鑰(你目前這把讀不了網頁);到 ⚙️ 設定加一把免費 Google 金鑰會穩很多。也可','Reading links or store names needs a Google key (your current key can\'t read web pages); add a free Google key in ⚙️ Settings. Or ') : RP('可','You can '))
-          + RP('改貼官網 / 菜單頁,或用「上傳菜單照片」。','use the official/menu page, or upload a menu photo.')+'</span>';
+          + (needGoogle ? RP('讀連結需要一把 Google 金鑰(你目前這把讀不了網頁);到 ⚙️ 設定加一把免費 Google 金鑰會穩很多。也可','Reading links needs a Google key (your current key can\'t read web pages); add a free Google key in ⚙️ Settings. Or ') : RP('可','You can '))
+          + RP('改貼官網 / 菜單頁連結,或用「上傳菜單照片」。','use the official / menu page link, or upload a menu photo.')+'</span>';
       }
       else status.innerHTML = '<span class="err">'+RP('這次沒成功('+reason.zh+'),再按一次試試。','That didn\'t work ('+reason.en+') — tap again.')+'</span>';
     }
@@ -2294,6 +2292,11 @@
     const restEl = document.getElementById("menuRestaurant");
     const rest = ((restEl&&restEl.value)||"").trim();
     const hasPhoto = menuPhotos.length>0;
+    const isLink = /^https?:\/\//i.test(rest) || /[\w-]+\.[a-z]{2,}(\/|\?|$)/i.test(rest);
+    if(rest && !isLink && !hasPhoto){
+      status.innerHTML = '<span class="err">'+RP('餐廳欄位請貼「官網 / 菜單頁連結」;若只知道店名,請改用「上傳菜單照片」。','Paste the restaurant\'s website / menu link here; if you only know the name, upload a menu photo instead.')+'</span>';
+      return;
+    }
     const field = regenField;
     if(!anyKey() && (rest || hasPhoto)){
       status.innerHTML = '<span class="err">讀取餐廳連結或菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(菜單照片 Google / Groq 都行)。</span>';
