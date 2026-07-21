@@ -69,8 +69,9 @@
   #bottomNav{ position:fixed; left:14px; right:14px; bottom:14px; height:72px; background:var(--pink);
     border-radius:24px; display:flex; z-index:200; box-shadow:0 6px 22px rgba(94,85,76,0.22); overflow:hidden; }
   .nav-btn{ flex:1; border:none; background:none; font-family:inherit; cursor:pointer; color:#fff;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:27px; }
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
   .nav-btn + .nav-btn{ border-left:1px solid rgba(255,255,255,0.35); }
+  .nav-ic{ width:26px; height:26px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; display:block; }
   .nav-btn span{ font-size:var(--fs-label); color:#fff; font-weight:700; }
   .nav-btn:active{ background:rgba(255,255,255,0.18); }
   .nav-jump-menu{ position:fixed; right:16px; bottom:98px; background:var(--card); border-radius:16px;
@@ -85,7 +86,8 @@
     padding:24px 20px 6px;
   }
   .stamp-row .brand{
-    font-size:var(--fs-label); letter-spacing:0.14em; color:var(--ink-soft);
+    font-size:var(--fs-label); letter-spacing:0.12em; color:var(--ink); font-weight:900;
+    background:var(--pink-soft); padding:5px 14px; border-radius:20px;
   }
   .stamp-row .badge{
     font-size:var(--fs-label); background:var(--pink); color:#fff; padding:3px 10px;
@@ -477,18 +479,18 @@
   .wo-items{ margin:0; padding-left:20px; }
   .wo-items li{ font-size:var(--fs-label); color:var(--ink); line-height:1.55; margin-bottom:2px; }
   .water-row{ display:flex; align-items:center; justify-content:center; gap:16px; }
-  .water-btn{ width:44px; height:44px; border-radius:50%; border:none; background:var(--blue-soft);
-    color:var(--blue); font-size:24px; font-weight:900; cursor:pointer; font-family:inherit; line-height:1; }
+  .water-btn{ width:38px; height:38px; border-radius:50%; border:none; background:var(--blue-soft);
+    color:var(--blue); font-size:21px; font-weight:900; cursor:pointer; font-family:inherit; line-height:1; }
   .water-btn:active{ transform:scale(0.94); }
-  .water-count{ font-size:var(--fs-body); font-weight:900; color:var(--blue); min-width:110px; text-align:center; }
-  .water-cups{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:8px 0 2px; }
-  .water-cups .cup{ width:19px; height:24px; border-radius:4px 4px 8px 8px; border:2px solid var(--blue); background:transparent; }
+  .water-count{ font-size:var(--fs-body); font-weight:900; color:var(--blue); min-width:100px; text-align:center; }
+  .water-cups{ display:flex; flex-wrap:wrap; gap:5px; justify-content:center; margin:6px 0 2px; }
+  .water-cups .cup{ width:16px; height:20px; border-radius:3px 3px 7px 7px; border:2px solid var(--blue); background:transparent; }
   .water-cups .cup.full{ background:var(--blue); }
   .water-ml{ text-align:center; color:var(--ink-soft); font-size:var(--fs-label); }
   /* 喝水那一區的圓點也用藍色、整體更精簡 */
   #waterSection .dot{ background:var(--blue); }
-  #waterSection .weight-box{ border-color:var(--blue-soft); padding:14px; }
-  #waterSection .target-row{ margin:12px 0 0; }
+  #waterSection .weight-box{ border-color:var(--blue-soft); padding:12px; }
+  #waterSection .target-row{ margin:10px 0 0; }
 </style>
 </head>
 <body>
@@ -531,7 +533,7 @@
 <h2 class="cute" id="planHeader" style="display:none;"></h2>
 
 <div class="stamp-row">
-  <div class="brand cute">🍑 TRAINING DIARY</div>
+  <div class="brand cute">TRAINING DIARY</div>
   <div class="badge" id="todayLabel">--</div>
 </div>
 
@@ -677,7 +679,7 @@
     <button class="save-btn cute" id="addFoodBtn">加入這一餐 🍽️</button>
 
     <div class="ai-photo-box" id="aiPhotoBox">
-      <div class="ai-photo-title">📷 拍照估熱量 <span class="ai-badge">AI</span></div>
+      <div class="ai-photo-title">📷 拍照估熱量</div>
       <input type="file" accept="image/*" id="aiPhotoInput" style="display:none">
       <button type="button" class="ai-photo-btn" id="aiPhotoBtn">上傳食物照片,自動估熱量加入<span id="aiMealName">早餐</span></button>
       <div class="ai-photo-status" id="aiPhotoStatus"></div>
@@ -773,10 +775,10 @@
 
 <div class="nav-jump-menu" id="navJumpMenu"></div>
 <nav id="bottomNav">
-  <button type="button" class="nav-btn" id="navHome">🏠<span>主畫面</span></button>
-  <button type="button" class="nav-btn" id="navNew">＋<span>新增計畫</span></button>
-  <button type="button" class="nav-btn" id="navJump">↕<span>跳到</span></button>
-  <button type="button" class="nav-btn" id="navSettings">⚙️<span>設定</span></button>
+  <button type="button" class="nav-btn" id="navHome"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v9h14v-9"/></svg><span>主畫面</span></button>
+  <button type="button" class="nav-btn" id="navNew"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>新增計畫</span></button>
+  <button type="button" class="nav-btn" id="navJump"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M12 4v16"/><path d="M8 8l4-4 4 4"/><path d="M8 16l4 4 4-4"/></svg><span>跳到</span></button>
+  <button type="button" class="nav-btn" id="navSettings"><svg class="nav-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/></svg><span>設定</span></button>
 </nav>
 </div><!-- /appView -->
 
@@ -1041,11 +1043,10 @@
     status.innerHTML = '<span class="ai-spin"></span>重新設計'+label+'中…';
     try{
       const target = parseInt(document.getElementById("inKcalTarget").value,10) || kcalTarget || 1500;
-      const prompt = '你是營養師,幫正在減重的人重新設計今天的「'+label+'」。'
-        + '每日總熱量目標約 '+target+' 大卡,這一餐抓合理比例,以原型食物、好準備為主。'
-        + '使用者想吃的:'+(wish || '沒特別指定,給清爽好準備的')+'。'
-        + (fridgeHave.length ? ('我冰箱有:'+fridgeHave.join("、")+'(優先用這些,想吃外食也可以)。') : '冰箱可能有:牛排、雞肉、鱸魚、牛肉片、蝦仁、豆腐、白飯、白麵、蔬菜、蕃茄橘子蘋果玉米(不一定要全用,想吃外食也可以)。')
-        + '只回傳 JSON,「只寫吃什麼」不要說明或理由、不超過 25 字,格式:{"text":"..."}。';
+      const prompt = '幫減重的人設計今天的「'+label+'」,每日約 '+target+' 大卡,原型食物、好準備。'
+        + '想吃:'+(wish || '清爽的')+'。'
+        + (fridgeHave.length ? ('冰箱有:'+fridgeHave.join("、")+'(優先用)。') : '')
+        + '只回 JSON、只寫吃什麼不超過25字:{"text":"..."}。';
       const m = await geminiJSON(prompt, null, 0.6);
       const text = (m && (m.text || m[field])) || "";
       if(!text) throw new Error("回傳格式看不懂");
@@ -1144,9 +1145,8 @@
     status.innerHTML='<span class="ai-spin"></span>依你的食材想菜中…';
     try{
       const target=parseInt(document.getElementById("inKcalTarget").value,10)||kcalTarget||1500;
-      const prompt='你是營養師兼家常菜廚師。我冰箱有這些食材:'+fridgeHave.join("、")+'。'
-        +'請推薦 5-6 道「用這些食材就能煮」、適合減重(每日約 '+target+' 大卡)的家常菜,盡量原型食物、好準備。'
-        +'只回傳 JSON,不要多餘文字,格式:{"dishes":[{"n":"菜名(含主要搭配,不超過15字)","kcal":整份估計熱量整數}]}。';
+      const prompt='冰箱食材:'+fridgeHave.join("、")+'。推薦 5-6 道用這些就能煮、適合減重(每日約 '+target+' 大卡)的家常菜。'
+        +'只回 JSON:{"dishes":[{"n":"菜名不超過15字","kcal":整數}]}。';
       const m=await geminiJSON(prompt,null,0.5);
       const dishes=(m&&m.dishes)||[];
       if(!dishes.length) throw new Error("回傳格式看不懂");
@@ -1915,7 +1915,7 @@
     throw new Error(lastMsg);
   }
   async function analyzeFoodPhoto(b64){
-    const prompt = '你是營養師。看這張食物照片,用繁體中文判斷主要是什麼食物或餐點,並估計「整份」的總熱量(大卡)。只回傳 JSON,不要多餘文字。格式:{"name":"簡短餐點名稱(繁體中文,不超過12字)","kcal":整數總熱量,"note":"一句話說明估算依據"}。若照片看不出是食物,name 請回空字串。';
+    const prompt = '看這張食物照片,用繁體中文判斷是什麼餐點並估計整份總熱量(大卡)。只回 JSON:{"name":"餐點名不超過12字","kcal":整數,"note":"一句話依據"}。看不出是食物就 name 回空字串。';
     return await geminiJSON(prompt, [{inline_data:{mime_type:"image/jpeg", data:b64}}], 0.2);
   }
   function initAIPhotoModule(){
