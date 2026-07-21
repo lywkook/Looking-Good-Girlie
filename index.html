@@ -506,7 +506,12 @@
   .ask-log:empty{ display:none; }
   .ask-bubble{ font-size:var(--fs-body); line-height:1.55; padding:10px 13px; border-radius:14px; white-space:pre-wrap; word-break:break-word; }
   .ask-q{ align-self:flex-end; background:var(--pink); color:#fff; border-bottom-right-radius:4px; max-width:85%; }
-  .ask-a{ align-self:flex-start; background:#FFFBF6; border:1.5px solid var(--line); color:var(--ink); border-bottom-left-radius:4px; max-width:92%; }
+  .ask-a{ align-self:flex-start; background:#FFFBF6; border:1.5px solid var(--line); color:var(--ink); border-bottom-left-radius:4px; max-width:92%; white-space:normal; }
+  .ask-a .md-p{ margin:3px 0; }
+  .ask-a .md-li{ margin:3px 0 3px 6px; padding-left:2px; }
+  .ask-a .md-h{ margin:6px 0 2px; font-weight:900; }
+  .ask-a .md-sp{ height:7px; }
+  .ask-a b{ font-weight:900; }
   .ask-input-row{ display:flex; gap:8px; align-items:flex-end; }
   .ask-textarea{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
     font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; resize:vertical; }
@@ -2059,6 +2064,24 @@
     else { h.innerHTML='免費申請一把金鑰即可(拍照與文字都用它):<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a> 或 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>。免費、免信用卡。'; }
   }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+  // 把 AI 常用的 Markdown(**粗體**、* 項目、#標題)轉成乾淨的 HTML(先跳脫再轉,安全)
+  function mdToHtml(text){
+    const lines=String(text==null?"":text).split(/\r?\n/);
+    let html="";
+    lines.forEach(raw=>{
+      let t=esc(raw);
+      const isBullet=/^\s*[\*\-]\s+/.test(raw);
+      const heading=/^\s*#{1,6}\s+/.test(raw);
+      t=t.replace(/^\s*#{1,6}\s+/,"").replace(/^\s*[\*\-]\s+/,"");
+      t=t.replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>");           // **粗體**
+      t=t.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g,"$1<i>$2</i>"); // *斜體*
+      if(!t.trim()){ html+='<div class="md-sp"></div>'; return; }
+      if(heading) html+='<div class="md-h">'+t+'</div>';
+      else if(isBullet) html+='<div class="md-li">• '+t+'</div>';
+      else html+='<div class="md-p">'+t+'</div>';
+    });
+    return html;
+  }
   // 容錯 JSON 解析:AI 有時會多回 ```json 圍欄或前後多字,盡量抓出 JSON 主體
   function parseLooseJSON(txt){
     if(!txt) return null;
@@ -2241,7 +2264,7 @@
       const qb=document.createElement("div"); qb.className="ask-bubble ask-q"; qb.textContent=q; log.appendChild(qb);
       const ab=document.createElement("div"); ab.className="ask-bubble ask-a"; ab.textContent="…思考中"; log.appendChild(ab);
       status.innerHTML=""; ab.scrollIntoView({block:"nearest"});
-      try{ const ans=await askAIText(q); ab.textContent=ans; }
+      try{ const ans=await askAIText(q); ab.innerHTML=mdToHtml(ans); }
       catch(e){ ab.textContent="⚠️ "+(e.message||e); }
       btn.disabled=false; ab.scrollIntoView({block:"nearest"});
     }
