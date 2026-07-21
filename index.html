@@ -127,9 +127,9 @@
   .date-bar{ display:flex; align-items:center; gap:8px; margin:0 0 10px; padding:8px 10px; background:var(--card); border-radius:16px; box-shadow:var(--shadow); border:2px solid var(--pink-soft); }
   .date-nav{ width:36px; height:36px; border:none; border-radius:11px; background:var(--pink-soft); color:var(--pink-shadow); font-size:22px; font-weight:900; cursor:pointer; flex:none; line-height:1; }
   .date-nav:active{ transform:scale(0.93); }
-  .date-mid{ flex:1; display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; }
-  .date-input{ border:none; background:transparent; font-family:inherit; font-size:var(--fs-body); color:var(--ink); font-weight:900; text-align:center; max-width:100%; }
-  .date-label{ font-size:var(--fs-hint); color:var(--ink-soft); }
+  .date-mid{ flex:1; position:relative; display:flex; align-items:center; justify-content:center; min-width:0; }
+  .date-display{ font-family:inherit; font-size:var(--fs-body); color:var(--ink); font-weight:900; text-align:center; }
+  .date-overlay{ position:absolute; inset:0; width:100%; height:100%; opacity:0; border:none; padding:0; margin:0; cursor:pointer; }
   .date-today-btn{ border:none; border-radius:11px; background:var(--pink); color:#fff; font-family:inherit; font-weight:700; font-size:var(--fs-label); padding:8px 12px; cursor:pointer; flex:none; }
   .date-today-btn:active{ transform:scale(0.95); }
   body{
@@ -700,8 +700,8 @@
 <div class="date-bar" id="dateBar">
   <button type="button" class="date-nav" id="datePrev" aria-label="前一天">‹</button>
   <div class="date-mid">
-    <input type="date" id="datePicker" class="date-input">
-    <div class="date-label" id="dateLabel"></div>
+    <div class="date-display" id="dateDisplay"></div>
+    <input type="date" id="datePicker" class="date-overlay" aria-label="選擇日期">
   </div>
   <button type="button" class="date-nav" id="dateNext" aria-label="後一天">›</button>
   <button type="button" class="date-today-btn" id="dateTodayBtn">今天</button>
@@ -1847,18 +1847,32 @@
   window.__rebuildPlanContent = rebuildPlanContent;
 
   // ---------- 日期選擇(計畫最上方,切換不同日期的頁面) ----------
+  const EN_MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  function dateBarText(){
+    const wn=(lang==="en"?weekdayNames.en:weekdayNames.zh);
+    const isT=curIso()===isoDate(today);
+    if(lang==="en") return EN_MON[viewDate.getMonth()]+" "+viewDate.getDate()+" ("+wn[viewDate.getDay()]+")"+(isT?" · Today":"");
+    return fmtDate(viewDate)+" 週"+wn[viewDate.getDay()]+(isT?" · 今天":"");
+  }
   function syncDateBar(){
     const dp=document.getElementById("datePicker"); if(dp) dp.value=curIso();
-    const dl=document.getElementById("dateLabel");
-    if(dl){ const wn=(lang==="en"?weekdayNames.en:weekdayNames.zh); const isT=curIso()===isoDate(today);
-      const wk=(lang==="en"?"":"週")+wn[viewDate.getDay()];
-      dl.textContent=fmtDate(viewDate)+" ("+wk+")"+(isT?(lang==="en"?" · Today":" · 今天"):""); }
+    const dd=document.getElementById("dateDisplay"); if(dd) dd.textContent=dateBarText();
+  }
+  // 頂部總覽:剩餘天數、最新體重 依「目前檢視的日期」變動
+  function updateStripForDate(){
+    const ms=86400000;
+    const dl=document.getElementById("daysLeft");
+    if(dl) dl.textContent = Math.max(0, Math.round((endDate - viewDate)/ms));
+    const lw=document.getElementById("latestWeight");
+    if(lw){ const upto=(typeof log!=="undefined"&&log?log:[]).filter(e=>e.weight!=null&&e.date<=curIso()).slice().sort((a,b)=>a.date.localeCompare(b.date));
+      lw.textContent = upto.length ? (upto[upto.length-1].weight+"kg") : "--"; }
   }
   function refreshDateViews(){
     if(typeof renderTodayMenu==="function") renderTodayMenu();
     if(typeof renderFoodLog==="function") renderFoodLog();
     if(typeof renderWater==="function") renderWater();
     if(typeof renderDays==="function") renderDays();
+    if(typeof updateStripForDate==="function") updateStripForDate();
     const eb=document.getElementById("inExBurn");
     if(eb){ const v=Math.round((typeof exBurn!=="undefined"&&exBurn[curIso()])||0); eb.value=v>0?v:""; }
   }
@@ -2399,14 +2413,12 @@
 
   function drawChart(){
     const area = document.getElementById("chartArea");
+    if(typeof updateStripForDate==="function") updateStripForDate();   // 最新體重依所選日期
     if(!log.length){
       area.innerHTML = '<div class="chart-empty">尚無紀錄,填入體重後會顯示趨勢曲線。</div>';
-      document.getElementById("latestWeight").textContent = "--";
       return;
     }
     const sorted = [...log].sort((a,b)=>a.date.localeCompare(b.date));
-    const latest = sorted[sorted.length-1];
-    document.getElementById("latestWeight").textContent = latest.weight + "kg";
 
     const w=320,h=130,padX=8,padY=16;
     const values = sorted.map(p=>p.weight);
@@ -4178,6 +4190,7 @@
     await switchPlan(id);
     viewDate = new Date(today);   // 進入計畫時預設看「今天」
     if(typeof syncDateBar==="function") syncDateBar();
+    if(typeof updateStripForDate==="function") updateStripForDate();
     document.getElementById("homeScreen").style.display="none";
     document.getElementById("appView").style.display="";
     window.scrollTo(0,0);
