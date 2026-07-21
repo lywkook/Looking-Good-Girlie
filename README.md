@@ -47,6 +47,8 @@
 | `aiphotocache`        | 拍照估熱量的結果快取 `{ 圖片雜湊: {name,kcal,note} }`,同一張照片回同一結果(最多 50 張,只存本機) | false |
 | `groqkey` / `googlekey` | 舊版雙金鑰欄位(仍讀取,啟動時自動併回單一 geminikey) | false |
 | `home:themecolor` / `home:bgcolor` / `home:bgimage` | 主畫面自己的外觀(主題色/背景色/背景圖,與各計畫獨立) | false |
+| `helpcollapsed` | 主畫面「第一次使用說明」是否收合 | false |
+| `checkincollapsed`(含 `p:<id>:` 前綴) | 每日打卡區塊是否收合(每計畫獨立) | false |
 | `bgcolor` / `bgimage`(含 `p:<id>:` 前綴) | 各計畫自己的背景色/背景圖(每個計畫獨立;背景圖用固定圖層,不隨捲動移動) | false |
 | `workout`             | JSON `{days,cardio,note,plan}`,運動需求輸入 + 產生的客製課表 | false |
 | `wocollapsed`         | 運動計畫區塊是否收合 ("1"/"0")               | false  |

@@ -381,6 +381,17 @@
   .home-new{ margin-top:24px; background:var(--card); border-radius:18px; padding:16px; box-shadow:var(--shadow);
     display:flex; flex-direction:column; gap:8px; }
   .home-new-title{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
+  .home-help{ max-width:560px; margin:16px auto 0; background:var(--card); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
+  .home-help-head{ padding:14px 16px; font-size:var(--fs-body); font-weight:800; color:var(--ink); cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between; }
+  .home-help-head .pf-caret{ color:var(--pink); font-size:var(--fs-label); }
+  .home-help.collapsed .home-help-body{ display:none; }
+  .home-help-body{ padding:0 16px 14px; font-size:var(--fs-label); color:var(--ink); line-height:1.6; }
+  .home-help-body p{ margin:10px 0; }
+  .home-help-body ol{ margin:8px 0; padding-left:20px; }
+  .home-help-body li{ margin:5px 0; }
+  .home-help-body a{ color:var(--pink); font-weight:700; }
+  .home-help-note{ color:var(--ink-soft); font-size:var(--fs-hint); }
   .home-appearance-btn{ display:block; width:100%; max-width:560px; margin:20px auto 0; box-sizing:border-box;
     background:var(--card); border:2px solid var(--pink-soft); border-radius:16px; padding:14px;
     font-size:var(--fs-body); font-weight:800; color:var(--ink); cursor:pointer; box-shadow:var(--shadow); font-family:inherit; }
@@ -488,6 +499,9 @@
   .wo-hint.err{ color:#B5766F; }
   #checkinBlock{ margin-top:16px; border-top:1px dashed var(--line); padding-top:14px; }
   .wo-sub{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:10px; }
+  .wo-sub-toggle{ cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
+  .wo-sub-toggle .pf-caret{ font-size:var(--fs-label); color:var(--pink); }
+  #checkinBlock.collapsed #checkinBody{ display:none; }
   .wo-datepick{ display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:var(--fs-label); color:var(--ink-soft); }
   .wo-datepick input{ padding:8px 10px; border-radius:12px; border:2px solid var(--line);
     font-size:var(--fs-label); background:#FFFDFA; color:var(--ink); font-family:inherit; }
@@ -525,6 +539,22 @@
   <div class="home-head">
     <div class="home-title cute">我的計畫</div>
     <div class="home-sub">點一個計畫進入</div>
+  </div>
+  <div class="home-help" id="homeHelp">
+    <div class="home-help-head" id="homeHelpToggle">❓ 第一次使用?看這裡 <span class="pf-caret" id="homeHelpCaret">▾</span></div>
+    <div class="home-help-body" id="homeHelpBody">
+      <p><b>這個 App 幫你什麼?</b><br>記錄每天吃了什麼、喝水、體重,還能幫你規劃減重菜單與運動,拍照就能估熱量。</p>
+      <p><b>怎麼開始?</b><br>① 點上面的計畫卡片進入,或用下方「＋ 建立新計畫」<br>② 進去後就能記錄飲食、喝水、體重</p>
+      <p><b>想用「拍照估熱量」和「AI 運動規劃」?要先貼一把免費金鑰(一次就好):</b></p>
+      <ol>
+        <li>到 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a> 申請(推薦,額度高、也能看圖);或 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>。都是<b>免費、免信用卡</b></li>
+        <li>登入 →「Create API key」→ 複製那串金鑰</li>
+        <li>回到 App,進入任一計畫 → 「飲食紀錄」裡的「🔑 AI 金鑰設定」→ 貼上 → 儲存</li>
+        <li>之後拍照估熱量、換菜單、運動規劃都能用了</li>
+      </ol>
+      <p><b>換背景 / 顏色?</b><br>主畫面按「🎨 主畫面外觀」;每個計畫進去後按下面「⚙️ 設定」,可以各自換。</p>
+      <p class="home-help-note">你的資料只存在自己這支手機的瀏覽器,不會上傳,換手機或清除瀏覽器資料就會不見。</p>
+    </div>
   </div>
   <div id="homeList" class="home-list"></div>
   <div class="home-new">
@@ -676,9 +706,11 @@
     <div class="clear-row"><button type="button" class="clear-all-btn" id="clearWorkoutBtn">🗑 清除運動計畫,重新選取</button></div>
 
     <div id="checkinBlock">
-      <div class="wo-sub">每日打卡</div>
-      <div class="wo-datepick"><span>跳到日期</span><input type="date" id="woDate" min="2026-07-20" max="2026-08-28" value="2026-07-20"></div>
-      <div id="dayList"></div>
+      <div class="wo-sub wo-sub-toggle" id="checkinToggle">每日打卡 <span class="pf-caret" id="checkinCaret">▾</span></div>
+      <div id="checkinBody">
+        <div class="wo-datepick"><span>跳到日期</span><input type="date" id="woDate" min="2026-07-20" max="2026-08-28" value="2026-07-20"></div>
+        <div id="dayList"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2526,6 +2558,7 @@
     renderWorkout(workoutPlan); updateWoMini(); syncWorkoutToCheckin();
     let stored=null; try{ const c=await window.storage.get(K("wocollapsed"),false); if(c&&c.value!=null&&c.value!=="") stored=c.value; }catch(e){}
     setWorkoutCollapsed(stored!=null ? stored==="1" : false, false);
+    await loadCheckinCollapsed();
   }
   async function saveWorkout(){
     const g=id=>{ const el=document.getElementById(id); return el?el.value:""; };
@@ -2705,10 +2738,21 @@
     updateWoMini();
     if(persist){ try{ window.storage.set(K("wocollapsed"), collapsed?"1":"0", false); }catch(e){} }
   }
+  function setCheckinCollapsed(collapsed, persist){
+    const blk=document.getElementById("checkinBlock"); if(!blk) return;
+    blk.classList.toggle("collapsed", collapsed);
+    const c=document.getElementById("checkinCaret"); if(c) c.textContent=collapsed?"▸":"▾";
+    if(persist){ try{ window.storage.set(K("checkincollapsed"), collapsed?"1":"0", false); }catch(e){} }
+  }
+  async function loadCheckinCollapsed(){
+    let st=null; try{ const r=await window.storage.get(K("checkincollapsed"),false); if(r&&r.value!=null&&r.value!=="") st=r.value; }catch(e){}
+    setCheckinCollapsed(st==="1", false);
+  }
   function initWorkoutModule(){
     const gen=document.getElementById("woGenBtn"); if(gen) gen.addEventListener("click", generateWorkoutUnified);
     const gi=document.getElementById("woGoal"); if(gi) gi.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); generateWorkoutUnified(); } });
     const cw=document.getElementById("clearWorkoutBtn"); if(cw) cw.addEventListener("click", clearWorkout);
+    const ct=document.getElementById("checkinToggle"); if(ct) ct.addEventListener("click", ()=>{ const blk=document.getElementById("checkinBlock"); setCheckinCollapsed(!blk.classList.contains("collapsed"), true); });
     initWorkoutPhoto();
     ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs","woGoal"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
     // 部位 / 器材 的「其他」新增
@@ -2984,6 +3028,11 @@
     const add=document.getElementById("homeAddBtn"); if(add) add.addEventListener("click", addPlanHome);
     const ha=document.getElementById("homeAppearanceBtn"); if(ha) ha.addEventListener("click", openHomeSettings);
     const hb=document.getElementById("homeBtn"); if(hb) hb.addEventListener("click", goHome);
+    // 使用說明:預設展開(給第一次使用的人看),收合後記住
+    const help=document.getElementById("homeHelp"), ht=document.getElementById("homeHelpToggle"), hc=document.getElementById("homeHelpCaret");
+    const setHelp=(c)=>{ if(help) help.classList.toggle("collapsed",c); if(hc) hc.textContent=c?"▸":"▾"; };
+    (async()=>{ let st=null; try{ const r=await window.storage.get("helpcollapsed",false); if(r&&r.value!=null&&r.value!=="") st=r.value; }catch(e){} setHelp(st==="1"); })();
+    if(ht) ht.addEventListener("click", ()=>{ const c=!(help.classList.contains("collapsed")); setHelp(c); try{ window.storage.set("helpcollapsed", c?"1":"0", false); }catch(e){} });
     const setC=document.getElementById("setClose"), sm=document.getElementById("settingsModal");
     if(setC) setC.addEventListener("click", ()=> sm.classList.remove("show"));
     if(sm) sm.addEventListener("click", (e)=>{ if(e.target===sm) sm.classList.remove("show"); });
@@ -3050,6 +3099,10 @@
     const layer=document.getElementById("bgLayer");
     document.documentElement.style.setProperty("--cream", bgColor);
     if(layer) layer.style.backgroundImage = bgImage ? ("url('"+bgImage+"')") : "none";
+    // 有背景圖時,讓 body/html 透明,固定圖層(#bgLayer)才透得出來;沒圖時回到底色
+    const bodyBg = bgImage ? "transparent" : "";
+    document.body.style.background = bodyBg;
+    document.documentElement.style.background = bodyBg;
     renderSwatches();
   }
   function renderSwatches(){
