@@ -256,9 +256,6 @@
   .fc-qty{ font-size:var(--fs-label); font-weight:900; color:var(--ink); min-width:26px; text-align:center; }
   .food-card .fc-kcal{ font-size:var(--fs-label); color:var(--pink); font-weight:900; }
   .food-card .fc-kcal-num{ border-bottom:1.5px dashed var(--pink); padding:0 1px; min-width:14px; display:inline-block; outline:none; }
-  .food-card .fc-kcal-edit{ font-size:var(--fs-hint); color:var(--ink-soft); font-weight:700;
-    border:1px solid var(--line); border-radius:10px; padding:0 6px; margin-left:2px; cursor:pointer; }
-  .food-card .fc-kcal-edit:active{ opacity:0.6; }
   .clear-row{ display:flex; justify-content:center; margin-top:12px; }
   .clear-all-btn{ font-size:var(--fs-label); color:#9E5A5A; background:#F7ECEC; border:1px solid #E4CFCF;
     border-radius:20px; padding:7px 16px; font-weight:700; cursor:pointer; font-family:inherit; }
@@ -1168,16 +1165,24 @@
     if(list.length<3){ RECIPES.forEach(r=>{ if(have.indexOf(r.need[0])>=0 && list.indexOf(r)<0) list.push(r); }); }
     return list.slice(0,8);
   }
+  let fridgeDishCollapsed=false;
   function renderDishes(dishes, note){
     const box=document.getElementById("fridgeResult"); if(!box) return;
     if(!dishes||!dishes.length){ box.innerHTML='<div class="chart-empty">先點你冰箱有的食材,再按推薦 🍳</div>'; return; }
-    let h = note? '<div class="advice">'+esc(note)+'</div>':'';
-    h += dishes.map(d=> '<div class="dish"><span class="d-name">'+esc(d.n||d.name||"")+'</span><span class="d-kcal">'+(d.kcal?('約 '+Math.round(d.kcal)+' kcal'):'')+'</span></div>').join("");
+    const collapsed=fridgeDishCollapsed;
+    let h='<div class="wo-plan-head" id="dishToggle"><span class="wo-plan-title">🍳 推薦菜色</span><span class="wo-plan-caret">'+(collapsed?'展開 ▸':'收起 ▾')+'</span></div>';
+    h+='<div class="wo-plan-body"'+(collapsed?' style="display:none;"':'')+'>';
+    h+= note? '<div class="advice">'+esc(note)+'</div>':'';
+    h+= dishes.map(d=> '<div class="dish"><span class="d-name">'+esc(d.n||d.name||"")+'</span><span class="d-kcal">'+(d.kcal?('約 '+Math.round(d.kcal)+' kcal'):'')+'</span></div>').join("");
+    h+='</div>';
     box.innerHTML=h;
+    const tog=document.getElementById("dishToggle");
+    if(tog) tog.addEventListener("click", ()=>{ fridgeDishCollapsed=!fridgeDishCollapsed; renderDishes(dishes, note); });
   }
   async function suggestDishes(){
     const status=document.getElementById("fridgeStatus");
     if(!fridgeHave.length){ status.innerHTML='<span class="err">先點一下你冰箱有的食材</span>'; return; }
+    fridgeDishCollapsed=false;   // 產生新推薦時預設展開
     if(!anyKey()){ renderDishes(localDishes()); status.innerHTML=''; return; }
     const btn=document.getElementById("fridgeGenBtn"); const old=btn.textContent; btn.disabled=true; btn.textContent="想菜中…";
     status.innerHTML='<span class="ai-spin"></span>依你的食材想菜中…';
@@ -1803,7 +1808,7 @@
           ${f.thumb?`<img src="${f.thumb}">`:''}
           <div class="fc-main">
             <div class="fc-name" data-fid="${f.id}">${esc(f.name)}</div>
-            <div class="fc-kcal"><span class="fc-kcal-num" data-fid="${f.id}">${Math.round(unit*qty)}</span> kcal${qty>1?`(×${qty})`:''} <span class="fc-kcal-edit" data-fid="${f.id}">改</span></div>
+            <div class="fc-kcal"><span class="fc-kcal-num" data-fid="${f.id}">${Math.round(unit*qty)}</span> kcal${qty>1?`(×${qty})`:''}</div>
             <div class="fc-qtyrow" data-fid="${f.id}" style="display:none;">
               <button type="button" class="fc-q" data-fid="${f.id}" data-d="-1">−</button>
               <span class="fc-qty">×${qty}</span>
@@ -1853,13 +1858,8 @@
         if(row) row.style.display = (row.style.display==="none") ? "flex" : "none";
       });
     });
-    // 直接改熱量(手動或拍照估的都能改):總熱量會回推每單位熱量
+    // 直接點熱量數字就能改(手動或拍照估的都能改):總熱量會回推每單位熱量
     const startKcalEdit=(el)=>{ el.contentEditable="true"; el.focus(); document.getSelection().selectAllChildren(el); };
-    area.querySelectorAll(".fc-kcal-edit").forEach(btn=>{
-      btn.addEventListener("click",(e)=>{ e.stopPropagation();
-        const num=area.querySelector('.fc-kcal-num[data-fid="'+btn.dataset.fid+'"]'); if(num) startKcalEdit(num);
-      });
-    });
     area.querySelectorAll(".fc-kcal-num").forEach(el=>{
       el.addEventListener("click",(e)=>{ e.stopPropagation(); startKcalEdit(el); });
       el.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); el.blur(); } });
