@@ -244,7 +244,7 @@
   }
   .save-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--pink-shadow); }
 
-  svg.chart{ width:100%; height:130px; display:block; margin-top:6px; }
+  svg.chart{ width:100%; height:auto; display:block; margin-top:6px; }
   .chart-empty{ font-size:var(--fs-body); color:var(--ink-soft); padding:14px 0 2px; text-align:center; }
   .metric-tabs{ display:flex; gap:6px; margin-top:16px; flex-wrap:wrap; }
   .metric-tab{ flex:1 1 auto; min-width:0; padding:8px 6px; border-radius:12px; border:2px solid var(--line);
@@ -2792,14 +2792,15 @@
       area.innerHTML = '<div class="chart-empty">這個指標還沒有紀錄,填入'+cfg.label+'後會顯示趨勢。</div>';
       return;
     }
-    const w=320,h=130,padX=8,padY=16;
+    const w=320,h=152,padX=10,padTop=18,padBottom=28;   // 底部留一條放日期
     const goal = cfg.goal();
     const values = pts.map(p=>p.v).concat(goal!=null?[goal]:[]);
     let minV = Math.min(...values), maxV = Math.max(...values);
     if(maxV-minV < 0.5){ minV-=0.5; maxV+=0.5; } else { const pad=(maxV-minV)*0.12; minV-=pad; maxV+=pad; }
     const n = pts.length;
     const x=idx=> n===1? w/2 : padX + (idx/(n-1))*(w-padX*2);
-    const y=v=> h-padY - ((v-minV)/(maxV-minV))*(h-padY*2);
+    const y=v=> padTop + (h-padTop-padBottom)*(1-(v-minV)/(maxV-minV));
+    const md=s=>{ const m=/\d{4}-(\d{2})-(\d{2})/.exec(String(s)); return m?(parseInt(m[1],10)+"/"+parseInt(m[2],10)):String(s); };
     const path = pts.map((p,idx)=>(idx===0?"M":"L")+x(idx).toFixed(1)+","+y(p.v).toFixed(1)).join(" ");
     const dots = pts.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="4" fill="${cfg.color}" stroke="#fff" stroke-width="1.5"/>`).join("");
     // 每個資料點上標數值(點多就每隔幾點標一次,避免擠在一起)
@@ -2808,9 +2809,18 @@
       if(idx!==0 && idx!==n-1 && idx%step!==0) return "";
       const xx=x(idx), yy=y(p.v);
       const anchor = n===1?"middle":(idx===0?"start":(idx===n-1?"end":"middle"));
-      const ty = (yy-10 > 12) ? (yy-9) : (yy+18);   // 靠上緣就標到點的下方,避免被切掉
+      const ty = (yy-10 > padTop) ? (yy-9) : (yy+18);   // 靠上緣就標到點的下方,避免被切掉
       const dx = idx===0?2:(idx===n-1?-2:0);
       return `<text x="${(xx+dx).toFixed(1)}" y="${ty.toFixed(1)}" font-size="12.5" font-weight="800" fill="#6E655B" text-anchor="${anchor}">${p.v}</text>`;
+    }).join("");
+    // 底部標日期(日期較寬,點多就標少一點)
+    const dstep = n<=8 ? 1 : Math.ceil(n/6);
+    const dateLabels = pts.map((p,idx)=>{
+      if(idx!==0 && idx!==n-1 && idx%dstep!==0) return "";
+      const xx=x(idx);
+      const anchor = n===1?"middle":(idx===0?"start":(idx===n-1?"end":"middle"));
+      const dx = idx===0?2:(idx===n-1?-2:0);
+      return `<text x="${(xx+dx).toFixed(1)}" y="${(h-8).toFixed(1)}" font-size="11" fill="#A69C90" text-anchor="${anchor}">${md(p.date)}</text>`;
     }).join("");
     let goalLine="";
     if(goal!=null){
@@ -2824,6 +2834,7 @@
         <path d="${path}" fill="none" stroke="${cfg.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         ${dots}
         ${labels}
+        ${dateLabels}
       </svg>`;
   }
   document.querySelectorAll("#metricTabs .metric-tab").forEach(b=>{
