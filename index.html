@@ -594,8 +594,32 @@
       <div class="field"><label>每次有氧</label><div class="wrap"><input type="number" id="woCardio" placeholder="20"><span class="unit">分鐘</span></div></div>
     </div>
     <div class="wo-field">
-      <label>器材 · 想加強的部位 · 偏好(自由填,越詳細越準)</label>
-      <textarea id="woNote" class="wo-textarea" placeholder="例:家裡有 5-8 磅啞鈴 + 跑步機,想練直角肩、大腿內側、手臂拜拜肉,不想跳太吵的動作,膝蓋不好"></textarea>
+      <label>想練的部位 / 分類(可複選;沒有列到的用「其他」自己加)</label>
+      <div class="fridge-chips" id="focusChips"></div>
+      <div class="fridge-add-row" style="margin-top:8px;"><input id="focusAdd" placeholder="其他部位?打字加入" autocomplete="off"><button type="button" class="mini-btn" id="focusAddBtn">加入</button></div>
+    </div>
+    <div class="wo-field">
+      <label>重訓器材(可複選;沒有列到的用「其他」自己加)</label>
+      <div class="fridge-chips" id="strengthChips"></div>
+      <div class="fridge-add-row" style="margin-top:8px;"><input id="strengthAdd" placeholder="其他器材?打字加入" autocomplete="off"><button type="button" class="mini-btn" id="strengthAddBtn">加入</button></div>
+    </div>
+    <div class="wo-field">
+      <label>有氧器材 / 方式(可複選)</label>
+      <div class="fridge-chips" id="cardioChips"></div>
+      <div class="fridge-add-row" style="margin-top:8px;"><input id="cardioAdd" placeholder="其他有氧?打字加入" autocomplete="off"><button type="button" class="mini-btn" id="cardioAddBtn">加入</button></div>
+    </div>
+    <div class="wo-field">
+      <label>訓練強度偏好(選填,空白就讓系統幫你決定)</label>
+      <div class="metric-inputs">
+        <div class="field"><label>每個動作組數</label><div class="wrap"><input type="number" id="woSets" placeholder="3"><span class="unit">組</span></div></div>
+        <div class="field"><label>每組次數</label><div class="wrap"><input type="number" id="woReps" placeholder="12"><span class="unit">下</span></div></div>
+        <div class="field"><label>重量</label><div class="wrap"><input type="text" id="woWeight" placeholder="例:5-8 磅"></div></div>
+        <div class="field"><label>計時動作秒數</label><div class="wrap"><input type="number" id="woSecs" placeholder="40"><span class="unit">秒</span></div></div>
+      </div>
+    </div>
+    <div class="wo-field">
+      <label>想加強的部位 · 其他偏好(自由填)</label>
+      <textarea id="woNote" class="wo-textarea" placeholder="例:想練直角肩、大腿內側、手臂拜拜肉,不想跳太吵的動作,膝蓋不好"></textarea>
     </div>
     <button class="save-btn cute" id="woGenBtn">產生 / 重新調整運動計畫 ✨</button>
     <div id="woResult"></div>
@@ -2135,10 +2159,46 @@
 
   // ---------- 運動計畫 · 客製化 ----------
   let workoutPlan = null;
+  const FOCUS_PRESET = ["腿","臀","腹部/核心","胸","背","肩","手臂","全身"];
+  const STRENGTH_PRESET = ["徒手/自體重量","啞鈴","槓鈴","壺鈴","彈力帶/阻力帶","史密斯機","滑輪纜繩機","腿推機","胸推機","高位下拉機","坐姿划船機","蝴蝶機","腿彎舉/腿伸機","引體向上桿","TRX 懸吊","健身球","腹肌輪"];
+  const CARDIO_PRESET = ["跑步機","橢圓機/滑步機","划船機","飛輪車","室內腳踏車","登階機","戶外跑步/快走","跳繩","飛輪課","有氧課程"];
+  let focusSel = [], strengthSel = [], cardioSel = [];
+  function renderEquip(boxId, preset, sel){
+    const box=document.getElementById(boxId); if(!box) return;
+    const customs = sel.filter(x=>preset.indexOf(x)<0);
+    const all = preset.concat(customs);
+    box.innerHTML = all.map(n=>{
+      const on = sel.indexOf(n)>=0; const custom = preset.indexOf(n)<0;
+      return '<span class="fchip'+(on?' on':'')+'" data-n="'+esc(n)+'">'+esc(n)+(custom?' <i class="fx" data-del="'+esc(n)+'">✕</i>':'')+'</span>';
+    }).join("");
+    box.querySelectorAll(".fchip").forEach(c=> c.addEventListener("click",(e)=>{
+      if(e.target.classList.contains("fx")) return;
+      const n=c.dataset.n; const i=sel.indexOf(n);
+      if(i>=0) sel.splice(i,1); else sel.push(n);
+      renderEquip(boxId, preset, sel); saveWorkout();
+    }));
+    box.querySelectorAll(".fx").forEach(x=> x.addEventListener("click",(e)=>{ e.stopPropagation();
+      const n=x.dataset.del; const i=sel.indexOf(n); if(i>=0) sel.splice(i,1);
+      renderEquip(boxId, preset, sel); saveWorkout();
+    }));
+  }
+  function addEquip(inputId, preset, sel, boxId){
+    const el=document.getElementById(inputId); const v=(el.value||"").trim(); if(!v) return;
+    if(sel.indexOf(v)<0) sel.push(v);
+    el.value=""; renderEquip(boxId, preset, sel); saveWorkout();
+  }
   function spreadDays(n){ const out=[]; for(let i=0;i<n;i++) out.push(Math.min(6, Math.round(i*7/n))); return out; }
+  function woPrefs(){ const g=id=>{ const e=document.getElementById(id); return e?(e.value||"").trim():""; };
+    return { sets:g("woSets"), reps:g("woReps"), weight:g("woWeight"), secs:g("woSecs") }; }
   function localWorkoutPlan(days, cardioMin, note){
     days = Math.min(7, Math.max(1, days||4)); cardioMin = cardioMin||20;
-    const parts = ["肩 · 直角肩","大腿內側 · 翹臀","手臂 · 拜拜肉","背 · 核心"];
+    const pf = woPrefs();
+    const setsReps = (pf.sets||pf.reps) ? ((pf.sets||"3-4")+" 組 × "+(pf.reps||"12-15")+" 下") : "3-4 組 × 12-15 下";
+    const wt = pf.weight ? "("+pf.weight+")" : "";
+    const secs = pf.secs || "40";
+    const parts = focusSel.length ? focusSel.slice() : ["肩 · 直角肩","大腿內側 · 翹臀","手臂 · 拜拜肉","背 · 核心"];
+    const gear = strengthSel.length ? strengthSel[0] : "啞鈴";
+    const cardioGear = cardioSel.length ? cardioSel[0] : "跑步機";
     const dayNames = ["週一","週二","週三","週四","週五","週六","週日"];
     const trainDays = spreadDays(days); let li=0;
     const week=[];
@@ -2148,18 +2208,20 @@
         if(ti%2===0){
           const focus = parts[li%parts.length]; li++;
           week.push({ day:dayNames[i], type:"重訓", focus,
-            items:["暖身 5 分鐘","主項:針對「"+focus+"」啞鈴動作 3-4 組 × 12-15 下","輔助動作 2-3 組","收操伸展 5 分鐘"] });
+            items:["暖身 5 分鐘","主項:用「"+gear+"」"+wt+" 針對「"+focus+"」"+setsReps,"輔助動作 2-3 組 × "+(pf.reps||"12-15")+" 下","收操伸展 5 分鐘"] });
         } else {
           week.push({ day:dayNames[i], type:"有氧", focus:"燃脂",
-            items:["跑步機間歇 / 快走 "+cardioMin+" 分鐘","全身燃脂:開合跳 / 高抬腿 / 深蹲跳 各 40 秒 × 3 輪"] });
+            items:[cardioGear+" 間歇 "+cardioMin+" 分鐘","全身燃脂:開合跳 / 高抬腿 / 深蹲跳 各 "+secs+" 秒 × 3 輪"] });
         }
       } else {
         week.push({ day:dayNames[i], type:"休息", focus:"", items:["休息 / 輕鬆散步 / 伸展放鬆"] });
       }
     }
     const tips=["重訓後 30 分鐘內補充蛋白質","動作會痠是正常,關節會痛就停下","一週至少 2 天完全休息,肌肉才會長"];
-    if(note) tips.unshift("你的偏好:"+note+"(內建版已盡量納入;貼上免費 AI 金鑰可產生更貼身的計畫)");
-    return { summary:"依你選的每週 "+days+" 天、每次有氧約 "+cardioMin+" 分鐘:重訓與有氧交替、其餘休息。", week, tips };
+    if(strengthSel.length||cardioSel.length) tips.unshift("你的器材:重訓["+(strengthSel.join("、")||"—")+"] · 有氧["+(cardioSel.join("、")||"—")+"]");
+    if(focusSel.length) tips.unshift("鎖定部位:"+focusSel.join("、"));
+    if(note) tips.unshift("你的偏好:"+note+"(貼上免費 AI 金鑰可產生更貼身的計畫)");
+    return { summary:"依你選的每週 "+days+" 天、每次有氧約 "+cardioMin+" 分鐘,套用你選的器材:重訓與有氧交替、其餘休息。", week, tips };
   }
   function renderWorkout(plan){
     const box=document.getElementById("woResult"); if(!box) return;
@@ -2175,18 +2237,25 @@
     box.innerHTML=h;
   }
   async function loadWorkout(){
-    workoutPlan=null;
+    workoutPlan=null; focusSel.length=0; strengthSel.length=0; cardioSel.length=0;
     const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=(v==null?"":v); };
-    set("woDays",""); set("woCardio",""); set("woNote","");
+    set("woDays",""); set("woCardio",""); set("woNote",""); set("woSets",""); set("woReps",""); set("woWeight",""); set("woSecs","");
     try{ const r=await window.storage.get(K("workout"),false); if(r&&r.value){ const p=JSON.parse(r.value);
-      set("woDays",p.days); set("woCardio",p.cardio); set("woNote",p.note); workoutPlan=p.plan||null; } }catch(e){}
+      set("woDays",p.days); set("woCardio",p.cardio); set("woNote",p.note); workoutPlan=p.plan||null;
+      set("woSets",p.sets); set("woReps",p.reps); set("woWeight",p.weight); set("woSecs",p.secs);
+      (p.focus||[]).forEach(x=>focusSel.push(x)); (p.strength||[]).forEach(x=>strengthSel.push(x)); (p.cardioEq||[]).forEach(x=>cardioSel.push(x)); } }catch(e){}
+    renderEquip("focusChips", FOCUS_PRESET, focusSel);
+    renderEquip("strengthChips", STRENGTH_PRESET, strengthSel);
+    renderEquip("cardioChips", CARDIO_PRESET, cardioSel);
     renderWorkout(workoutPlan); updateWoMini();
     let stored=null; try{ const c=await window.storage.get(K("wocollapsed"),false); if(c&&c.value!=null&&c.value!=="") stored=c.value; }catch(e){}
     setWorkoutCollapsed(stored!=null ? stored==="1" : false, false);
   }
   async function saveWorkout(){
     const g=id=>{ const el=document.getElementById(id); return el?el.value:""; };
-    const p={ days:g("woDays"), cardio:g("woCardio"), note:g("woNote"), plan:workoutPlan };
+    const p={ days:g("woDays"), cardio:g("woCardio"), note:g("woNote"), plan:workoutPlan,
+      focus:focusSel, strength:strengthSel, cardioEq:cardioSel,
+      sets:g("woSets"), reps:g("woReps"), weight:g("woWeight"), secs:g("woSecs") };
     try{ await window.storage.set(K("workout"), JSON.stringify(p), false); }catch(e){}
   }
   async function generateWorkoutPlan(){
@@ -2205,10 +2274,22 @@
     const btn=document.getElementById("woGenBtn"); const oldT=btn.textContent; btn.disabled=true; btn.textContent="產生中…";
     box.innerHTML='<div class="advice"><span class="ai-spin"></span>正在依你的需求規劃…</div>';
     try{
-      const prompt='你是專業健身教練。根據以下資訊,用繁體中文設計「一週 7 天」的客製化運動計畫,兼顧減重減脂與保留肌肉,務必尊重使用者的器材與偏好、不要安排他做不到或不想做的動作。'
+      const pf=woPrefs();
+      const eqParts=[];
+      if(focusSel.length) eqParts.push("想練的部位/分類:"+focusSel.join("、")+"(請以這些安排分部訓練日,如練腿日、練胸日、全身日)");
+      if(strengthSel.length) eqParts.push("重訓器材:"+strengthSel.join("、"));
+      if(cardioSel.length) eqParts.push("有氧器材/方式:"+cardioSel.join("、"));
+      const intensity=[];
+      if(pf.sets) intensity.push("每個動作約 "+pf.sets+" 組");
+      if(pf.reps) intensity.push("每組約 "+pf.reps+" 下");
+      if(pf.weight) intensity.push("重量約 "+pf.weight);
+      if(pf.secs) intensity.push("計時動作每個約 "+pf.secs+" 秒");
+      if(intensity.length) eqParts.push("強度偏好:"+intensity.join("、"));
+      const eqStr = eqParts.join(";") || "一般居家,小啞鈴 + 跑步機";
+      const prompt='你是專業健身教練。根據以下資訊,用繁體中文設計「一週 7 天」的客製化運動計畫,兼顧減重減脂與保留肌肉。務必**只用使用者有的器材**、**依他想練的部位安排分部訓練**、**遵守他的組數/次數/重量/秒數偏好**,不要安排他沒有的器材或不想做的動作;有氧就用他選的器材/方式。'
         +'使用者:'+sex+'性,目前 '+(w||"?")+' kg,目標 '+(tw||"?")+' kg,希望 '+(dateStr||"")+' 前達成。'
-        +'每週可運動 '+days+' 天,每次有氧約 '+cardio+' 分鐘。器材與偏好:'+(note||"一般居家,小啞鈴 + 跑步機")+'。'
-        +'只回傳 JSON,不要多餘文字。格式:{"summary":"一句話總結","week":[{"day":"週一","type":"重訓 或 有氧 或 休息","focus":"部位或重點","items":["動作 組數×次數", "..."]}](剛好7天,週一到週日),"tips":["提醒", "..."]}。';
+        +'每週可運動 '+days+' 天,每次有氧約 '+cardio+' 分鐘。'+eqStr+'。其他偏好:'+(note||"無")+'。'
+        +'每個 items 動作要寫清楚「組數 × 次數」或「時間(秒/分鐘)」。只回傳 JSON,不要多餘文字。格式:{"summary":"一句話總結","week":[{"day":"週一","type":"重訓 或 有氧 或 休息","focus":"部位或重點(如 練腿、練胸、全身)","items":["動作 組數×次數 或 時間", "..."]}](剛好7天,週一到週日),"tips":["提醒", "..."]}。';
       const obj=await geminiJSON(prompt, null, 0.3);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
       workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini();
@@ -2233,7 +2314,15 @@
   }
   function initWorkoutModule(){
     const gen=document.getElementById("woGenBtn"); if(gen) gen.addEventListener("click", generateWorkoutPlan);
-    ["woDays","woCardio","woNote"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
+    ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
+    // 部位 / 器材 的「其他」新增
+    const wire=(inputId, btnId, preset, sel, boxId)=>{
+      const btn=document.getElementById(btnId); if(btn) btn.addEventListener("click", ()=> addEquip(inputId, preset, sel, boxId));
+      const inp=document.getElementById(inputId); if(inp) inp.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); addEquip(inputId, preset, sel, boxId); } });
+    };
+    wire("focusAdd","focusAddBtn", FOCUS_PRESET, focusSel, "focusChips");
+    wire("strengthAdd","strengthAddBtn", STRENGTH_PRESET, strengthSel, "strengthChips");
+    wire("cardioAdd","cardioAddBtn", CARDIO_PRESET, cardioSel, "cardioChips");
     const tog=document.getElementById("woToggle");
     if(tog) tog.addEventListener("click", ()=>{ const sec=document.getElementById("workoutSection"); setWorkoutCollapsed(!sec.classList.contains("collapsed"), true); });
     const mini=document.getElementById("woMini");
