@@ -756,7 +756,7 @@
       <p><b>怎麼開始?</b><br>① 點上方計畫卡片,或用「＋ 建立新計畫」<br>② 進入後記錄飲食、喝水、體重</p>
       <p><b>使用拍照估熱量與 AI 運動規劃前,先貼一把免費金鑰:</b></p>
       <ol>
-        <li>到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a> 申請(推薦:拍照估熱量、運動照片、讀餐廳連結都最穩);想要更高額度也可用 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>。都是<b>免費、免信用卡</b></li>
+        <li>到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a> 申請(推薦:拍照估熱量、運動照片、讀菜單照片都最穩);想要更高額度也可用 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>。都是<b>免費、免信用卡</b></li>
         <li>登入 → Create API key → 複製金鑰</li>
         <li>回到 App → 任一計畫 →「飲食紀錄」的『AI 金鑰設定』→ 貼上 → 儲存</li>
         <li>之後即可使用拍照估熱量、換菜單、運動規劃。</li>
@@ -850,7 +850,6 @@
       <span class="fchip" data-pref="湯品">湯品</span>
     </div>
     <input id="menuWish" placeholder="還想吃什麼?(可留空)" autocomplete="off">
-    <input id="menuRestaurant" placeholder="要外食?貼餐廳官網連結,幫你從菜單挑" autocomplete="off">
     <div class="menu-regen-photo-row">
       <input type="file" accept="image/*" id="menuPhotoInput" multiple style="display:none">
       <button type="button" class="mini-btn" id="menuPhotoBtn">上傳菜單照片</button>
@@ -1261,7 +1260,7 @@
     "主畫面與各計畫外觀可在「⚙️ 設定」分別調整。":"Set the home and each plan's look separately in “⚙️ Settings”.",
     "資料只存在本機瀏覽器,不會上傳;換手機或清除瀏覽器資料會遺失。":"Data stays in this browser only, never uploaded; lost if you switch phones or clear browser data.",
     "。都是":". Both are ","免費、免信用卡":"free, no credit card",
-    "申請(推薦:拍照估熱量、運動照片、讀餐廳連結都最穩);想要更高額度也可用":" (recommended — most reliable for photo calories, workout photos and reading restaurant links); or, for higher quota, use",
+    "申請(推薦:拍照估熱量、運動照片、讀菜單照片都最穩);想要更高額度也可用":" (recommended — most reliable for photo calories, workout photos and reading menu photos); or, for higher quota, use",
     // 底部導覽
     "主畫面":"Home","跳到":"Jump","問AI":"Ask AI","設定":"Settings","主畫面外觀":"Home appearance",
     // 計畫列 / 標題
@@ -1297,11 +1296,9 @@
     "高蛋白":"High protein","少油清爽":"Light / low oil","低卡":"Low calorie","低碳水":"Low carb","多蔬菜":"More veg","吃辣":"Spicy OK","不辣":"Not spicy","不吃牛":"No beef","不吃豬":"No pork","海鮮":"Seafood","素食":"Vegetarian","飯類":"Rice dishes","麵食":"Noodles","湯品":"Soup",
     "想吃什麼?(可留空)":"Craving anything? (optional)",
     "還想吃什麼?(可留空)":"Anything else you fancy? (optional)",
-    "要外食?貼餐廳官網連結,幫你從菜單挑":"Eating out? Paste the restaurant's website link and we'll pick from its menu",
     "上傳菜單照片":"Upload menu photo",
     "上傳菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(Google / Groq 都行)。":"Uploading a menu photo needs a free AI key. Paste one under “AI key” at the top of ⚙️ Settings (works on Google or Groq).",
-    "讀取餐廳連結或菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(菜單照片 Google / Groq 都行)。":"Reading a restaurant link or menu photo needs a free AI key. Paste one under “AI key” at the top of ⚙️ Settings (menu photos work on Google or Groq).",
-    "貼餐廳連結、或上傳菜單照片,AI 都會讀菜單幫你挑一道。菜單照片 Google / Groq 都讀得到;只有「讀網頁連結」用 Google 比較穩。":"Paste a restaurant link or upload a menu photo — AI reads the menu and picks a dish. Menu photos work on both Google and Groq; only reading web links is more reliable with Google.",
+    "讀取菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(Google / Groq 都行)。":"Reading a menu photo needs a free AI key. Paste one under “AI key” at the top of ⚙️ Settings (Google or Groq both work).",
     "清空今天,重新記錄":"Clear today & restart","存進今天的紀錄":"Save to today's log","清空今日所有紀錄":"Clear today's records","清空運動計劃,重新選取":"Clear workout & reselect",
     // 拍照 / AI 金鑰
     "拍照估熱量":"Photo calories","加照片(選填)":"Add photo (optional)",
@@ -2142,26 +2139,6 @@
   // 餐廳推薦:foods 有值時「只從使用者說有的餐點挑」,沒值時用 google_search 找真實菜單(找不到就回空,不虛構)
   // 所有「讀菜單/網頁再推薦」的共用鐵則:嚴禁虛構、輸出一律繁體中文
   const TW_RULE = '\n★語言:回覆一律用「繁體中文(台灣用語)」。若菜單或網頁是簡體中文,推薦時務必翻成繁體中文,text 與 why 裡「都不可以」出現任何簡體字。';
-  async function restaurantPick(url, wish, label, target, foods){
-    const sel = keyFor("browse");   // 讀網頁連結:優先 Google(url_context 較穩),沒有才用 Groq compound
-    if(!sel) throw new Error("尚未設定 AI 金鑰");
-    const prompt = foods
-      ? ('你是減重營養教練。使用者今天在「'+url+'」想吃「'+label+'」,並告訴你這間店有賣:'+foods+'。\n'
-        + '請「只」從使用者列的這些餐點裡,挑 1 道最適合減重的(可加吃法建議,如去醬、飲料換無糖)。絕對不要超出這個清單、不要虛構其他品項。\n'
-        + '條件:約 '+target+' 大卡上下、蛋白質足夠、少油炸勾芡與含糖飲料。'
-        + (wish ? ('其他偏好:'+wish+'。') : '')
-        + '\n只回 JSON:{"text":"從清單挑的餐點+吃法建議,不超過25字","why":"為什麼推薦,不超過30字"}。' + TW_RULE)
-      : ('你是減重營養教練。使用者提供了一個餐廳的官網 / 菜單網址:「'+url+'」,想吃「'+label+'」。\n'
-        + '請「讀取這個網址」的內容,找出這間店菜單上實際列出的餐點,從中挑 1 道最適合減重的(可加吃法建議,如去醬、飲料換無糖)。\n'
-        + '★鐵則:只能推薦你「真的從這個網址讀到、菜單上出現過」的餐點,而且要用菜單上的原文菜名。\n'
-        + '★如果你無法實際讀到這個網址的菜單內容(網址打不開、頁面沒有菜單、只有圖片、讀到的東西看不出是菜單),就「必須」回 text:"";絕對不可以用「這類餐廳常見的菜」「你猜這間店會賣的菜」來填。寧可回空,也不要自己編。\n'
-        + '條件:約 '+target+' 大卡上下、蛋白質足夠、少油炸勾芡與含糖飲料。'
-        + (wish ? ('其他偏好:'+wish+'。') : '')
-        + '\n只回 JSON:{"text":"菜單上的餐點+吃法建議,不超過25字","why":"為什麼推薦,不超過30字"}。' + TW_RULE);
-    const run=async s=> s.provider==="groq" ? await groqBrowseJSON(prompt, s.key) : await googleBrowseJSON(prompt, s.key, foods?0.3:0.3);
-    try{ return await run(sel); }
-    catch(e){ const alt=otherSel(sel); if(alt) return await run(alt); throw e; }
-  }
   // 讀菜單照片(可多張)→ 認出菜單上的餐點 → 挑一道適合減重的
   async function menuPhotoPick(b64s, wish, label, target){
     const prompt =
@@ -2192,39 +2169,20 @@
     if(c) c.addEventListener("click", ()=>{ menuPhotos=[]; updateMenuPhotoPreview(); });
   }
   // 換餐流程:先「顯示推薦在下方」,由使用者決定「採用這個」才套到上面的今日菜單,或「換一個」重挑
-  let regenCtx = null;   // { field, wish, rest, hasPhoto, photos, target, last }
+  let regenCtx = null;   // { field, wish, hasPhoto, photos, target, last }
   const RP=(zh,en)=> (typeof lang!=="undefined"&&lang==="en")?en:zh;
   async function pickMeal(avoid){
-    const { field, wish, rest, hasPhoto, photos, target, foods } = regenCtx;
+    const { field, wish, hasPhoto, photos, target } = regenCtx;
     const label = MEAL_LABEL[field];
     const avoidTxt = avoid ? ('。請不要再推薦「'+avoid+'」,換一道明顯不一樣的') : '';
     const wish2 = (wish||'') + avoidTxt;
     if(!anyKey()) return { text: localNewMeal(field), why:"" };   // 沒金鑰:用內建替代清單輪替
     if(hasPhoto) return await menuPhotoPick(photos, wish2, label, target);
-    if(rest || foods) return await restaurantPick(rest||foods, wish2, label, target, foods);
     const prompt = '幫減重的人設計今天的「'+label+'」,每日約 '+target+' 大卡,原型食物、好準備。'
       + '想吃:'+(wish2 || '清爽的')+'。'
       + (fridgeHave.length ? ('冰箱有:'+fridgeHave.join("、")+'(優先用)。') : '')
       + '只回 JSON:{"text":"吃什麼不超過25字","why":"為什麼推薦不超過30字"}。' + TW_RULE;
     return await geminiJSON(prompt, null, avoid?0.85:0.6);
-  }
-  // 不滿意/查不到菜單時,讓使用者「直接輸入這間店有賣什麼」,AI 只從裡面挑
-  function refineHTML(){
-    if(!(regenCtx && (regenCtx.rest || regenCtx.foods))) return '';
-    return '<div class="rr-refine">'
-      + '<div class="rr-refine-label">'+RP('不滿意?打上這間店「實際有賣」的餐點,只從裡面挑:','Not right? Type what this place actually serves — it\'ll pick from these:')+'</div>'
-      + '<input id="rrFoods" class="rr-foods" placeholder="'+RP('例:珍奶、烤吐司、雞排飯、沙拉(用、分隔)','e.g. milk tea, toast, chicken rice, salad')+'" autocomplete="off" value="'+esc(regenCtx.foods||'')+'">'
-      + '<button type="button" class="rr-again" id="rrFoodsGo" style="width:100%;margin-top:8px">'+RP('依這些幫我挑','Pick from these')+'</button>'
-      + '</div>';
-  }
-  function wireRefine(){
-    const go=document.getElementById("rrFoodsGo");
-    if(go) go.addEventListener("click", ()=>{
-      const v=((document.getElementById("rrFoods")||{}).value||"").trim();
-      if(!v) return;
-      regenCtx.foods = v;
-      runPick(null);
-    });
   }
   // 把推薦顯示在換餐區下方(尚未套到今日菜單),附「採用這個 / 換一個」
   function showRegenResult(text, why){
@@ -2239,38 +2197,25 @@
       +   '<button type="button" class="rr-use" id="rrUse">'+RP('採用這個','Use this')+'</button>'
       +   '<button type="button" class="rr-again" id="rrAgain">'+RP('換一個','Try another')+'</button>'
       + '</div>'
-      + refineHTML()
       + '</div>';
     document.getElementById("rrUse").addEventListener("click", ()=>{
       applyMeal(regenCtx.field, text);
       status.innerHTML = '<span class="ok">'+RP('已套用到上面的今日菜單 ✅','Applied to your menu above ✅')+'</span>';
     });
     document.getElementById("rrAgain").addEventListener("click", ()=> runPick(text));
-    wireRefine();
-  }
-  // 查不到真實菜單:不虛構,改請使用者輸入這間店有賣什麼
-  function showFoodsPrompt(intro){
-    const status = document.getElementById("menuRegenStatus");
-    status.innerHTML = '<div class="regen-result">'
-      + '<div class="rr-why" style="margin-bottom:8px">'+intro+'</div>'
-      + '<input id="rrFoods" class="rr-foods" placeholder="'+RP('這間店有賣什麼?例:珍奶、烤吐司、雞排飯、沙拉','What does it serve? e.g. milk tea, toast, chicken rice, salad')+'" autocomplete="off">'
-      + '<button type="button" class="rr-use" id="rrFoodsGo" style="width:100%;margin-top:8px">'+RP('依這些幫我挑','Pick from these')+'</button>'
-      + '</div>';
-    wireRefine();
   }
   async function runPick(avoid){
     const status = document.getElementById("menuRegenStatus");
-    const { field, rest, hasPhoto } = regenCtx;
+    const { field, hasPhoto } = regenCtx;
     const label = MEAL_LABEL[field];
     const btn = document.getElementById("menuGenBtn"); const old = btn.textContent;
     btn.disabled = true; btn.textContent = RP("產生中…","Working…");
-    status.innerHTML = '<span class="ai-spin"></span>'+ (hasPhoto?RP('正在讀菜單照片、幫你挑','Reading the menu photo'):(rest?RP('正在讀餐廳菜單、幫你挑','Reading the restaurant menu'):RP('重新設計','Re-planning your ')+label)) +'…';
+    status.innerHTML = '<span class="ai-spin"></span>'+ (hasPhoto?RP('正在讀菜單照片、幫你挑','Reading the menu photo'):(RP('重新設計','Re-planning your ')+label)) +'…';
     try{
       const m = await pickMeal(avoid);
       const text = (m && (m.text || m[field])) || "";
       if(!text){
         if(hasPhoto) status.innerHTML = '<span class="err">'+RP('這張認不太出來,靠近菜名分區拍幾張通常更清楚;或直接打想吃什麼。','Couldn\'t read this one — close-up shots of menu sections read better; or just type a craving.')+'</span>';
-        else if(rest || regenCtx.foods) showFoodsPrompt(RP('查不到店家菜單,請改上傳菜單照片,或在下方輸入參考品項:','Couldn\'t find the menu — upload a menu photo, or list some items below:'));
         else status.innerHTML = '<span class="err">'+RP('這次沒有建議,再按一次試試。','No suggestion this time — tap again.')+'</span>';
       } else {
         regenCtx.last = text;
@@ -2279,12 +2224,6 @@
     }catch(e){
       const reason = browseReason(e && (e.message||e));
       if(hasPhoto) status.innerHTML = '<span class="err">'+RP('讀取失敗('+reason.zh+')。換張更清楚的菜單照片再試,或直接打想吃什麼。','Read failed ('+reason.en+'). Try a clearer menu photo, or just type a craving.')+'</span>';
-      else if(rest){
-        const needGoogle = !googleKey;   // 沒 Google 金鑰是讀連結失敗最常見主因
-        status.innerHTML = '<span class="err">'+RP('讀取失敗('+reason.zh+')。','Read failed ('+reason.en+'). ')
-          + (needGoogle ? RP('讀連結需要一把 Google 金鑰(你目前這把讀不了網頁);到 ⚙️ 設定加一把免費 Google 金鑰會穩很多。也可','Reading links needs a Google key (your current key can\'t read web pages); add a free Google key in ⚙️ Settings. Or ') : RP('可','You can '))
-          + RP('改貼官網 / 菜單頁連結,或用「上傳菜單照片」。','use the official / menu page link, or upload a menu photo.')+'</span>';
-      }
       else status.innerHTML = '<span class="err">'+RP('這次沒成功('+reason.zh+'),再按一次試試。','That didn\'t work ('+reason.en+') — tap again.')+'</span>';
     }
     btn.disabled = false; btn.textContent = old;
@@ -2292,21 +2231,14 @@
   async function regenMenu(){
     const status = document.getElementById("menuRegenStatus");
     const wish = getMenuPrefs();
-    const restEl = document.getElementById("menuRestaurant");
-    const rest = ((restEl&&restEl.value)||"").trim();
     const hasPhoto = menuPhotos.length>0;
-    const isLink = /^https?:\/\//i.test(rest) || /[\w-]+\.[a-z]{2,}(\/|\?|$)/i.test(rest);
-    if(rest && !isLink && !hasPhoto){
-      status.innerHTML = '<span class="err">'+RP('餐廳欄位請貼「官網 / 菜單頁連結」;若只知道店名,請改用「上傳菜單照片」。','Paste the restaurant\'s website / menu link here; if you only know the name, upload a menu photo instead.')+'</span>';
-      return;
-    }
     const field = regenField;
-    if(!anyKey() && (rest || hasPhoto)){
-      status.innerHTML = '<span class="err">讀取餐廳連結或菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(菜單照片 Google / Groq 都行)。</span>';
+    if(!anyKey() && hasPhoto){
+      status.innerHTML = '<span class="err">讀取菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(Google / Groq 都行)。</span>';
       return;
     }
     const target = parseInt(document.getElementById("inKcalTarget").value,10) || kcalTarget || 1500;
-    regenCtx = { field, wish, rest, hasPhoto, photos: menuPhotos.slice(), target, foods:null, last:null };
+    regenCtx = { field, wish, hasPhoto, photos: menuPhotos.slice(), target, last:null };
     await runPick(null);
   }
   function initMenuModule(){
