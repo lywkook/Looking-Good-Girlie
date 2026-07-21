@@ -241,8 +241,15 @@
   }
   .save-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--pink-shadow); }
 
-  svg.chart{ width:100%; height:130px; display:block; margin-top:14px; }
+  svg.chart{ width:100%; height:130px; display:block; margin-top:6px; }
   .chart-empty{ font-size:var(--fs-body); color:var(--ink-soft); padding:14px 0 2px; text-align:center; }
+  .metric-tabs{ display:flex; gap:6px; margin-top:16px; flex-wrap:wrap; }
+  .metric-tab{ flex:1 1 auto; min-width:0; padding:8px 6px; border-radius:12px; border:2px solid var(--line);
+    background:#FFFDFA; color:var(--ink-soft); font-size:var(--fs-label); font-weight:700; font-family:inherit; cursor:pointer; white-space:nowrap; }
+  .metric-tab.active{ background:var(--pink); border-color:var(--pink); color:#fff; }
+  .chart-analysis{ margin-top:8px; }
+  .chart-analysis .ca-line{ font-size:var(--fs-label); color:var(--ink); line-height:1.6; }
+  .chart-analysis .ca-line b{ font-weight:900; }
 
   .snapshot-row{
     display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;
@@ -589,9 +596,8 @@
   .dish .d-kcal{ font-size:var(--fs-label); color:var(--pink); font-weight:900; white-space:nowrap; }
   .menu-regen-box{ display:none; margin-top:12px; padding:14px; background:var(--pink-soft); border-radius:16px; }
   .menu-regen-box.show{ display:block; }
-  #menuRegenBtn{ display:flex; flex-direction:column; align-items:center; gap:2px; }
-  #menuRegenBtn .mrb-main{ font-size:var(--fs-body); font-weight:800; }
-  #menuRegenBtn .mrb-sub{ font-size:var(--fs-hint); font-weight:600; opacity:.85; }
+  #menuRegenBtn{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+  #menuRegenBtn .mrb-main, #menuRegenBtn .mrb-sub{ font-size:var(--fs-body); font-weight:800; }
   .menu-regen-hint{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.55; margin-bottom:10px; }
   .menu-regen-box input + input{ margin-top:8px; }
   .menu-regen-sub{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.5; margin-top:6px; }
@@ -789,23 +795,28 @@
   </div>
   <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;width:100%;padding:14px 18px;font-weight:700;line-height:1.4;"><span class="mrb-main">更改菜單</span><span class="mrb-sub">上傳餐廳菜單,推薦適合我的</span></button>
   <div class="menu-regen-box" id="menuRegenBox">
-    <div class="menu-regen-hint">選一餐,AI 會依你的熱量目標重新配好。下面全部都可以留空,直接按也會推薦。</div>
     <div class="meal-tabs" id="regenMealTabs">
       <button type="button" class="meal-tab" data-rmeal="breakfast">早餐</button>
       <button type="button" class="meal-tab active" data-rmeal="lunch">午餐</button>
       <button type="button" class="meal-tab" data-rmeal="dinner">晚餐</button>
       <button type="button" class="meal-tab" data-rmeal="fruit">點心/水果</button>
     </div>
-    <div class="pref-label">口味喜好(可選,可複選)</div>
+    <div class="pref-label">口味喜好(可複選 / 不選)</div>
     <div class="fridge-chips pref-chips" id="menuPrefChips">
       <span class="fchip" data-pref="高蛋白">高蛋白</span>
       <span class="fchip" data-pref="少油清爽">少油清爽</span>
+      <span class="fchip" data-pref="低卡">低卡</span>
       <span class="fchip" data-pref="低碳水">低碳水</span>
       <span class="fchip" data-pref="多蔬菜">多蔬菜</span>
       <span class="fchip" data-pref="吃辣">吃辣</span>
+      <span class="fchip" data-pref="不辣">不辣</span>
       <span class="fchip" data-pref="不吃牛">不吃牛</span>
+      <span class="fchip" data-pref="不吃豬">不吃豬</span>
       <span class="fchip" data-pref="海鮮">海鮮</span>
       <span class="fchip" data-pref="素食">素食</span>
+      <span class="fchip" data-pref="飯類">飯類</span>
+      <span class="fchip" data-pref="麵食">麵食</span>
+      <span class="fchip" data-pref="湯品">湯品</span>
     </div>
     <input id="menuWish" placeholder="還想吃什麼?(可留空,AI 幫你決定)" autocomplete="off">
     <input id="menuRestaurant" placeholder="要外食?貼餐廳 Google Maps 或官網連結" autocomplete="off" inputmode="url">
@@ -814,8 +825,7 @@
       <button type="button" class="mini-btn" id="menuPhotoBtn">上傳菜單照片</button>
       <span class="menu-photo-preview" id="menuPhotoPreview"></span>
     </div>
-    <div class="menu-regen-sub">貼餐廳連結、或上傳菜單照片,AI 都會讀菜單幫你挑一道。菜單照片 Google / Groq 都讀得到;只有「讀網頁連結」用 Google 比較穩。</div>
-    <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">讓 AI 換這一餐</button>
+    <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:12px;">讓 AI 換這一餐</button>
     <div class="ai-photo-status" id="menuRegenStatus"></div>
   </div>
 </div>
@@ -1021,7 +1031,14 @@
       <div class="import-status" id="importWeightStatus"></div>
     </div>
 
+    <div class="metric-tabs" id="metricTabs">
+      <button type="button" class="metric-tab active" data-metric="weight">體重</button>
+      <button type="button" class="metric-tab" data-metric="fat">體脂率</button>
+      <button type="button" class="metric-tab" data-metric="bmi">BMI</button>
+      <button type="button" class="metric-tab" data-metric="muscle">肌肉重量</button>
+    </div>
     <div id="chartArea"><div class="chart-empty">尚無紀錄,填入體重後會顯示趨勢曲線。</div></div>
+    <div class="chart-analysis" id="chartAnalysis"></div>
     <div id="snapshotArea"></div>
     <div class="history" id="historyArea"></div>
     <div class="clear-row"><button type="button" class="clear-all-btn" id="clearMetricsBtn">清空今日所有紀錄</button></div>
@@ -1253,8 +1270,8 @@
     "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
     "更改菜單":"Change the menu","上傳餐廳菜單,推薦適合我的":"Upload a restaurant menu for a pick that suits you",
     "選一餐,AI 會依你的熱量目標重新配好。下面全部都可以留空,直接按也會推薦。":"Pick a meal and AI re-plans it to your calorie target. Everything below is optional — just tap and it still recommends.",
-    "口味喜好(可選,可複選)":"Taste preferences (optional, pick any)",
-    "高蛋白":"High protein","少油清爽":"Light / low oil","低碳水":"Low carb","多蔬菜":"More veg","吃辣":"Spicy OK","不吃牛":"No beef","海鮮":"Seafood","素食":"Vegetarian",
+    "口味喜好(可複選 / 不選)":"Taste preferences (pick any, or none)",
+    "高蛋白":"High protein","少油清爽":"Light / low oil","低卡":"Low calorie","低碳水":"Low carb","多蔬菜":"More veg","吃辣":"Spicy OK","不辣":"Not spicy","不吃牛":"No beef","不吃豬":"No pork","海鮮":"Seafood","素食":"Vegetarian","飯類":"Rice dishes","麵食":"Noodles","湯品":"Soup",
     "想吃什麼?(可留空)":"Craving anything? (optional)",
     "想吃什麼?(可留空,AI 幫你決定)":"Craving anything? (optional — AI decides if blank)",
     "還想吃什麼?(可留空,AI 幫你決定)":"Anything else you fancy? (optional — AI decides if blank)",
@@ -2698,34 +2715,78 @@
     })();
   }
 
+  // 四個身體指標,各自一個分頁的趨勢圖 + 簡短分析
+  let chartMetric = "weight";
+  const METRIC_CFG = {
+    weight:{ label:"體重", unit:"kg", color:"#B7A9D9", goal:()=>{ const t=parseFloat((document.getElementById("pfTargetW")||{}).value); return isNaN(t)?60:t; } },
+    fat:{    label:"體脂率", unit:"%", color:"#E0A9B0", goal:()=>{ const t=parseFloat((document.getElementById("pfTargetBf")||{}).value); return isNaN(t)?null:t; } },
+    bmi:{    label:"BMI", unit:"", color:"#8FBFB0", goal:()=>null },
+    muscle:{ label:"肌肉重量", unit:"kg", color:"#C6A9D9", goal:()=>null }
+  };
+  function metricVal(p, key){ const v=p[key]; return (v==null||v==="")?null:Number(v); }
+  function metricAnalysis(mk, pts, cfg, goal){
+    const P=(zh,en)=> (typeof lang!=="undefined" && lang==="en") ? en : zh;
+    const u=cfg.unit;
+    const first=pts[0].v, last=pts[pts.length-1].v, diff=last-first, ad=Math.abs(diff);
+    const goodDown = (mk!=="muscle");   // 肌肉越高越好,其餘越低越好
+    let dir;
+    if(ad<0.05) dir=P("和第一次差不多、持平","about the same as when you started");
+    else{
+      const down=diff<0, improving=(down===goodDown);
+      const word=down?P("下降","down"):P("上升","up");
+      dir=P("比第一次"+word+" "+ad.toFixed(1)+u+(improving?",方向很好!":",要留意一下"),
+            word+" "+ad.toFixed(1)+u+" vs your first record"+(improving?" — great direction!":" — keep an eye on it"));
+    }
+    let goalTxt="";
+    if(goal!=null){
+      const reached = (mk==="muscle") ? last>=goal : last<=goal;
+      goalTxt = reached
+        ? P("已達到目標 "+goal+u,"Goal "+goal+u+" reached")
+        : P("距離目標 "+goal+u+" 還差 "+Math.abs(last-goal).toFixed(1)+u, Math.abs(last-goal).toFixed(1)+u+" to the "+goal+u+" goal");
+    }
+    return '<div class="ca-line">'+P("最新","Latest")+' <b>'+last+u+'</b> · '+dir+'</div>'
+         + (goalTxt?'<div class="ca-line">'+goalTxt+'</div>':'')
+         + '<div class="ca-line" style="color:var(--ink-soft);font-size:var(--fs-hint)">'+pts.length+P(" 筆紀錄"," records")+'</div>';
+  }
   function drawChart(){
     const area = document.getElementById("chartArea");
+    const analysis = document.getElementById("chartAnalysis");
     if(typeof updateStripForDate==="function") updateStripForDate();   // 最新體重依所選日期
-    if(!log.length){
-      area.innerHTML = '<div class="chart-empty">尚無紀錄,填入體重後會顯示趨勢曲線。</div>';
-      return;
+    document.querySelectorAll("#metricTabs .metric-tab").forEach(b=> b.classList.toggle("active", b.dataset.metric===chartMetric));
+    const cfg = METRIC_CFG[chartMetric] || METRIC_CFG.weight;
+    const pts = [...log].sort((a,b)=>a.date.localeCompare(b.date))
+      .map(p=>({date:p.date, v:metricVal(p, chartMetric)})).filter(p=>p.v!=null);
+    if(!pts.length){
+      area.innerHTML = '<div class="chart-empty">這個指標還沒有紀錄,填入'+cfg.label+'後會顯示趨勢。</div>';
+      if(analysis) analysis.innerHTML=""; return;
     }
-    const sorted = [...log].sort((a,b)=>a.date.localeCompare(b.date));
-
     const w=320,h=130,padX=8,padY=16;
-    const values = sorted.map(p=>p.weight);
-    const goal=60;
-    const minV = Math.min(...values, goal) - 0.5;
-    const maxV = Math.max(...values, goal) + 0.5;
-    const n = sorted.length;
-    function x(idx){ return n===1? w/2 : padX + (idx/(n-1))*(w-padX*2); }
-    function y(v){ return h-padY - ((v-minV)/(maxV-minV))*(h-padY*2); }
-    let path = sorted.map((p,idx)=>(idx===0?"M":"L")+x(idx).toFixed(1)+","+y(p.weight).toFixed(1)).join(" ");
-    let dots = sorted.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.weight).toFixed(1)}" r="4" fill="#CDC3DB" stroke="#fff" stroke-width="1.5"/>`).join("");
-    const goalY = y(goal).toFixed(1);
+    const goal = cfg.goal();
+    const values = pts.map(p=>p.v).concat(goal!=null?[goal]:[]);
+    let minV = Math.min(...values), maxV = Math.max(...values);
+    if(maxV-minV < 0.5){ minV-=0.5; maxV+=0.5; } else { const pad=(maxV-minV)*0.12; minV-=pad; maxV+=pad; }
+    const n = pts.length;
+    const x=idx=> n===1? w/2 : padX + (idx/(n-1))*(w-padX*2);
+    const y=v=> h-padY - ((v-minV)/(maxV-minV))*(h-padY*2);
+    const path = pts.map((p,idx)=>(idx===0?"M":"L")+x(idx).toFixed(1)+","+y(p.v).toFixed(1)).join(" ");
+    const dots = pts.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="4" fill="${cfg.color}" stroke="#fff" stroke-width="1.5"/>`).join("");
+    let goalLine="";
+    if(goal!=null){
+      const gy=y(goal).toFixed(1);
+      const gLabel=(typeof lang!=="undefined"&&lang==="en"?"Goal ":"目標 ")+goal+cfg.unit;
+      goalLine=`<line x1="0" y1="${gy}" x2="${w}" y2="${gy}" stroke="#C3BDCB" stroke-width="1.5" stroke-dasharray="4 3"/><text x="4" y="${gy-4}" font-size="14.3" fill="#A69C90">${gLabel}</text>`;
+    }
     area.innerHTML = `
       <svg class="chart" viewBox="0 0 ${w} ${h}">
-        <line x1="0" y1="${goalY}" x2="${w}" y2="${goalY}" stroke="#C3BDCB" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <text x="4" y="${goalY-4}" font-size="14.3" fill="#A69C90">目標 60kg</text>
-        <path d="${path}" fill="none" stroke="#CDC3DB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        ${goalLine}
+        <path d="${path}" fill="none" stroke="${cfg.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         ${dots}
       </svg>`;
+    if(analysis) analysis.innerHTML = metricAnalysis(chartMetric, pts, cfg, goal);
   }
+  document.querySelectorAll("#metricTabs .metric-tab").forEach(b=>{
+    b.addEventListener("click", ()=>{ chartMetric = b.dataset.metric; drawChart(); });
+  });
 
   function drawSnapshot(){
     const area = document.getElementById("snapshotArea");
