@@ -1000,7 +1000,7 @@
     const workout = workoutForWeekday(wd, liftCounter);
     if(workout.type==="lift") liftCounter++;
     days.push({ idx:i+1, date:new Date(cur), iso:isoDate(cur), weekdayLabel:weekdayNames[wd],
-      workout, diet:dietForDay(i) });
+      workout, baseWorkout:workout, diet:dietForDay(i) });
     cur.setDate(cur.getDate()+1); i++;
   }
 
@@ -1226,6 +1226,29 @@
     return '<span class="day-tag tag-rest">休息</span>';
   }
 
+  // 把上方「運動計畫」的一週安排,依星期對應到下面每日打卡,讓兩邊資訊同步
+  const AI_WEEKDAY = {"週日":0,"週一":1,"週二":2,"週三":3,"週四":4,"週五":5,"週六":6,"周日":0,"周一":1,"周二":2,"周三":3,"周四":4,"周五":5,"周六":6};
+  function aiTypeToKind(t){ t=String(t||""); return /重訓|肌力|力量|阻力/.test(t)?"lift":(/有氧|燃脂|跑|心肺|快走/.test(t)?"cardio":"rest"); }
+  function applyAiPlanToDays(){
+    const byWd={};
+    if(workoutPlan && Array.isArray(workoutPlan.week)){
+      workoutPlan.week.forEach(d=>{ const wd=AI_WEEKDAY[String(d.day||"").replace(/\s/g,"")]; if(wd!=null && byWd[wd]==null) byWd[wd]=d; });
+    }
+    days.forEach(day=>{
+      const ai = byWd[day.date.getDay()];
+      if(ai){
+        const kind=aiTypeToKind(ai.type||"");
+        day.workout={ type:kind, emoji:kind==="lift"?"💪":(kind==="cardio"?"🏃‍♀️":"🌙"),
+          title:((ai.type||"運動")+(ai.focus?(" · "+ai.focus):"")),
+          note:"這天的安排來自你上方的「運動計畫」,想調整就到那邊改。",
+          exercises:(ai.items&&ai.items.length)?ai.items.map(it=>({name:String(it),detail:""})):[{name:"依運動計畫進行",detail:""}] };
+      } else {
+        day.workout = day.baseWorkout;
+      }
+    });
+  }
+  // 運動計畫有變動時呼叫:重新對應每日打卡並重畫
+  function syncWorkoutToCheckin(){ applyAiPlanToDays(); if(typeof renderDays==="function"){ try{ renderDays(); }catch(e){} } }
   function renderDays(){
     listEl.innerHTML = "";
     days.forEach(day=>{
@@ -1951,8 +1974,8 @@
   const GEMINI_MODELS = ["gemini-2.5-flash-lite","gemini-2.0-flash-lite","gemini-2.5-flash","gemini-flash-latest"];
   let geminiLastGood = null;
   // Groq 看圖模型(2026/6 起 llama-4 陸續停用,現行主力為 qwen 視覺,放最前面)
-  const GROQ_VISION = ["qwen/qwen3.6-27b","mistral/pixtral-large","meta-llama/llama-4-maverick-17b-128e-instruct","meta-llama/llama-4-scout-17b-16e-instruct"];
-  const GROQ_VISION_RE = /scout|maverick|vision|llava|llama-?4|pixtral|[-_]vl\b|qwen3|qwen.*vl|omni|gemini/i;
+  const GROQ_VISION = ["groq/compound","groq/compound-mini","meta-llama/llama-4-scout-17b-16e-instruct","meta-llama/llama-4-maverick-17b-128e-instruct","mistral/pixtral-large","qwen/qwen3.6-27b"];
+  const GROQ_VISION_RE = /compound|scout|maverick|vision|llava|llama-?4|pixtral|[-_]vl\b|qwen3|qwen.*vl|omni|gemini/i;
   const GROQ_TEXT = ["llama-3.3-70b-versatile","openai/gpt-oss-120b","llama-3.1-8b-instant"];
   let groqGoodVision = null, groqGoodText = null;
   // 一把金鑰走到底:gsk_ 開頭用 Groq,其餘一律用 Google(拍照與文字都用同一把,不切換)
@@ -1982,8 +2005,11 @@
     const avail = await groqModelList(key);   // 問這把金鑰實際有哪些模型
     let models;
     if(hasImg){
-      models = avail.filter(id=>GROQ_VISION_RE.test(id) && !/guard|whisper|tts/i.test(id));
-      GROQ_VISION.forEach(m=>{ if(models.indexOf(m)<0) models.push(m); });   // 一律附上已知看圖模型當備援
+      models = avail.filter(id=>GROQ_VISION_RE.test(id) && !/guard|whisper|tts|orpheus|prompt-guard/i.test(id));
+      if(!avail.length) GROQ_VISION.forEach(m=>{ if(models.indexOf(m)<0) models.push(m); });   // 只有抓不到清單時才附備援,避免試到帳號沒有的模型
+      // 看圖能力排序:compound(多模態)> pixtral > llama-4 > 其餘
+      const prio=m=>/compound/.test(m)?0:(/pixtral/.test(m)?1:(/llama-?4|scout|maverick/.test(m)?2:3));
+      models.sort((a,b)=>prio(a)-prio(b));
       if(groqGoodVision) models = [groqGoodVision].concat(models.filter(m=>m!==groqGoodVision));
     }else{
       models = avail.filter(id=>/llama|gemma|qwen|mixtral|instant|versatile|gpt-oss|kimi/i.test(id) && !/vision|guard|whisper|tts/i.test(id));
@@ -2456,7 +2482,7 @@
     renderEquip("focusChips", FOCUS_PRESET, focusSel);
     renderEquip("strengthChips", STRENGTH_PRESET, strengthSel);
     renderEquip("cardioChips", CARDIO_PRESET, cardioSel);
-    renderWorkout(workoutPlan); updateWoMini();
+    renderWorkout(workoutPlan); updateWoMini(); syncWorkoutToCheckin();
     let stored=null; try{ const c=await window.storage.get(K("wocollapsed"),false); if(c&&c.value!=null&&c.value!=="") stored=c.value; }catch(e){}
     setWorkoutCollapsed(stored!=null ? stored==="1" : false, false);
   }
@@ -2474,7 +2500,7 @@
     const note=(document.getElementById("woNote").value||"").trim();
     await saveWorkout();
     if(!anyKey()){
-      workoutPlan=localWorkoutPlan(days,cardio,note); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini();
+      workoutPlan=localWorkoutPlan(days,cardio,note); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini(); syncWorkoutToCheckin();
       box.insertAdjacentHTML("afterbegin",'<div class="wo-hint">目前用內建規則產生。想要更貼你需求的計畫,可到下方「飲食紀錄」貼上免費 AI 金鑰,再回來按一次 ✨</div>');
       return;
     }
@@ -2490,9 +2516,9 @@
         +'每個動作寫清楚「組數×次數」或「時間」。只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
       const obj=await geminiJSON(prompt, null, 0.3);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
-      workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini();
+      workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
     }catch(e){
-      workoutPlan=localWorkoutPlan(days,cardio,note); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini();
+      workoutPlan=localWorkoutPlan(days,cardio,note); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini(); syncWorkoutToCheckin();
       box.insertAdjacentHTML("afterbegin",'<div class="wo-hint err">AI 連線失敗('+esc(e.message||e)+'),先給你內建規則版。</div>');
     }
     btn.disabled=false; btn.textContent=oldT;
@@ -2506,7 +2532,7 @@
     renderEquip("focusChips", FOCUS_PRESET, focusSel);
     renderEquip("strengthChips", STRENGTH_PRESET, strengthSel);
     renderEquip("cardioChips", CARDIO_PRESET, cardioSel);
-    renderWorkout(null); updateWoMini();
+    renderWorkout(null); updateWoMini(); syncWorkoutToCheckin();
     const st=document.getElementById("woPhotoStatus"); if(st) st.innerHTML="";
     await saveWorkout();
   }
@@ -2524,7 +2550,7 @@
       if(!picked.length) picked.push("全身");
       focusSel.length=0; picked.forEach(f=>focusSel.push(f));
       renderEquip("focusChips", FOCUS_PRESET, focusSel);
-      workoutPlan=localWorkoutPlan(days,cardio,"目標:"+goal); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini();
+      workoutPlan=localWorkoutPlan(days,cardio,"目標:"+goal); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini(); syncWorkoutToCheckin();
       box.insertAdjacentHTML("afterbegin",'<div class="wo-hint">已依「'+esc(goal)+'」用內建規則規劃(鎖定:'+esc(picked.join("、"))+')。貼上免費 AI 金鑰可更精準。</div>');
       return;
     }
@@ -2538,9 +2564,9 @@
         +'動作寫組數×次數或時間。只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
       const obj=await geminiJSON(prompt,null,0.4);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
-      workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini();
+      workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
     }catch(e){
-      workoutPlan=localWorkoutPlan(days,cardio,"目標:"+goal); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini();
+      workoutPlan=localWorkoutPlan(days,cardio,"目標:"+goal); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini(); syncWorkoutToCheckin();
       box.insertAdjacentHTML("afterbegin",'<div class="wo-hint err">AI 連線失敗('+esc(e.message||e)+'),先給你內建版。</div>');
     }
     btn.disabled=false; btn.textContent=oldT;
@@ -2586,7 +2612,7 @@
         if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
         const move=(obj.move||"").trim(), target=(obj.target||"").trim();
         if(move){ obj.summary="偵測到的動作:"+move+(target?"(主要練"+target+")":"")+"。"+(obj.summary||""); }
-        workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini();
+        workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
         status.innerHTML = move ? '<span class="ok">認出「'+esc(move)+'」,已排入計畫 ✅</span>' : '<span class="ok">已排入計畫 ✅</span>';
       }catch(e){
         box.innerHTML='';
