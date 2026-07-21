@@ -110,6 +110,9 @@
     #printArea li{ margin:3px 0; font-size:15px; line-height:1.55; }
     .pdf-chart{ width:100%; height:auto; display:block; margin:2px 0 8px; }
     .pdf-chart-card{ background:#FAF8F4; border:1px solid #ECE6DC; border-radius:14px; padding:12px 12px 6px; margin-bottom:6px; break-inside:avoid; }
+    .pdf-charts-2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .pdf-charts-2 .pdf-chart-card{ margin-bottom:0; }
+    .pdf-mini-cap{ font-size:13px; font-weight:700; color:var(--ink); margin:0 0 2px 2px; }
     .pdf-foot{ text-align:center; font-size:13px; color:var(--ink-soft); margin-top:22px; padding-top:10px; border-top:1px solid #ECE6DC; }
   }
   .bg-adjust-hint{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:4px; line-height:1.5; }
@@ -4600,13 +4603,15 @@
   function openHomeSettings(){ themeScope="home"; openSettings(); }
   // 匯出整個計畫成 PDF(用瀏覽器列印→儲存成 PDF,可存手機/雲端/分享)
   function pdfRow(k,v){ return v?('<tr><td>'+esc(k)+'</td><td>'+esc(v)+'</td></tr>'):''; }
-  function pdfWeightChart(entries, goal, col, P){
+  function pdfWeightChart(entries, goal, col, P){ return pdfMetricChart(entries,"weight",goal,col,P); }
+  // 任一身體指標的 SVG 折線圖(含目標虛線、面積、資料點)
+  function pdfMetricChart(entries, key, goal, col, P){
     P = P || ((zh,en)=>zh);
-    // 用 SVG 畫一張體重折線圖(含目標虛線、面積、資料點),顏色套用計畫主色
-    const data=(entries||[]).filter(e=>e.weight!=null && !isNaN(Number(e.weight))).map(e=>({d:e.date, w:Number(e.weight)}));
+    const data=(entries||[]).filter(e=>e[key]!=null && e[key]!=="" && !isNaN(Number(e[key]))).map(e=>({d:e.date, w:Number(e[key])}));
     if(data.length<2) return '';
+    const hasGoal = (goal!=null && !isNaN(goal));
     const W=540,H=190,L=40,R=16,T=14,B=28;
-    const vals=data.map(p=>p.w).concat(!isNaN(goal)?[goal]:[]);
+    const vals=data.map(p=>p.w).concat(hasGoal?[goal]:[]);
     let mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
     if(mx-mn<1){ mn-=1; mx+=1; }
     const p=(mx-mn)*0.18; mn-=p; mx+=p;
@@ -4620,7 +4625,7 @@
     }
     const area='M'+X(0).toFixed(1)+' '+(H-B)+' '+data.map((q,i)=>'L'+X(i).toFixed(1)+' '+Y(q.w).toFixed(1)).join(' ')+' L'+X(data.length-1).toFixed(1)+' '+(H-B)+' Z';
     s+='<path d="'+area+'" fill="'+col.pinkSoft+'" stroke="none"/>';
-    if(!isNaN(goal)){ const gy=Y(goal);
+    if(hasGoal){ const gy=Y(goal);
       s+='<line x1="'+L+'" y1="'+gy.toFixed(1)+'" x2="'+(W-R)+'" y2="'+gy.toFixed(1)+'" stroke="'+col.pinkShadow+'" stroke-width="1.4" stroke-dasharray="5 4"/>';
       s+='<text x="'+(W-R)+'" y="'+(gy-4).toFixed(1)+'" font-size="9" fill="'+col.pinkShadow+'" text-anchor="end">'+P('目標 ','Goal ')+goal+'</text>';
     }
@@ -4629,6 +4634,32 @@
     data.forEach((q,i)=>{ s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(q.w).toFixed(1)+'" r="3" fill="#fff" stroke="'+col.pinkShadow+'" stroke-width="2"/>'; });
     s+='<text x="'+X(0).toFixed(1)+'" y="'+(H-8)+'" font-size="9" fill="'+col.inkSoft+'" text-anchor="start">'+md(data[0].d)+'</text>';
     s+='<text x="'+X(data.length-1).toFixed(1)+'" y="'+(H-8)+'" font-size="9" fill="'+col.inkSoft+'" text-anchor="end">'+md(data[data.length-1].d)+'</text>';
+    return s+'</svg>';
+  }
+  // 每日總熱量長條圖(最近 14 天)+ 目標線
+  function pdfCalorieChart(fl, target, col, P){
+    P = P || ((zh,en)=>zh);
+    const byDate={}; (fl||[]).forEach(f=>{ byDate[f.date]=(byDate[f.date]||0)+(Number(f.kcal)||0); });
+    const days=Object.keys(byDate).sort().slice(-14);
+    if(!days.length) return '';
+    const W=540,H=180,L=42,R=16,T=14,B=30;
+    const tgt=(target&&!isNaN(target))?Number(target):0;
+    const mx=(Math.max.apply(null, days.map(d=>byDate[d]).concat(tgt?[tgt]:[]))||1)*1.12;
+    const Y=v=> T+(H-T-B)*(1-v/mx);
+    const X=i=> L+(W-L-R)*((i+0.5)/days.length);
+    const bw=Math.min(34,(W-L-R)/days.length*0.6);
+    const md=s2=>{ const m=/\d{4}-(\d{2})-(\d{2})/.exec(String(s2)); return m?m[1]+'/'+m[2]:String(s2); };
+    let s='<svg class="pdf-chart" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
+    for(let t=0;t<=3;t++){ const v=mx*t/3, y=Y(v);
+      s+='<line x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'" stroke="#ECE6DC" stroke-width="1"/>';
+      s+='<text x="'+(L-6)+'" y="'+(y+3).toFixed(1)+'" font-size="9" fill="'+col.inkSoft+'" text-anchor="end">'+Math.round(v)+'</text>'; }
+    days.forEach((d,i)=>{ const v=byDate[d], x=X(i), y=Y(v), over=tgt&&v>tgt;
+      s+='<rect x="'+(x-bw/2).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,H-B-y).toFixed(1)+'" rx="3" fill="'+(over?col.pinkShadow:col.pink)+'"/>'; });
+    if(tgt){ const ty=Y(tgt);
+      s+='<line x1="'+L+'" y1="'+ty.toFixed(1)+'" x2="'+(W-R)+'" y2="'+ty.toFixed(1)+'" stroke="'+col.pinkShadow+'" stroke-width="1.4" stroke-dasharray="5 4"/>';
+      s+='<text x="'+(W-R)+'" y="'+(ty-4).toFixed(1)+'" font-size="9" fill="'+col.pinkShadow+'" text-anchor="end">'+P('目標 ','Target ')+tgt+'</text>'; }
+    s+='<text x="'+X(0).toFixed(1)+'" y="'+(H-8)+'" font-size="9" fill="'+col.inkSoft+'" text-anchor="middle">'+md(days[0])+'</text>';
+    if(days.length>1) s+='<text x="'+X(days.length-1).toFixed(1)+'" y="'+(H-8)+'" font-size="9" fill="'+col.inkSoft+'" text-anchor="middle">'+md(days[days.length-1])+'</text>';
     return s+'</svg>';
   }
   function buildPrintHTML(){
@@ -4665,32 +4696,33 @@
 
     // 體重變化圖表
     const chart=pdfWeightChart(logs, goalW, col, P);
-    if(chart){ h+='<div class="pdf-h2">'+P('體重變化','Weight trend')+'</div><div class="pdf-chart-card">'+chart+'</div>'; }
-
-    // 重點分析(條列)
-    const b=[];
-    if(!isNaN(curW)){
-      if(!isNaN(startW)&&logs.length>=2){
-        const lost=startW-curW;
-        if(lost>0.05) b.push(P('從 '+startW+' kg 一路減到 '+curW+' kg,已經瘦了 <b>'+lost.toFixed(1)+' kg</b>,很棒,繼續保持!','Down from '+startW+' kg to '+curW+' kg — you\'ve lost <b>'+lost.toFixed(1)+' kg</b>. Great, keep it up!'));
-        else if(lost<-0.05) b.push(P('目前 '+curW+' kg,比一開始 '+startW+' kg 多了 '+(-lost).toFixed(1)+' kg,別氣餒,調整一下飲食與運動節奏。','Now '+curW+' kg, '+(-lost).toFixed(1)+' kg above the starting '+startW+' kg. Don\'t worry — adjust your food and exercise pace.'));
-        else b.push(P('體重穩定在 '+curW+' kg 附近,維持得不錯。','Weight is steady around '+curW+' kg — nicely maintained.'));
-      }
-      if(!isNaN(goalW)){
-        if(remain>0.05) b.push(P('距離目標 '+goalW+' kg 還差 <b>'+remain.toFixed(1)+' kg</b>,加油!','<b>'+remain.toFixed(1)+' kg</b> to go to reach the '+goalW+' kg goal. You can do it!'));
-        else b.push(P('已達成目標 '+goalW+' kg 🎉 恭喜!接下來維持住就好。','Goal of '+goalW+' kg reached 🎉 Congrats! Now just maintain it.'));
-      }
-      if(logs.length>=2 && !isNaN(goalW)){
-        const d0=new Date(logs[0].date+'T00:00:00'), d1=new Date(logs[logs.length-1].date+'T00:00:00');
-        const days=Math.max(1,(d1-d0)/86400000), rate=(startW-curW)/(days/7);
-        if(rate>0.03){
-          b.push(P('平均每週約減 <b>'+rate.toFixed(2)+' kg</b>'+(rate>1?'(速度偏快,注意營養均衡)':(rate<0.25?'(速度和緩、對身體友善)':'(健康的減重速度)'))+'。','Losing about <b>'+rate.toFixed(2)+' kg</b> per week'+(rate>1?' (a bit fast — watch your nutrition)':(rate<0.25?' (gentle and body-friendly)':' (a healthy pace)'))+'.'));
-          if(remain>0.05){ const wk=Math.ceil(remain/rate); b.push(P('若維持這個速度,大約再 <b>'+wk+' 週</b>就能達標。','At this pace you\'ll reach the goal in about <b>'+wk+' weeks</b>.')); }
-        }
-      }
+    if(chart || logs.length>=2){
+      h+='<div class="pdf-h2">'+P('趨勢圖','Trends')+'</div>';
+      if(chart) h+='<div class="pdf-chart-card"><div class="pdf-mini-cap">'+P('體重','Weight')+' (kg)</div>'+chart+'</div>';
+      const minis=[];
+      const bf=pdfMetricChart(logs,"fat", num(g("pfTargetBf")), col, P); if(bf) minis.push([P('體脂率','Body fat')+' (%)', bf]);
+      const bm=pdfMetricChart(logs,"bmi", NaN, col, P); if(bm) minis.push(['BMI', bm]);
+      const mu=pdfMetricChart(logs,"muscle", NaN, col, P); if(mu) minis.push([P('肌肉重量','Muscle')+' (kg)', mu]);
+      if(minis.length) h+='<div class="pdf-charts-2">'+minis.map(m=>'<div class="pdf-chart-card"><div class="pdf-mini-cap">'+m[0]+'</div>'+m[1]+'</div>').join('')+'</div>';
     }
-    b.push(P('每日熱量目標:<b>'+kcalTarget+' kcal</b>,搭配運動計畫更容易達成。','Daily calorie target: <b>'+kcalTarget+' kcal</b> — pair it with the workout plan for best results.'));
-    h+='<div class="pdf-h2">'+P('重點分析','Key analysis')+'</div><ul class="pdf-analysis">'+b.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+
+    // 重點(精簡:最多兩行)
+    const b=[];
+    if(!isNaN(curW)&&!isNaN(startW)&&logs.length>=2){
+      const lost=startW-curW;
+      let seg = lost>0.05 ? P('已減 <b>'+lost.toFixed(1)+' kg</b>('+startW+'→'+curW+' kg)','Lost <b>'+lost.toFixed(1)+' kg</b> ('+startW+'→'+curW+' kg)')
+              : lost<-0.05 ? P('比起始多 '+(-lost).toFixed(1)+' kg,調整一下節奏','+'+(-lost).toFixed(1)+' kg vs start — adjust pace')
+              : P('體重穩定在 '+curW+' kg','Steady around '+curW+' kg');
+      if(!isNaN(goalW)){
+        if(remain>0.05){
+          seg += P(',距目標 '+goalW+' kg 還差 <b>'+remain.toFixed(1)+' kg</b>',', <b>'+remain.toFixed(1)+' kg</b> to the '+goalW+' kg goal');
+          const d0=new Date(logs[0].date+'T00:00:00'),d1=new Date(logs[logs.length-1].date+'T00:00:00'),dys=Math.max(1,(d1-d0)/86400000),rate=(startW-curW)/(dys/7);
+          if(rate>0.03){ const wk=Math.ceil(remain/rate); b.push(P('每週約減 '+rate.toFixed(2)+' kg,依此速度約 <b>'+wk+' 週</b>達標','About '+rate.toFixed(2)+' kg/week — roughly <b>'+wk+' weeks</b> to goal')); }
+        } else seg += P(',已達標','— goal reached');
+      }
+      b.unshift(seg);
+    }
+    if(b.length) h+='<div class="pdf-h2">'+P('重點','Summary')+'</div><ul class="pdf-analysis">'+b.slice(0,2).map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 
     // 個人資料
     const sex=g("pfSex")==="male"?P('男','Male'):(g("pfSex")==="female"?P('女','Female'):"");
@@ -4725,21 +4757,10 @@
       }
     }
 
-    // 身體數據紀錄
-    if(logs.length){
-      h+='<div class="pdf-h2">'+P('身體數據紀錄','Body data log')+'</div><table class="pdf-tbl"><tr><th>'+P('日期','Date')+'</th><th>'+P('體重','Weight')+'</th><th>'+P('體脂%','Fat%')+'</th><th>BMI</th><th>'+P('肌肉','Muscle')+'</th></tr>';
-      logs.forEach(r=>{ h+='<tr><td>'+esc(r.date)+'</td><td>'+esc(r.weight!=null?r.weight:"")+'</td><td>'+esc(r.fat!=null?r.fat:"")+'</td><td>'+esc(r.bmi!=null?r.bmi:"")+'</td><td>'+esc(r.muscle!=null?r.muscle:"")+'</td></tr>'; });
-      h+='</table>';
-    }
-
-    // 飲食紀錄
+    // 每日熱量長條圖(取代逐項文字清單,精簡又直觀)
     if(typeof foodLog!=="undefined" && foodLog && foodLog.length){
-      h+='<div class="pdf-h2">'+P('飲食紀錄','Food log')+'</div>';
-      const byDate={}; foodLog.forEach(f=>{ (byDate[f.date]=byDate[f.date]||[]).push(f); });
-      Object.keys(byDate).sort().forEach(dt=>{
-        const items=byDate[dt]; const tot=items.reduce((s,f)=>s+(Number(f.kcal)||0),0);
-        h+='<div class="pdf-card"><b>'+esc(dt)+P(' (共 '+Math.round(tot)+' kcal)',' ('+Math.round(tot)+' kcal total)')+'</b><ul>'+items.map(f=>'<li>'+esc(t(f.meal||""))+' · '+esc(f.name)+' '+Math.round(Number(f.kcal)||0)+' kcal</li>').join('')+'</ul></div>';
-      });
+      const calChart=pdfCalorieChart(foodLog, kcalTarget, col, P);
+      if(calChart) h+='<div class="pdf-h2">'+P('每日熱量','Daily calories')+'</div><div class="pdf-chart-card">'+calChart+'</div>';
     }
 
     h+='<div class="pdf-foot">'+P('由減重計畫 App 匯出 · 計畫:','Exported from Weight Plan app · Plan: ')+esc(PLAN?PLAN.name:"")+' · '+esc(isoDate(today))+'</div>';
