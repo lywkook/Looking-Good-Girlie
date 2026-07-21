@@ -446,6 +446,7 @@
     box-shadow:var(--shadow); font-size:var(--fs-body); color:var(--ink); cursor:pointer;
   }
   .pf-hint{ color:var(--ink-soft); }
+  .pf-hint-nl{ display:block; margin-top:3px; }
   .food-suggest{ display:none; margin:-4px 0 10px; border:2px solid var(--line);
     border-radius:12px; overflow:hidden; background:var(--card); box-shadow:var(--shadow); }
   .food-suggest.show{ display:block; }
@@ -943,6 +944,7 @@
 
 <div class="section" id="checkinSection">
   <h2 class="cute" id="checkinToggle"><span class="dot"></span>每日打卡 <span class="pf-caret" id="checkinCaret">▾</span></h2>
+  <div class="pf-mini" id="checkinMini"></div>
   <div id="checkinBody">
     <div id="dayList"></div>
   </div>
@@ -2410,8 +2412,8 @@
   }
   function updateFrMini(){
     const mini=document.getElementById("frMini"); if(!mini) return;
-    if(fridgeHave.length) mini.innerHTML='冰箱有 <b>'+fridgeHave.length+'</b> 樣食材 <span class="pf-hint">(點這裡展開看能煮什麼)</span>';
-    else mini.innerHTML='<span class="pf-hint">點這裡展開,選冰箱有的食材</span>';
+    if(fridgeHave.length) mini.innerHTML='冰箱有 <b>'+fridgeHave.length+'</b> 樣食材 <span class="pf-hint">(點此展開)</span>';
+    else mini.innerHTML='<span class="pf-hint">點此展開</span>';
   }
   function setFridgeCollapsed(collapsed, persist){
     const sec=document.getElementById("fridgeSection"); if(!sec) return;
@@ -2727,9 +2729,9 @@
       let s = `最新 <b>${l.weight}</b>kg`;
       if(l.fat) s += ` · 體脂 ${l.fat}%`;
       if(l.muscle) s += ` · 肌肉 ${l.muscle}kg`;
-      mini.innerHTML = s + ` <span class="pf-hint">(點這裡展開)</span>`;
+      mini.innerHTML = s + `<span class="pf-hint pf-hint-nl">點此展開</span>`;
     } else {
-      mini.innerHTML = `<span class="pf-hint">點這裡展開,紀錄今天的體重</span>`;
+      mini.innerHTML = `<span class="pf-hint">點此展開</span>`;
     }
   }
   function setMetricsCollapsed(collapsed, persist){
@@ -3948,8 +3950,8 @@
     if(!mini) return;
     const rec = document.getElementById("inKcalTarget").value;
     const tw  = document.getElementById("pfTargetW").value;
-    if(rec && tw) mini.innerHTML = `每日建議吃 <b>${rec}</b> kcal · 目標 <b>${tw}</b>kg <span class="pf-hint">(點這裡展開)</span>`;
-    else mini.innerHTML = `<span class="pf-hint">點這裡展開,填個人資料</span>`;
+    if(rec && tw) mini.innerHTML = `每日建議吃 <b>${rec}</b> kcal · 目標 <b>${tw}</b>kg <span class="pf-hint">(點此展開)</span>`;
+    else mini.innerHTML = `<span class="pf-hint">點此展開</span>`;
   }
   function setProfileCollapsed(collapsed, persist){
     const sec = document.getElementById("profileSection");
@@ -4339,8 +4341,8 @@
   function updateWoMini(){
     const mini=document.getElementById("woMini"); if(!mini) return;
     const d=document.getElementById("woDays").value;
-    if(workoutPlan && d) mini.innerHTML='運動計畫:每週 <b>'+esc(d)+'</b> 天已排好 <span class="pf-hint">(點這裡展開)</span>';
-    else mini.innerHTML='<span class="pf-hint">點這裡展開,填你的運動需求</span>';
+    if(workoutPlan && d) mini.innerHTML='運動計畫:每週 <b>'+esc(d)+'</b> 天已排好 <span class="pf-hint">(點此展開)</span>';
+    else mini.innerHTML='<span class="pf-hint">點此展開</span>';
   }
   function setWorkoutCollapsed(collapsed, persist){
     const sec=document.getElementById("workoutSection"); if(!sec) return;
@@ -4353,6 +4355,14 @@
     const blk=document.getElementById("checkinSection"); if(!blk) return;
     blk.classList.toggle("collapsed", collapsed);
     const c=document.getElementById("checkinCaret"); if(c) c.textContent=collapsed?"▸":"▾";
+    const mm=document.getElementById("checkinMini");
+    if(mm && collapsed){
+      const day = (typeof resolveDay==="function") ? resolveDay(curIso()) : null;
+      const w = day && day.workout ? day.workout : null;
+      mm.innerHTML = (lang==="en")
+        ? ('Today: '+(w?esc(w.title||'workout'):'workout')+' <span class="pf-hint">· tap to open the checklist</span>')
+        : ('今天:'+(w?esc(w.title||'運動'):'運動')+' <span class="pf-hint">· 點此展開打卡清單</span>');
+    }
     if(persist){ try{ window.storage.set(K("checkincollapsed"), collapsed?"1":"0", false); }catch(e){} }
   }
   async function loadCheckinCollapsed(){
@@ -4367,6 +4377,7 @@
     const adjIn=document.getElementById("woAdjustInput"); if(adjIn) adjIn.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); adjustWorkoutPlan(); } });
     document.querySelectorAll("#woAdjustQuick .wo-chip-btn").forEach(c=> c.addEventListener("click", ()=>{ const inp=document.getElementById("woAdjustInput"); if(inp) inp.value=c.dataset.q; adjustWorkoutPlan(c.dataset.q); }));
     const ct=document.getElementById("checkinToggle"); if(ct) ct.addEventListener("click", ()=>{ const blk=document.getElementById("checkinSection"); setCheckinCollapsed(!blk.classList.contains("collapsed"), true); });
+    const cm=document.getElementById("checkinMini"); if(cm) cm.addEventListener("click", ()=> setCheckinCollapsed(false, true));
     initWorkoutPhoto();
     ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs","woGoal"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
     // 部位 / 器材 的「其他」新增
@@ -5129,7 +5140,7 @@
     }catch(e){ alert((lang==="en"?"Failed: ":"產生失敗:")+(e.message||e)); return false; }
   }
   function updateRmMini(){ const m=document.getElementById("rmMini"); if(!m) return;
-    m.innerHTML = reminderCfg.on ? ('提醒 '+reminderCfg.time+' 已開 <span class="pf-hint">(點開設定)</span>') : '<span class="pf-hint">點這裡展開,設定提醒</span>';
+    m.innerHTML = reminderCfg.on ? ('提醒 '+reminderCfg.time+' 已開 <span class="pf-hint">(點此展開)</span>') : '<span class="pf-hint">點此展開</span>';
   }
   function setReminderCollapsed(c,persist){ const s=document.getElementById("reminderSection"); if(!s) return;
     s.classList.toggle("collapsed",c); const el=document.getElementById("rmCaret"); if(el) el.textContent=c?"▸":"▾"; updateRmMini();
@@ -5183,7 +5194,7 @@
       const setC=(c)=>{ s.classList.toggle("collapsed",c); const cc=document.getElementById(caret); if(cc) cc.textContent=c?"▸":"▾";
         const mm=document.getElementById(mini); if(mm){
           if(sec==="waterSection" && c && typeof waterMiniHTML==="function") mm.innerHTML = waterMiniHTML();
-          else mm.innerHTML='<span class="pf-hint">'+label+'(點開)</span>';
+          else mm.innerHTML='<span class="pf-hint">'+label+' · 點此展開</span>';
         } };
       const tg=document.getElementById(tog); if(tg) tg.addEventListener("click", async ()=>{ const c=!s.classList.contains("collapsed"); setC(c); try{ await window.storage.set(key, c?"1":"0", false);}catch(e){} });
       const mn=document.getElementById(mini); if(mn) mn.addEventListener("click", async ()=>{ setC(false); try{ await window.storage.set(key,"0",false);}catch(e){} });
