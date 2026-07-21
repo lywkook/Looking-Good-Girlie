@@ -541,8 +541,20 @@
     <div class="home-title cute">我的計畫</div>
     <div class="home-sub">點一個計畫進入</div>
   </div>
+  <div id="homeList" class="home-list"></div>
+  <div class="home-new">
+    <div class="home-new-title">新增計畫</div>
+    <input id="homeNewName" placeholder="計畫名稱(例:長期體重紀錄)" autocomplete="off">
+    <select id="homeNewType">
+      <option value="track">紀錄飲食 + 喝水 + 體重</option>
+      <option value="full">幫我規劃減重減脂</option>
+    </select>
+    <button id="homeAddBtn" class="save-btn cute">＋ 建立新計畫</button>
+  </div>
+  <button type="button" class="home-appearance-btn" id="homeAppearanceBtn">🎨 主畫面外觀(背景・主題色)</button>
+  <div class="home-sub" style="margin-top:10px;">每個計畫的外觀 → 進入計畫後點下方「⚙️ 設定」各自設定</div>
   <div class="home-help" id="homeHelp">
-    <div class="home-help-head" id="homeHelpToggle">❓ 第一次使用?看這裡 <span class="pf-caret" id="homeHelpCaret">▾</span></div>
+    <div class="home-help-head" id="homeHelpToggle">＊ 第一次使用?看這裡 <span class="pf-caret" id="homeHelpCaret">▾</span></div>
     <div class="home-help-body" id="homeHelpBody">
       <p><b>這個 App 幫你什麼?</b><br>記錄每天吃了什麼、喝水、體重,還能幫你規劃減重菜單與運動,拍照就能估熱量。</p>
       <p><b>怎麼開始?</b><br>① 點上面的計畫卡片進入,或用下方「＋ 建立新計畫」<br>② 進去後就能記錄飲食、喝水、體重</p>
@@ -557,18 +569,6 @@
       <p class="home-help-note">你的資料只存在自己這支手機的瀏覽器,不會上傳,換手機或清除瀏覽器資料就會不見。</p>
     </div>
   </div>
-  <div id="homeList" class="home-list"></div>
-  <div class="home-new">
-    <div class="home-new-title">新增計畫</div>
-    <input id="homeNewName" placeholder="計畫名稱(例:長期體重紀錄)" autocomplete="off">
-    <select id="homeNewType">
-      <option value="track">紀錄飲食 + 喝水 + 體重</option>
-      <option value="full">幫我規劃減重減脂</option>
-    </select>
-    <button id="homeAddBtn" class="save-btn cute">＋ 建立新計畫</button>
-  </div>
-  <button type="button" class="home-appearance-btn" id="homeAppearanceBtn">🎨 主畫面外觀(背景・主題色)</button>
-  <div class="home-sub" style="margin-top:10px;">每個計畫的外觀 → 進入計畫後點下方「⚙️ 設定」各自設定</div>
 </div>
 
 <div id="appView" style="display:none;">
