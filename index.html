@@ -127,6 +127,7 @@
   #reminderSection{ order:6; }
   #profileSection{ order:7; }
   #workoutSection{ order:8; }
+  #askSection{ order:9; }
   .section{ padding:22px 20px 0; }
   .section h2{
     font-size:var(--fs-title); margin:0 0 12px; font-weight:400;
@@ -500,6 +501,21 @@
   .wo-hint{ font-size:var(--fs-hint); color:var(--ink-soft); margin:10px 0; line-height:1.5; }
   .wo-hint.err{ color:#B5766F; }
   #checkinBlock{ margin-top:16px; border-top:1px dashed var(--line); padding-top:14px; }
+  .ask-hint{ font-size:var(--fs-label); color:var(--ink-soft); line-height:1.5; margin-bottom:10px; }
+  .ask-log{ display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+  .ask-log:empty{ display:none; }
+  .ask-bubble{ font-size:var(--fs-body); line-height:1.55; padding:10px 13px; border-radius:14px; white-space:pre-wrap; word-break:break-word; }
+  .ask-q{ align-self:flex-end; background:var(--pink); color:#fff; border-bottom-right-radius:4px; max-width:85%; }
+  .ask-a{ align-self:flex-start; background:#FFFBF6; border:1.5px solid var(--line); color:var(--ink); border-bottom-left-radius:4px; max-width:92%; }
+  .ask-input-row{ display:flex; gap:8px; align-items:flex-end; }
+  .ask-textarea{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
+    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; resize:vertical; }
+  .ask-textarea:focus{ outline:none; border-color:var(--pink); }
+  .ask-send{ flex:none; padding:11px 18px; border:none; border-radius:12px; background:var(--pink); color:#fff;
+    font-size:var(--fs-body); font-weight:800; font-family:inherit; cursor:pointer; }
+  .ask-send:active{ opacity:0.7; }
+  .ask-send:disabled{ opacity:0.5; }
+  .ask-status{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:6px; }
   .wo-sub{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:10px; }
   .wo-sub-toggle{ cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
   .wo-sub-toggle .pf-caret{ font-size:var(--fs-label); color:var(--pink); }
@@ -840,6 +856,19 @@
     <div class="rm-preview" id="rmPreview"></div>
     <button type="button" class="mini-btn" id="rmCopy">📋 複製內容</button>
     <div class="rm-note" id="rmNote"></div>
+  </div>
+</div>
+
+<div class="section" id="askSection">
+  <h2 class="cute" id="askToggle"><span class="dot"></span>不懂問 AI 🤖 <span class="pf-caret" id="askCaret">▾</span></h2>
+  <div class="weight-box">
+    <div class="ask-hint">任何問題都可以問(飲食、運動、健康、生活…),AI 用中文回答你。需要先在「飲食紀錄」的 🔑 貼上免費金鑰。</div>
+    <div id="askLog" class="ask-log"></div>
+    <div class="ask-input-row">
+      <textarea id="askInput" class="ask-textarea" rows="2" placeholder="例:燕麥怎麼吃比較不會胖? / 深蹲要注意什麼?"></textarea>
+      <button type="button" class="ask-send" id="askBtn">問</button>
+    </div>
+    <div class="ask-status" id="askStatus"></div>
   </div>
 </div>
 
@@ -2129,6 +2158,72 @@
       window.storage.set("aiphotocache", JSON.stringify(aiPhotoCache), false);
     }catch(e){}
   }
+  // ---------- 不懂問 AI:一般問答(純文字回覆) ----------
+  async function askAIText(question){
+    const key=cleanKey(geminiKey);
+    if(!key) throw new Error("尚未設定 AI 金鑰。請到「飲食紀錄」的 🔑 貼上一把免費金鑰(Google 或 Groq)。");
+    const prompt="你是親切、可靠的中文小幫手。請用「繁體中文」、口語、簡單好懂地回答使用者的問題;需要時可條列重點。若問題涉及健康或醫療,提醒對方嚴重時要看醫生。使用者的問題:\n"+question;
+    if(key.slice(0,4)==="gsk_") return await groqChat(prompt, key);
+    return await googleChat(prompt, key);
+  }
+  async function googleChat(prompt, key){
+    const body={ contents:[{parts:[{text:prompt}]}], generationConfig:{ temperature:0.6 } };
+    let models=GEMINI_MODELS.slice(); if(geminiLastGood && models.indexOf(geminiLastGood)>=0) models=[geminiLastGood].concat(models.filter(m=>m!==geminiLastGood));
+    let lastMsg="連線失敗", quota=false;
+    for(const mdl of models){
+      let res;
+      try{ res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+mdl+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(body)}); }
+      catch(e){ lastMsg="無法連線到 Google,請檢查網路"; continue; }
+      if(res.ok){ const d=await res.json(); const parts=((((d.candidates||[])[0]||{}).content||{}).parts)||[]; const txt=parts.map(p=>p.text||"").join("").trim(); geminiLastGood=mdl; if(txt) return txt; throw new Error("AI 沒有回覆內容,換個問法再試"); }
+      let msg="錯誤 "+res.status; const st=res.status; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
+      lastMsg=msg;
+      if(st===401||st===400||st===403) throw new Error("Google 金鑰無法通過驗證,請重新複製、或改用 Groq 金鑰。");
+      if(st===429) quota=true;
+    }
+    if(quota) throw new Error("Google 免費額度滿了,稍等再試,或改用 Groq 金鑰(gsk_)。");
+    throw new Error(lastMsg);
+  }
+  async function groqChat(prompt, key){
+    const avail=await groqModelList(key);
+    let models=avail.filter(id=>/llama|gemma|qwen|mixtral|instant|versatile|gpt-oss|kimi/i.test(id) && !/guard|whisper|tts|vision/i.test(id));
+    GROQ_TEXT.forEach(m=>{ if(models.indexOf(m)<0) models.push(m); });
+    if(groqGoodText) models=[groqGoodText].concat(models.filter(m=>m!==groqGoodText));
+    let lastMsg="連線失敗", quota=false;
+    for(const mdl of models){
+      let res;
+      try{ res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:mdl,messages:[{role:"user",content:prompt}],temperature:0.6})}); }
+      catch(e){ lastMsg="無法連線到 Groq(可能是瀏覽器限制)"; continue; }
+      if(res.ok){ const d=await res.json(); const txt=((((d.choices||[])[0]||{}).message)||{}).content||""; groqGoodText=mdl; if(txt.trim()) return txt.trim(); throw new Error("AI 沒有回覆內容,換個問法再試"); }
+      let msg="錯誤 "+res.status; const st=res.status; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
+      lastMsg=msg;
+      if(st===401||st===403) throw new Error("Groq 金鑰無效(需 gsk_ 開頭)。");
+      if(st===429) quota=true;
+    }
+    if(quota) throw new Error("Groq 額度滿了,稍等再試。");
+    throw new Error(lastMsg);
+  }
+  function initAskModule(){
+    const box=document.getElementById("askSection"); if(!box) return;
+    const input=document.getElementById("askInput");
+    const btn=document.getElementById("askBtn");
+    const log=document.getElementById("askLog");
+    const status=document.getElementById("askStatus");
+    const tog=document.getElementById("askToggle");
+    if(tog) tog.addEventListener("click", ()=>{ const c=box.classList.toggle("collapsed"); const cr=document.getElementById("askCaret"); if(cr) cr.textContent=c?"▸":"▾"; });
+    async function ask(){
+      const q=(input.value||"").trim(); if(!q) return;
+      if(!anyKey()){ status.innerHTML='<span class="err">請先到「飲食紀錄」的 🔑 貼上免費金鑰,才能問 AI</span>'; return; }
+      input.value=""; btn.disabled=true;
+      const qb=document.createElement("div"); qb.className="ask-bubble ask-q"; qb.textContent=q; log.appendChild(qb);
+      const ab=document.createElement("div"); ab.className="ask-bubble ask-a"; ab.textContent="…思考中"; log.appendChild(ab);
+      status.innerHTML=""; ab.scrollIntoView({block:"nearest"});
+      try{ const ans=await askAIText(q); ab.textContent=ans; }
+      catch(e){ ab.textContent="⚠️ "+(e.message||e); }
+      btn.disabled=false; ab.scrollIntoView({block:"nearest"});
+    }
+    if(btn) btn.addEventListener("click", ask);
+    if(input) input.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); ask(); } });
+  }
   async function analyzeFoodPhoto(b64s){
     if(typeof b64s==="string") b64s=[b64s];
     const many=b64s.length>1;
@@ -2854,6 +2949,7 @@
     show('foodSection', t==='origin'||t==='full'||t==='track');
     show('waterSection', t==='origin'||t==='full'||t==='track');
     show('metricsSection', true);
+    show('askSection', true);
     show('reminderSection', t==='origin');
     const ph=document.getElementById("planHeader");
     if(ph){ if(t==='origin'){ ph.style.display="none"; } else { ph.style.display=""; ph.textContent=PLAN.name; } }
@@ -3044,10 +3140,10 @@
   }
 
   // ---------- 底部主選單(回主畫面 / 新增 / 跳到某區塊) ----------
-  const SECTION_LABELS = { menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", reminderSection:"提醒", profileSection:"個人資料", workoutSection:"運動計畫" };
+  const SECTION_LABELS = { menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", reminderSection:"提醒", profileSection:"個人資料", workoutSection:"運動計畫", askSection:"不懂問 AI" };
   function buildJumpMenu(){
     const box=document.getElementById("navJumpMenu"); if(!box) return;
-    const ids=["menuSection","foodSection","waterSection","metricsSection","fridgeSection","reminderSection","profileSection","workoutSection"];
+    const ids=["menuSection","foodSection","waterSection","metricsSection","fridgeSection","reminderSection","profileSection","workoutSection","askSection"];
     box.innerHTML = ids.filter(id=>{ const el=document.getElementById(id); return el && el.style.display!=="none"; })
       .map(id=>`<div class="nav-jump-item" data-sec="${id}">${SECTION_LABELS[id]}</div>`).join("");
     box.querySelectorAll(".nav-jump-item").forEach(it=> it.addEventListener("click", ()=> jumpToSection(it.dataset.sec)));
@@ -3285,6 +3381,7 @@
     await loadWorkout();
     initReminderModule();
     await loadReminder();
+    initAskModule();
     await initSimpleCollapse();
     initHomeModule();
     initBottomNav();
