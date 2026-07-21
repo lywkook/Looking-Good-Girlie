@@ -494,6 +494,9 @@
   .bg-sw.on{ outline:3px solid var(--pink); outline-offset:2px; }
   .bg-actions{ display:flex; gap:8px; flex-wrap:wrap; }
   .set-block{ margin-bottom:22px; }
+  .import-panel{ margin-top:8px; padding:12px 14px; background:var(--pink-soft); border-radius:14px; }
+  .import-hint{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.6; margin-bottom:10px; }
+  .import-status{ font-size:var(--fs-label); color:var(--ink); margin-top:8px; line-height:1.5; }
   .analysis-toggle{ cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px;
     font-size:var(--fs-label); font-weight:900; color:var(--pink-shadow); margin-top:14px;
     background:var(--pink-soft); border:1.5px solid var(--pink); border-radius:12px; padding:12px 15px; }
@@ -974,6 +977,14 @@
     </div>
     <button class="save-btn cute" id="addWeightBtn">存進今天的紀錄</button>
 
+    <button type="button" class="mini-btn" id="importWeightToggle" style="width:100%;margin-top:10px;">連結體重 App / 匯入資料</button>
+    <div class="import-panel" id="importWeightPanel" style="display:none;">
+      <div class="import-hint" id="importWeightHint"></div>
+      <input type="file" accept=".csv,text/csv,text/plain,.txt" id="importWeightFile" style="display:none">
+      <button type="button" class="mini-btn" id="importWeightBtn" style="width:100%;">選擇檔案匯入(CSV)</button>
+      <div class="import-status" id="importWeightStatus"></div>
+    </div>
+
     <div id="chartArea"><div class="chart-empty">尚無紀錄,填入體重後會顯示趨勢曲線。</div></div>
     <div id="snapshotArea"></div>
     <div class="history" id="historyArea"></div>
@@ -1198,6 +1209,7 @@
     "每日目標(1 杯 250ml)":"Daily goal (1 cup = 250ml)","杯":"cups",
     // 身體數據
     "量體重/身體數據":"Log weight / body data","體重":"Weight","體脂率":"Body fat %","肌肉重量":"Muscle",
+    "連結體重 App / 匯入資料":"Connect scale app / import","選擇檔案匯入(CSV)":"Choose file to import (CSV)",
     "尚無紀錄,填入體重後會顯示趨勢曲線。":"No records yet — enter your weight to see the trend chart.",
     "內容預覽(即時反映 App 內更動)":"Preview (reflects your changes live)","歲":"yrs",
     // 運動計畫
@@ -2430,6 +2442,49 @@
     drawSnapshot();
     drawHistory();
     updateMxMini();
+  }
+  // ---------- 連結體重 App / 匯入資料(CSV) ----------
+  function parseWeightCSV(text){
+    const out=[], seen=new Set();
+    const lines=String(text).split(/\r?\n/);
+    const dateRe=/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})|(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/;
+    for(const line of lines){
+      if(!line.trim()) continue;
+      const cells=line.split(/[,;\t]/).map(s=>s.trim().replace(/^"|"$/g,""));
+      let iso=null, dateCell=-1;
+      for(let i=0;i<cells.length;i++){ const dm=cells[i].match(dateRe);
+        if(dm){ let y,mo,d; if(dm[1]){ y=+dm[1]; mo=+dm[2]; d=+dm[3]; } else { mo=+dm[4]; d=+dm[5]; y=+dm[6]; }
+          if(y>1900&&mo>=1&&mo<=12&&d>=1&&d<=31){ iso=y+"-"+String(mo).padStart(2,"0")+"-"+String(d).padStart(2,"0"); dateCell=i; break; } } }
+      if(!iso) continue;
+      let wt=null;
+      for(let i=0;i<cells.length;i++){ if(i===dateCell) continue; const nm=cells[i].match(/(\d{2,3}(?:\.\d+)?)/);
+        if(nm){ const v=parseFloat(nm[1]); if(v>=20&&v<=400){ wt=v; break; } } }
+      if(wt!=null && !seen.has(iso)){ seen.add(iso); out.push({date:iso, weight:wt}); }
+    }
+    return out;
+  }
+  function initWeightImport(){
+    const tog=document.getElementById("importWeightToggle"), panel=document.getElementById("importWeightPanel");
+    const fileBtn=document.getElementById("importWeightBtn"), file=document.getElementById("importWeightFile"), status=document.getElementById("importWeightStatus"), hint=document.getElementById("importWeightHint");
+    const setHint=()=>{ if(hint) hint.innerHTML = lang==="en"
+      ? "A web app can't read Apple Health or scale apps directly (that needs a native app). But export your weight history as a <b>CSV</b> from your app and import it here — no more daily typing.<br>Apple Health: use a export shortcut/app to get a CSV. Withings, Fitbit, Mi Fitness, Garmin, etc. all export CSV. The file just needs a date and a weight per row."
+      : "網頁 App 沒辦法直接讀取 Apple「健康」或體重計 App(那需要原生 App 權限)。但你可以把體重紀錄從那些 App <b>匯出成 CSV</b>,上傳這裡自動填入,就不用每天手動輸入。<br>Apple 健康:用匯出捷徑/App 轉成 CSV;Withings、Fitbit、小米運動、Garmin 等都能匯出 CSV。檔案每列只要有「日期」和「體重」即可。"; };
+    setHint();
+    if(tog&&panel) tog.addEventListener("click", ()=>{ panel.style.display = panel.style.display==="none"?"":"none"; setHint(); });
+    if(fileBtn&&file) fileBtn.addEventListener("click", ()=> file.click());
+    if(file) file.addEventListener("change", async ()=>{ const f=file.files[0]; file.value=""; if(!f||!status) return;
+      status.textContent = lang==="en"?"Reading…":"讀取中…";
+      try{
+        const text=await f.text();
+        const entries=parseWeightCSV(text);
+        if(!entries.length){ status.textContent = lang==="en"?"No weight data found (need a date + weight per row).":"檔案裡找不到體重資料(每列需要日期與體重)。"; return; }
+        let n=0;
+        entries.forEach(e=>{ const idx=log.findIndex(p=>p.date===e.date);
+          if(idx>=0){ log[idx].weight=e.weight; } else { log.push({date:e.date, weight:e.weight}); } n++; });
+        await saveLog(); renderMetrics(); if(typeof updateStripForDate==="function") updateStripForDate();
+        status.textContent = lang==="en"?("Imported "+n+" weight records ✅"):("已匯入 "+n+" 筆體重資料 ✅");
+      }catch(err){ status.textContent = (lang==="en"?"Import failed: ":"匯入失敗:")+(err.message||err); }
+    });
   }
   function updateMxMini(){
     const mini = document.getElementById("mxMini");
@@ -4663,6 +4718,7 @@
     await loadDoneState();
     await loadLog();
     initMetricsCollapse();
+    initWeightImport();
     initFoodModule();
     await loadFoodLog();
     initAIPhotoModule();
