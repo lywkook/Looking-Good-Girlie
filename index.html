@@ -3544,8 +3544,9 @@
       tools:[{ url_context:{} },{ google_search:{} }],
       generationConfig:{ temperature: temp==null?0.4:temp }
     };
-    let lastMsg="連線失敗", quota=false;
-    for(const mdl of GEMINI_BROWSE_MODELS){
+    let lastMsg="連線失敗", quota=false, parseFail=false;
+    const models = GEMINI_BROWSE_MODELS.concat([GEMINI_BROWSE_MODELS[0]]);   // 最佳模型多試一次,提高穩定度
+    for(const mdl of models){
       let res;
       try{ res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+mdl+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(body)}); }
       catch(netErr){ lastMsg="無法連線到 Google,請檢查網路"; continue; }
@@ -3555,7 +3556,7 @@
         const txt = parts.map(p=>p.text||"").join("").trim();
         const obj = parseLooseJSON(txt);
         if(obj!=null) return obj;
-        throw new Error("回傳格式看不懂,請再試一次");
+        parseFail=true; continue;   // 這次回的不是乾淨 JSON → 換下一個模型再試,不要直接放棄
       }
       let msg="錯誤 "+res.status; const st=res.status;
       try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
@@ -3565,22 +3566,24 @@
       if(st===429) quota=true;
     }
     if(quota) throw new Error("Google 免費額度滿了,稍等再試。");
+    if(parseFail) throw new Error("回傳格式看不懂,請再試一次");
     throw new Error(lastMsg);
   }
   // Groq 的 compound 模型內建網頁瀏覽,可讀餐廳連結;一般 llama 模型不行。
   async function groqBrowseJSON(prompt, key){
-    const models = ["groq/compound","groq/compound-mini"];
-    let lastMsg="連線失敗";
+    const models = ["groq/compound","groq/compound-mini","groq/compound"];   // compound 多試一次
+    let lastMsg="連線失敗", parseFail=false;
     for(const mdl of models){
       let res;
       try{ res = await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:mdl,messages:[{role:"user",content:prompt}],temperature:0.4})}); }
       catch(netErr){ lastMsg="無法連線到 Groq"; continue; }
-      if(res.ok){ const d=await res.json(); const txt=(((d.choices||[])[0]||{}).message||{}).content||""; const o=parseLooseJSON(txt); if(o!=null) return o; throw new Error("回傳格式看不懂,請再試一次"); }
+      if(res.ok){ const d=await res.json(); const txt=(((d.choices||[])[0]||{}).message||{}).content||""; const o=parseLooseJSON(txt); if(o!=null) return o; parseFail=true; continue; }
       let msg="錯誤 "+res.status; const st=res.status;
       try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
       lastMsg=msg;
       if(st===401||st===403) throw new Error("Groq 金鑰無效,請確認是 gsk_ 開頭的金鑰。");
     }
+    if(parseFail) throw new Error("回傳格式看不懂,請再試一次");
     throw new Error("這把 Groq 金鑰讀不到網頁("+lastMsg+")。讀餐廳連結建議改用 Google 金鑰(到 Google AI Studio 免費申請)。");
   }
   // 圖片內容雜湊:同一張照片得到同一把 key,配合快取讓熱量估計每次一致
