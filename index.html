@@ -264,13 +264,16 @@
   .chip .k{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:1px; }
 
   .history{ margin-top:14px; }
-  .history-row{
-    display:flex; justify-content:space-between; align-items:center;
-    font-size:var(--fs-body); padding:7px 0; border-bottom:1px dashed var(--line);
-    color:var(--ink-soft);
-  }
-  .history-row:last-child{ border-bottom:none; }
-  .history-row b{ color:var(--ink); }
+  .dt-title{ font-size:var(--fs-label); font-weight:800; color:var(--ink); margin:16px 0 6px; }
+  .data-table-wrap{ max-height:260px; overflow:auto; border:1px solid var(--line); border-radius:12px; }
+  .data-table{ width:100%; border-collapse:collapse; font-size:var(--fs-label); }
+  .data-table th, .data-table td{ padding:9px 6px; text-align:center; white-space:nowrap; border-bottom:1px solid var(--line); }
+  .data-table thead th{ position:sticky; top:0; background:var(--card, #FFFDFA); color:var(--ink-soft);
+    font-weight:700; font-size:var(--fs-hint); line-height:1.25; }
+  .data-table tbody tr:last-child td{ border-bottom:none; }
+  .data-table td{ color:var(--ink); font-weight:700; }
+  .data-table td.dt-date{ color:var(--ink-soft); font-weight:700; }
+  .data-table .dt-none{ color:var(--line); }
 
   .day-card{
     background:var(--card); border-radius:20px; margin-bottom:12px;
@@ -1974,6 +1977,8 @@
       if(typeof loadOverrides==="function") await loadOverrides();
       if(typeof renderTodayMenu==="function") renderTodayMenu();
       if(typeof renderDays==="function") renderDays();
+      if(typeof drawChart==="function") drawChart();       // 圖表分析文字隨語言更新
+      if(typeof drawHistory==="function") drawHistory();   // 歷史數據表格隨語言更新
     }catch(e){}
   }
   window.__rebuildPlanContent = rebuildPlanContent;
@@ -2804,11 +2809,17 @@
   function drawHistory(){
     const area = document.getElementById("historyArea");
     if(!log.length){ area.innerHTML=""; return; }
-    const sorted = [...log].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,7);
-    area.innerHTML = sorted.map(p=>{
+    const P=(zh,en)=> (typeof lang!=="undefined"&&lang==="en")?en:zh;
+    const sorted = [...log].sort((a,b)=>b.date.localeCompare(a.date));
+    const cell=v=> (v==null||v==="") ? '<span class="dt-none">—</span>' : v;
+    const rows = sorted.map(p=>{
       const d = new Date(p.date+"T00:00:00");
-      return `<div class="history-row"><span>${fmtDate(d)}</span><span><b>${p.weight}kg</b>${p.fat? ' · 體脂 '+p.fat+'%':''}${p.muscle? ' · 肌肉 '+p.muscle+'kg':''}</span></div>`;
+      return `<tr><td class="dt-date">${fmtDate(d)}</td><td>${cell(p.weight)}</td><td>${cell(p.fat)}</td><td>${cell(p.bmi)}</td><td>${cell(p.muscle)}</td></tr>`;
     }).join("");
+    area.innerHTML = `<div class="dt-title">${P('歷史紀錄','History')}</div>`
+      + `<div class="data-table-wrap"><table class="data-table">`
+      + `<thead><tr><th>${P('日期','Date')}</th><th>${P('體重','Weight')}<br>kg</th><th>${P('體脂','Fat')}<br>%</th><th>BMI</th><th>${P('肌肉','Muscle')}<br>kg</th></tr></thead>`
+      + `<tbody>${rows}</tbody></table></div>`;
   }
 
   document.getElementById("addWeightBtn").addEventListener("click", async ()=>{
