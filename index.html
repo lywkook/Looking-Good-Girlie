@@ -667,21 +667,21 @@
     <button id="homeAddBtn" class="save-btn cute">＋ 建立新計畫</button>
   </div>
   <button type="button" class="home-appearance-btn" id="homeAppearanceBtn">⚙️ 設定(外觀・語言・字體大小)</button>
-  <div class="home-sub" style="margin-top:10px;">每個計畫的外觀 → 進入計畫後點下方「⚙️ 設定」各自設定</div>
+  <div class="home-sub" style="margin-top:10px;">各計畫外觀:進入計畫後於「⚙️ 設定」調整。</div>
   <div class="home-help" id="homeHelp">
     <div class="home-help-head" id="homeHelpToggle">＊ 第一次使用?看這裡 <span class="pf-caret" id="homeHelpCaret">▾</span></div>
     <div class="home-help-body" id="homeHelpBody">
-      <p><b>這個 App 幫你什麼?</b><br>記錄每天吃了什麼、喝水、體重,還能幫你規劃減重菜單與運動,拍照就能估熱量。</p>
-      <p><b>怎麼開始?</b><br>① 點上面的計畫卡片進入,或用下方「＋ 建立新計畫」<br>② 進去後就能記錄飲食、喝水、體重</p>
-      <p><b>想用「拍照估熱量」和「AI 運動規劃」?要先貼一把免費金鑰(一次就好):</b></p>
+      <p><b>這個 App 幫你什麼?</b><br>記錄飲食、喝水、體重,規劃減重菜單與運動,拍照估熱量。</p>
+      <p><b>怎麼開始?</b><br>① 點上方計畫卡片,或用「＋ 建立新計畫」<br>② 進入後記錄飲食、喝水、體重</p>
+      <p><b>使用拍照估熱量與 AI 運動規劃前,先貼一把免費金鑰:</b></p>
       <ol>
         <li>到 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a> 申請(推薦,額度高、也能看圖);或 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>。都是<b>免費、免信用卡</b></li>
-        <li>登入 →「Create API key」→ 複製那串金鑰</li>
-        <li>回到 App,進入任一計畫 → 「飲食紀錄」裡的「🔑 AI 金鑰設定」→ 貼上 → 儲存</li>
-        <li>之後拍照估熱量、換菜單、運動規劃都能用了</li>
+        <li>登入 → Create API key → 複製金鑰</li>
+        <li>回到 App → 任一計畫 →「飲食紀錄」的 🔑 → 貼上 → 儲存</li>
+        <li>之後即可使用拍照估熱量、換菜單、運動規劃。</li>
       </ol>
-      <p><b>換背景 / 顏色?</b><br>主畫面按「🎨 主畫面外觀」;每個計畫進去後按下面「⚙️ 設定」,可以各自換。</p>
-      <p class="home-help-note">你的資料只存在自己這支手機的瀏覽器,不會上傳,換手機或清除瀏覽器資料就會不見。</p>
+      <p><b>換背景 / 顏色?</b><br>主畫面與各計畫外觀可在「⚙️ 設定」分別調整。</p>
+      <p class="home-help-note">資料只存在本機瀏覽器,不會上傳;換手機或清除瀏覽器資料會遺失。</p>
     </div>
   </div>
 </div>
@@ -741,7 +741,7 @@
       <button type="button" class="meal-tab" data-rmeal="dinner">晚餐</button>
       <button type="button" class="meal-tab" data-rmeal="fruit">水果</button>
     </div>
-    <input id="menuWish" placeholder="想吃什麼?例:牛肉麵、清淡的、日式(可留空)" autocomplete="off">
+    <input id="menuWish" placeholder="想吃什麼?(可留空)" autocomplete="off">
     <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">換這一餐 ✨</button>
     <div class="ai-photo-status" id="menuRegenStatus"></div>
   </div>
@@ -771,13 +771,13 @@
   <div class="pf-mini" id="woMini"></div>
   <div class="weight-box">
     <div class="wo-quick">
-      <div class="wo-quick-title">① 看到喜歡的動作?可上傳照片(可多張,如影片的多個畫面),AI 會認出來一起排 · 沒有就跳過</div>
+      <div class="wo-quick-title">看到喜歡的動作?可上傳照片加入運動計劃</div>
       <input type="file" accept="image/*" id="woPhotoInput" multiple style="display:none">
       <button type="button" class="ai-photo-btn" id="woPhotoBtn">📷 上傳照片</button>
       <div class="ai-photo-status" id="woPhotoStatus"></div>
     </div>
     <div class="wo-quick" style="margin-top:10px;">
-      <div class="wo-quick-title">② 想瘦哪裡、想要什麼身材?(可留空)</div>
+      <div class="wo-quick-title">② 想瘦哪裡、想要的身材?(可留空)</div>
       <input id="woGoal" placeholder="例:想瘦肚子和大腿 / 馬甲線 / 蜜桃臀 + 直角肩" autocomplete="off">
     </div>
     <div class="wo-adv-toggle" id="woAdvToggle">＋ 細調:部位・器材・組數(可跳過)</div>
@@ -820,7 +820,7 @@
     <div class="wo-adjust" id="woAdjustBox" style="display:none;">
       <div class="wo-adjust-title">🔁 調整運動計劃</div>
       <div class="wo-adjust-row">
-        <input id="woAdjustInput" placeholder="例:今天想休息 / 只想練上半身 / 這週只能練 3 天" autocomplete="off">
+        <input id="woAdjustInput" placeholder="例:今天休息 / 只練上半身 / 這週練 3 天" autocomplete="off">
         <button type="button" class="mini-btn" id="woAdjustBtn">重新調整 ✨</button>
       </div>
       <div class="wo-adjust-quick" id="woAdjustQuick">
@@ -873,7 +873,7 @@
     <div class="ai-photo-box" id="aiPhotoBox">
       <div class="ai-photo-title">📷 拍照估熱量</div>
       <input type="file" accept="image/*" id="aiPhotoInput" multiple style="display:none">
-      <button type="button" class="ai-photo-btn" id="aiPhotoBtn">上傳食物照片,自動估熱量(可多張)</button>
+      <button type="button" class="ai-photo-btn" id="aiPhotoBtn">上傳食物照片估熱量(可多張)</button>
       <div class="ai-photo-status" id="aiPhotoStatus"></div>
       <div class="ai-key-line">
         <span class="ai-key-toggle" id="aiKeyToggle">🔑 AI 金鑰設定</span>
@@ -881,7 +881,7 @@
         <a class="ai-key-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>
       </div>
       <div class="ai-key-row" id="aiKeyRow">
-        <input type="password" id="inGeminiKey" placeholder="貼上你的免費金鑰(Google 或 Groq 都可)" autocomplete="off">
+        <input type="password" id="inGeminiKey" placeholder="貼上免費金鑰(Google 或 Groq)" autocomplete="off">
         <button type="button" class="mini-btn" id="saveGeminiKey">儲存</button>
       </div>
     </div>
@@ -941,7 +941,7 @@
     </div>
     <button class="save-btn cute" id="addWeightBtn">存進今天的紀錄 💗</button>
 
-    <div id="chartArea"><div class="chart-empty">還沒有紀錄,量完體重後填上面表格就會畫出趨勢曲線囉</div></div>
+    <div id="chartArea"><div class="chart-empty">尚無紀錄,填入體重後會顯示趨勢曲線。</div></div>
     <div id="snapshotArea"></div>
     <div class="history" id="historyArea"></div>
   </div>
@@ -964,7 +964,7 @@
         <label class="rm-item"><input type="checkbox" id="rmBody" checked> 量體重/身體數據</label>
       </div>
     </div>
-    <div class="rm-preview-label">內容預覽(會即時反映你在 App 裡的更動)</div>
+    <div class="rm-preview-label">內容預覽(即時反映 App 內更動)</div>
     <div class="rm-preview" id="rmPreview"></div>
     <button type="button" class="mini-btn" id="rmCopy">📋 複製內容</button>
     <div class="rm-note" id="rmNote"></div>
@@ -977,7 +977,7 @@
     <button type="button" class="ask-modal-close" id="askClose">✕</button>
   </div>
   <div id="askLog" class="ask-log">
-    <div class="ask-empty" id="askEmpty">問我任何問題吧 —— 飲食、運動、健康、生活都可以。<br>(需要先在「飲食紀錄」的 🔑 貼上免費金鑰)</div>
+    <div class="ask-empty" id="askEmpty">飲食、運動、健康、生活,都可以問。<br>(需要先在「飲食紀錄」的 🔑 貼上免費金鑰)</div>
   </div>
   <div class="ask-bottom">
     <div class="ask-status" id="askStatus"></div>
@@ -1019,7 +1019,7 @@
       </div>
       <div class="bg-adjust" id="bgAdjust" style="display:none;">
         <button type="button" class="mini-btn" id="bgEditBtn">🖐️ 調整背景照片(縮放/移動)</button>
-        <div class="bg-adjust-hint">背景圖固定在手機畫面上、上下滑動都不會跑掉。點上面按鈕後,用兩隻手指縮放、單指拖曳位置,就像調整社群大頭貼一樣。</div>
+        <div class="bg-adjust-hint">兩指縮放、單指拖曳調整位置,背景固定不隨畫面捲動。</div>
       </div>
     </div>
 
@@ -1071,7 +1071,7 @@
     <div class="set-block" id="setExportBlock">
       <div class="set-title">匯出 / 備份</div>
       <button type="button" id="exportPdfBtn" class="mini-btn" style="width:100%;padding:12px;">📄 匯出成 PDF(可存手機/雲端/分享)</button>
-      <div class="set-hint" style="font-size:var(--fs-hint);color:var(--ink-soft);margin-top:6px;">會整理成一份文件(個人資料、身體數據、運動計畫、飲食紀錄),用手機的「列印 → 儲存成 PDF」存檔或分享。</div>
+      <div class="set-hint" style="font-size:var(--fs-hint);color:var(--ink-soft);margin-top:6px;">整理成一份文件,可用「列印 → 儲存成 PDF」存檔或分享。</div>
     </div>
 
     <div class="set-block" id="setDangerBlock" style="display:none;">
@@ -1102,20 +1102,20 @@
     "計畫名稱(例:長期體重紀錄)":"Plan name (e.g. Long-term weight log)",
     "紀錄飲食 + 喝水 + 體重":"Track food + water + weight","幫我規劃減重減脂":"Plan my weight & fat loss",
     "＋ 建立新計畫":"＋ Create plan","⚙️ 設定(外觀・語言・字體大小)":"⚙️ Settings (appearance · language · text size)",
-    "每個計畫的外觀 → 進入計畫後點下方「⚙️ 設定」各自設定":"Each plan's look → open the plan, then tap “⚙️ Settings” below.",
+    "各計畫外觀:進入計畫後於「⚙️ 設定」調整。":"Per-plan look: open the plan, then “⚙️ Settings”.",
     "＊ 第一次使用?看這裡":"＊ First time? Start here",
     "這個 App 幫你什麼?":"What does this app do?",
-    "記錄每天吃了什麼、喝水、體重,還能幫你規劃減重菜單與運動,拍照就能估熱量。":"Log what you eat, water and weight each day. It can plan your meals and workouts, and estimate calories from a photo.",
+    "記錄飲食、喝水、體重,規劃減重菜單與運動,拍照估熱量。":"Log food, water and weight; plan meals and workouts; estimate calories from a photo.",
     "怎麼開始?":"How to start?",
-    "① 點上面的計畫卡片進入,或用下方「＋ 建立新計畫」":"① Tap a plan card above, or use “＋ Create plan” below.",
-    "② 進去後就能記錄飲食、喝水、體重":"② Inside, log food, water and weight.",
-    "想用「拍照估熱量」和「AI 運動規劃」?要先貼一把免費金鑰(一次就好):":"Want photo calorie estimates and AI workout planning? Paste one free API key (just once):",
-    "登入 →「Create API key」→ 複製那串金鑰":"Sign in → “Create API key” → copy the key.",
-    "回到 App,進入任一計畫 → 「飲食紀錄」裡的「🔑 AI 金鑰設定」→ 貼上 → 儲存":"Back in the app, open any plan → “🔑 AI key” in Food Log → paste → save.",
-    "之後拍照估熱量、換菜單、運動規劃都能用了":"Then photo calories, meal swaps and workout planning all work.",
+    "① 點上方計畫卡片,或用「＋ 建立新計畫」":"① Tap a plan card above, or “＋ Create plan”.",
+    "② 進入後記錄飲食、喝水、體重":"② Inside, log food, water and weight.",
+    "使用拍照估熱量與 AI 運動規劃前,先貼一把免費金鑰:":"Before photo calories and AI workout planning, paste one free key:",
+    "登入 → Create API key → 複製金鑰":"Sign in → Create API key → copy the key.",
+    "回到 App → 任一計畫 →「飲食紀錄」的 🔑 → 貼上 → 儲存":"Back in app → any plan → 🔑 in Food Log → paste → save.",
+    "之後即可使用拍照估熱量、換菜單、運動規劃。":"Then photo calories, meal swaps and workout planning all work.",
     "換背景 / 顏色?":"Change background / colour?",
-    "主畫面按「🎨 主畫面外觀」;每個計畫進去後按下面「⚙️ 設定」,可以各自換。":"On the home screen tap “⚙️ Settings”; inside each plan tap “⚙️ Settings” below to set it separately.",
-    "你的資料只存在自己這支手機的瀏覽器,不會上傳,換手機或清除瀏覽器資料就會不見。":"Your data stays only in this phone's browser. It is never uploaded, and is lost if you switch phones or clear browser data.",
+    "主畫面與各計畫外觀可在「⚙️ 設定」分別調整。":"Set the home and each plan's look separately in “⚙️ Settings”.",
+    "資料只存在本機瀏覽器,不會上傳;換手機或清除瀏覽器資料會遺失。":"Data stays in this browser only, never uploaded; lost if you switch phones or clear browser data.",
     "。都是":". Both are ","申請(推薦,額度高、也能看圖);或":" (recommended — high quota, reads photos too); or ","免費、免信用卡":"free, no credit card",
     // 底部導覽
     "主畫面":"Home","跳到":"Jump","問AI":"Ask AI","設定":"Settings","主畫面外觀":"Home appearance",
@@ -1125,13 +1125,13 @@
     "主題色":"Theme colour","背景":"Background","套用":"Apply","清除":"Clear","字體":"Font","粗線體":"CuHsian",
     "📷 上傳背景照片":"📷 Upload background photo",
     "🖐️ 調整背景照片(縮放/移動)":"🖐️ Adjust background (zoom / move)",
-    "背景圖固定在手機畫面上、上下滑動都不會跑掉。點上面按鈕後,用兩隻手指縮放、單指拖曳位置,就像調整社群大頭貼一樣。":"The background stays fixed on screen and won't move as you scroll. Tap the button above, then pinch with two fingers to zoom and drag with one finger — just like adjusting a social profile photo.",
+    "兩指縮放、單指拖曳調整位置,背景固定不隨畫面捲動。":"Pinch to zoom, drag to reposition. The background stays fixed while you scroll.",
     "兩指縮放 · 單指拖曳位置":"Pinch to zoom · drag to move","取消":"Cancel","儲存":"Save",
     "個人資料 · 減重分析":"Profile · Analysis","性別":"Sex","年齡":"Age","身高":"Height","男":"Male","女":"Female",
     "目前體重":"Current weight","目標體重":"Goal weight","目標體脂":"Goal body fat","希望達成日期":"Target date",
     "刪除計畫":"Delete plan","🗑 刪除這個計畫":"🗑 Delete this plan","匯出 / 備份":"Export / Backup",
     "📄 匯出成 PDF(可存手機/雲端/分享)":"📄 Export as PDF (save to phone / cloud / share)",
-    "會整理成一份文件(個人資料、身體數據、運動計畫、飲食紀錄),用手機的「列印 → 儲存成 PDF」存檔或分享。":"Builds a document (profile, body data, workout plan, food log). Use your phone's “Print → Save as PDF” to save or share.",
+    "整理成一份文件,可用「列印 → 儲存成 PDF」存檔或分享。":"Compiles a document you can save or share via “Print → Save as PDF”.",
     // 今日 / 區塊標題
     "今日目標":"Today's target","今日運動":"Today's workout","今日運動消耗":"Today's workout burn",
     "今日菜單 🍽️":"Today's menu 🍽️","今日早餐":"Breakfast","今日午餐":"Lunch","今晚晚餐":"Dinner",
@@ -1145,31 +1145,31 @@
     "份 / 顆 / 個(熱量會 ×數量)":"servings / pcs (kcal × qty)","加入這一餐 🍽️":"Add this meal 🍽️",
     "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
     "🔄 不想吃這些?換一份":"🔄 Not these? Swap","換這一餐 ✨":"Swap this meal ✨",
-    "想吃什麼?例:牛肉麵、清淡的、日式(可留空)":"Craving anything? e.g. light, Japanese (optional)",
+    "想吃什麼?(可留空)":"Craving anything? (optional)",
     "🗑 清空今天,重新記錄":"🗑 Clear today & restart","存進今天的紀錄 💗":"Save to today's log 💗",
     // 拍照 / AI 金鑰
     "📷 拍照估熱量":"📷 Photo calories","📷 加照片(選填)":"📷 Add photo (optional)",
-    "上傳食物照片,自動估熱量(可多張)":"Upload food photos to auto-estimate calories (multiple ok)",
-    "🔑 AI 金鑰設定":"🔑 AI key","貼上你的免費金鑰(Google 或 Groq 都可)":"Paste your free key (Google or Groq)",
+    "上傳食物照片估熱量(可多張)":"Upload food photos to auto-estimate calories (multiple ok)",
+    "🔑 AI 金鑰設定":"🔑 AI key","貼上免費金鑰(Google 或 Groq)":"Paste your free key (Google or Groq)",
     "(需要先在「飲食紀錄」的 🔑 貼上免費金鑰)":"(First paste a free key under 🔑 in Food Log)",
     // 喝水
     "每日目標(1 杯 250ml)":"Daily goal (1 cup = 250ml)","杯":"cups",
     // 身體數據
     "量體重/身體數據":"Log weight / body data","體重":"Weight","體脂率":"Body fat %","肌肉重量":"Muscle",
-    "還沒有紀錄,量完體重後填上面表格就會畫出趨勢曲線囉":"No records yet — fill in the table above and a trend chart will appear.",
-    "內容預覽(會即時反映你在 App 裡的更動)":"Preview (reflects your changes live)","歲":"yrs",
+    "尚無紀錄,填入體重後會顯示趨勢曲線。":"No records yet — enter your weight to see the trend chart.",
+    "內容預覽(即時反映 App 內更動)":"Preview (reflects your changes live)","歲":"yrs",
     // 運動計畫
     "一週練幾天":"Days per week","想練的部位(可複選)":"Target areas (multi-select)",
     "重訓器材(可複選)":"Strength equipment (multi-select)","有氧方式(可複選)":"Cardio type (multi-select)",
     "＋ 細調:部位・器材・組數(可跳過)":"＋ Fine-tune: areas · equipment · sets (optional)",
-    "② 想瘦哪裡、想要什麼身材?(可留空)":"② Where to slim, what shape? (optional)",
+    "② 想瘦哪裡、想要的身材?(可留空)":"② Where to slim, what shape? (optional)",
     "例:想瘦肚子和大腿 / 馬甲線 / 蜜桃臀 + 直角肩":"e.g. slimmer belly & thighs / abs / peach hips",
     "其他偏好(選填)":"Other preferences (optional)","強度(選填)":"Intensity (optional)",
     "例:膝蓋不好、不想跳太吵的動作":"e.g. bad knees, no loud jumping",
-    "① 看到喜歡的動作?可上傳照片(可多張,如影片的多個畫面),AI 會認出來一起排 · 沒有就跳過":"① Like a move? Upload photos (multiple, e.g. video frames) and the AI will recognise and include it — or skip.",
+    "看到喜歡的動作?可上傳照片加入運動計劃":"See a move you like? Upload a photo to add it to your plan.",
     "📷 上傳照片":"📷 Upload photo","✨ 生成運動計劃":"✨ Generate workout plan","重新調整 ✨":"Re-adjust ✨",
     "🔁 調整運動計劃":"🔁 Adjust workout plan","🗑 清除運動計畫,重新選取":"🗑 Clear workout & reselect",
-    "例:今天想休息 / 只想練上半身 / 這週只能練 3 天":"e.g. rest today / upper body only / only 3 days this week",
+    "例:今天休息 / 只練上半身 / 這週練 3 天":"e.g. rest today / upper body only / only 3 days this week",
     "今天休息":"Rest today","今天輕鬆做":"Easy today","這週練 3 天":"3 days this week",
     "每次有氧":"Each cardio","組":"sets","組數":"Sets","次數":"Reps","重量":"Weight","秒":"sec","秒數":"Seconds","分":"min","次":"reps",
     "重訓":"Strength","有氧":"Cardio","休息":"Rest","燃脂":"Cardio",
@@ -1180,7 +1180,7 @@
     "提醒時間":"Reminder time","提醒內容:":"Message:","開啟提醒":"Enable reminder","5-8 磅":"5–8 lbs",
     // 問 AI
     "問我任何問題…":"Ask me anything…","問":"Ask","不懂問 AI":"Ask AI",
-    "問我任何問題吧 —— 飲食、運動、健康、生活都可以。":"Ask me anything — food, exercise, health, life.",
+    "飲食、運動、健康、生活,都可以問。":"Ask about food, exercise, health or life.",
     // 其他
     "到":" to ","下":"Down","天":"days","📋 複製內容":"📋 Copy",
     // 計畫類型
@@ -1880,7 +1880,7 @@
   function drawChart(){
     const area = document.getElementById("chartArea");
     if(!log.length){
-      area.innerHTML = '<div class="chart-empty">還沒有紀錄,量完體重後填上面表格就會畫出趨勢曲線囉</div>';
+      area.innerHTML = '<div class="chart-empty">尚無紀錄,填入體重後會顯示趨勢曲線。</div>';
       document.getElementById("latestWeight").textContent = "--";
       return;
     }
