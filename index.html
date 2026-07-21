@@ -1791,15 +1791,18 @@
   }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
   // 依序嘗試目前仍在免費額度內的模型(舊的 gemini-2.0-flash 免費額度已歸零,擺最後備援)
-  const GEMINI_MODELS = ["gemini-2.5-flash","gemini-2.5-flash-lite","gemini-flash-latest","gemini-2.0-flash"];
+  const GEMINI_MODELS = ["gemini-2.5-flash-lite","gemini-2.0-flash-lite","gemini-2.5-flash","gemini-flash-latest"];
+  let geminiLastGood = null;
   async function geminiJSON(prompt, extraParts, temp){
     const parts=[{text:prompt}]; if(extraParts) extraParts.forEach(p=>parts.push(p));
     const body = { contents:[{ parts }], generationConfig:{ responseMimeType:"application/json", temperature: temp==null?0.3:temp } };
     const key = (geminiKey||"").trim().replace(/\s+/g,"");
     if(!key) throw new Error("尚未設定 API 金鑰");
+    let models = GEMINI_MODELS.slice();
+    if(geminiLastGood && models.indexOf(geminiLastGood)>=0) models = [geminiLastGood].concat(models.filter(m=>m!==geminiLastGood));
     let lastMsg="連線失敗", quotaHit=false;
-    for(let i=0;i<GEMINI_MODELS.length;i++){
-      const url = "https://generativelanguage.googleapis.com/v1beta/models/"+GEMINI_MODELS[i]+":generateContent";
+    for(const mdl of models){
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/"+mdl+":generateContent";
       let res;
       try{ res = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":key}, body:JSON.stringify(body) }); }
       catch(netErr){ lastMsg="無法連線到 Google,請檢查網路"; continue; }
@@ -1807,6 +1810,7 @@
         const data = await res.json();
         const rparts = ((((data.candidates||[])[0]||{}).content||{}).parts)||[];
         const txt = (rparts[0]||{}).text || "";
+        geminiLastGood = mdl;
         try{ return JSON.parse(txt); }catch(e){ throw new Error("AI 回傳格式看不懂,請再試一次"); }
       }
       let msg="錯誤 "+res.status; const status=res.status;
@@ -1821,7 +1825,7 @@
       }
       if(status===429) quotaHit=true;   // 這個模型免費額度用完/歸零 → 換下一個
     }
-    if(quotaHit) throw new Error("免費額度已用完或此金鑰暫無可用的免費模型,請稍後再試或明天再用(免費額度每天會重置)。");
+    if(quotaHit) throw new Error("剛剛太密集了 🙏 免費額度是「每分鐘」有上限,等約 1 分鐘再拍一次就好(不是用完了,每分鐘和每天都會自動重置)。");
     throw new Error(lastMsg);
   }
   async function analyzeFoodPhoto(b64){
@@ -1855,7 +1859,7 @@
       btn.disabled=true;
       status.innerHTML='<span class="ai-spin"></span>分析中…(約幾秒)';
       try{
-        const big=await resizeImageToBase64(file,640);
+        const big=await resizeImageToBase64(file,512);
         const thumb=await resizeImageToBase64(file,220);
         const obj=await analyzeFoodPhoto(big.split(",")[1]);
         const name=(obj.name||"").trim();
