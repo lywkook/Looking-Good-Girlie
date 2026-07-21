@@ -58,9 +58,11 @@
   }
   *{box-sizing:border-box;}
   input, textarea, select, button{ font-family: var(--font-main), "Noto Sans TC", -apple-system, sans-serif; }
-  /* 固定在手機畫面的背景圖層:position:fixed 不受內容捲動影響(iOS 上比 background-attachment:fixed 可靠) */
-  #bgLayer{ position:fixed; inset:0; z-index:-1; background-size:cover; background-position:center;
-    background-repeat:no-repeat; pointer-events:none; }
+  .bg-adjust{ margin-top:10px; }
+  .bg-slider-row{ display:flex; align-items:center; gap:10px; margin:8px 0; }
+  .bg-slider-row label{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; width:36px; flex:none; }
+  .bg-slider-row input[type=range]{ flex:1; accent-color:var(--pink); }
+  .bg-adjust-hint{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:4px; line-height:1.5; }
   body{
     margin:0;
     background: var(--cream);
@@ -534,7 +536,6 @@
 </head>
 <body>
 
-<div id="bgLayer"></div>
 <div id="homeScreen">
   <div class="home-head">
     <div class="home-title cute">我的計畫</div>
@@ -871,6 +872,12 @@
         <input type="file" accept="image/*" id="bgUpload" style="display:none">
         <button type="button" class="mini-btn" id="bgUploadBtn">📷 上傳背景照片</button>
         <button type="button" class="mini-btn" id="bgClear">清除</button>
+      </div>
+      <div class="bg-adjust" id="bgAdjust" style="display:none;">
+        <div class="bg-slider-row"><label>縮放</label><input type="range" id="bgScale" min="100" max="300" step="5" value="100"></div>
+        <div class="bg-slider-row"><label>左右</label><input type="range" id="bgPosX" min="0" max="100" step="1" value="50"></div>
+        <div class="bg-slider-row"><label>上下</label><input type="range" id="bgPosY" min="0" max="100" step="1" value="0"></div>
+        <div class="bg-adjust-hint">背景圖固定手機寬度、不變形;往下滑會看到照片下半部。拉「縮放/左右/上下」調整想露出的位置。</div>
       </div>
     </div>
 
@@ -2995,7 +3002,7 @@
     const db=document.getElementById("setDangerBlock");
     if(db) db.style.display=(!isHome && PLAN)?"":"none";
     const ttl=document.getElementById("setModalTitle"); if(ttl) ttl.textContent = isHome ? "主畫面外觀" : "設定";
-    renderAccentSwatches(); renderSwatches();
+    renderAccentSwatches(); renderSwatches(); refreshBgAdjustUI();
     document.getElementById("settingsModal").classList.add("show");
   }
   function openHomeSettings(){ themeScope="home"; openSettings(); }
@@ -3070,10 +3077,22 @@
     if(aBtn) aBtn.addEventListener("click", ()=> setAccent(ah.value));
     if(ah) ah.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); setAccent(ah.value); } });
     const bp=document.getElementById("bgPicker"), bh=document.getElementById("bgHex"), bBtn=document.getElementById("bgApply");
-    const setBg=async(hex)=>{ hex=normHex(hex); if(!hex) return; bgImage=""; bgColor=hex; applyTheme(); await saveTheme(); renderSwatches(); if(bh) bh.value=hex; if(bp) bp.value=hex; };
+    const setBg=async(hex)=>{ hex=normHex(hex); if(!hex) return; bgImage=""; bgColor=hex; applyTheme(); await saveTheme(); renderSwatches(); refreshBgAdjustUI(); if(bh) bh.value=hex; if(bp) bp.value=hex; };
     if(bp) bp.addEventListener("input", ()=> setBg(bp.value));
     if(bBtn) bBtn.addEventListener("click", ()=> setBg(bh.value));
     if(bh) bh.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); setBg(bh.value); } });
+    // 背景圖 位置/縮放 調整
+    const sc=document.getElementById("bgScale"), px=document.getElementById("bgPosX"), py=document.getElementById("bgPosY");
+    const onAdjust=async ()=>{ if(sc) bgScale=parseInt(sc.value,10)||100; if(px) bgPosX=parseInt(px.value,10); if(py) bgPosY=parseInt(py.value,10);
+      applyTheme(); await saveTheme(); };
+    if(sc) sc.addEventListener("input", onAdjust);
+    if(px) px.addEventListener("input", onAdjust);
+    if(py) py.addEventListener("input", onAdjust);
+  }
+  function refreshBgAdjustUI(){
+    const wrap=document.getElementById("bgAdjust"); if(wrap) wrap.style.display = bgImage ? "" : "none";
+    const sc=document.getElementById("bgScale"), px=document.getElementById("bgPosX"), py=document.getElementById("bgPosY");
+    if(sc) sc.value=bgScale; if(px) px.value=bgPosX; if(py) py.value=bgPosY;
   }
 
   // ---------- 字體切換(粗線體 / 紅豆奶霜體,可比較) ----------
@@ -3094,15 +3113,23 @@
 
   // ---------- 背景主題(顏色 / 自訂照片,自動儲存) ----------
   const BG_PRESETS = ["#F5F1EB","#EDE6DA","#E6E9E4","#ECE4E6","#E3E9EE","#EAE6EE","#F3E8E2","#DED7CB"];
-  let bgColor="#F5F1EB", bgImage="";
+  let bgColor="#F5F1EB", bgImage="", bgScale=100, bgPosX=50, bgPosY=0;
   function applyTheme(){
-    const layer=document.getElementById("bgLayer");
     document.documentElement.style.setProperty("--cream", bgColor);
-    if(layer) layer.style.backgroundImage = bgImage ? ("url('"+bgImage+"')") : "none";
-    // 有背景圖時,讓 body/html 透明,固定圖層(#bgLayer)才透得出來;沒圖時回到底色
-    const bodyBg = bgImage ? "transparent" : "";
-    document.body.style.background = bodyBg;
-    document.documentElement.style.background = bodyBg;
+    const body=document.body;
+    if(bgImage){
+      // 背景圖直接鋪在 body:寬度貼齊手機、不變形(100% auto),隨內容捲動,往下滑看到照片下半部
+      body.style.backgroundImage = "url('"+bgImage+"')";
+      body.style.backgroundColor = bgColor;
+      body.style.backgroundRepeat = "no-repeat";
+      body.style.backgroundAttachment = "scroll";
+      body.style.backgroundSize = bgScale + "% auto";
+      body.style.backgroundPosition = bgPosX + "% " + bgPosY + "%";
+    } else {
+      body.style.backgroundImage = "none";
+      body.style.backgroundColor = "";
+      body.style.backgroundSize = ""; body.style.backgroundPosition = ""; body.style.backgroundAttachment = "";
+    }
     renderSwatches();
   }
   function renderSwatches(){
@@ -3111,18 +3138,25 @@
     box.querySelectorAll(".bg-sw").forEach(s=> s.addEventListener("click", async ()=>{ bgColor=s.dataset.c; bgImage=""; applyTheme(); await saveTheme(); }));
   }
   async function loadTheme(){
-    bgColor="#F5F1EB"; bgImage="";
+    bgColor="#F5F1EB"; bgImage=""; bgScale=100; bgPosX=50; bgPosY=0;
     try{ const r=await window.storage.get(tkey("bgcolor"),false); if(r&&r.value) bgColor=r.value; }catch(e){}
     try{ const r=await window.storage.get(tkey("bgimage"),false); if(r&&r.value) bgImage=r.value; }catch(e){}
+    try{ const r=await window.storage.get(tkey("bgscale"),false); if(r&&r.value) bgScale=parseInt(r.value,10)||100; }catch(e){}
+    try{ const r=await window.storage.get(tkey("bgposx"),false); if(r&&r.value!=null&&r.value!=="") bgPosX=parseInt(r.value,10); }catch(e){}
+    try{ const r=await window.storage.get(tkey("bgposy"),false); if(r&&r.value!=null&&r.value!=="") bgPosY=parseInt(r.value,10); }catch(e){}
     applyTheme();
   }
-  async function saveTheme(){ try{ await window.storage.set(tkey("bgcolor"), bgColor, false); await window.storage.set(tkey("bgimage"), bgImage, false); }catch(e){} }
+  async function saveTheme(){ try{
+    await window.storage.set(tkey("bgcolor"), bgColor, false); await window.storage.set(tkey("bgimage"), bgImage, false);
+    await window.storage.set(tkey("bgscale"), String(bgScale), false);
+    await window.storage.set(tkey("bgposx"), String(bgPosX), false); await window.storage.set(tkey("bgposy"), String(bgPosY), false);
+  }catch(e){} }
   function initThemeModule(){
     const up=document.getElementById("bgUpload"), upBtn=document.getElementById("bgUploadBtn"), clr=document.getElementById("bgClear");
     if(upBtn) upBtn.addEventListener("click", ()=> up.click());
     if(up) up.addEventListener("change", async ()=>{ const f=up.files[0]; up.value=""; if(!f) return;
-      try{ bgImage=await resizeImageToBase64(f, 1200); applyTheme(); await saveTheme(); }catch(e){} });
-    if(clr) clr.addEventListener("click", async ()=>{ bgImage=""; bgColor="#F5F1EB"; applyTheme(); await saveTheme(); });
+      try{ bgImage=await resizeImageToBase64(f, 1400); bgScale=100; bgPosX=50; bgPosY=0; applyTheme(); await saveTheme(); refreshBgAdjustUI(); }catch(e){} });
+    if(clr) clr.addEventListener("click", async ()=>{ bgImage=""; bgColor="#F5F1EB"; bgScale=100; bgPosX=50; bgPosY=0; applyTheme(); await saveTheme(); refreshBgAdjustUI(); });
     const delBtn=document.getElementById("setDeleteBtn");
     if(delBtn) delBtn.addEventListener("click", ()=>{ if(PLAN) deletePlan(PLAN.id); });
   }
