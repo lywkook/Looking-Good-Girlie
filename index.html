@@ -459,18 +459,19 @@
   .wo-day-h b{ font-weight:900; color:var(--ink); }
   .wo-items{ margin:0; padding-left:20px; }
   .wo-items li{ font-size:var(--fs-label); color:var(--ink); line-height:1.55; margin-bottom:2px; }
-  .water-row{ display:flex; align-items:center; justify-content:center; gap:20px; }
-  .water-btn{ width:56px; height:56px; border-radius:50%; border:none; background:var(--blue-soft);
-    color:var(--blue); font-size:28px; font-weight:900; cursor:pointer; font-family:inherit; line-height:1; }
+  .water-row{ display:flex; align-items:center; justify-content:center; gap:16px; }
+  .water-btn{ width:44px; height:44px; border-radius:50%; border:none; background:var(--blue-soft);
+    color:var(--blue); font-size:24px; font-weight:900; cursor:pointer; font-family:inherit; line-height:1; }
   .water-btn:active{ transform:scale(0.94); }
-  .water-count{ font-size:var(--fs-num); font-weight:900; color:var(--blue); min-width:130px; text-align:center; }
-  .water-cups{ display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin:14px 0 4px; }
-  .water-cups .cup{ width:24px; height:30px; border-radius:5px 5px 10px 10px; border:2px solid var(--blue); background:transparent; }
+  .water-count{ font-size:var(--fs-body); font-weight:900; color:var(--blue); min-width:110px; text-align:center; }
+  .water-cups{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:8px 0 2px; }
+  .water-cups .cup{ width:19px; height:24px; border-radius:4px 4px 8px 8px; border:2px solid var(--blue); background:transparent; }
   .water-cups .cup.full{ background:var(--blue); }
   .water-ml{ text-align:center; color:var(--ink-soft); font-size:var(--fs-label); }
-  /* 喝水那一區的圓點也用藍色 */
+  /* 喝水那一區的圓點也用藍色、整體更精簡 */
   #waterSection .dot{ background:var(--blue); }
-  #waterSection .weight-box{ border-color:var(--blue-soft); }
+  #waterSection .weight-box{ border-color:var(--blue-soft); padding:14px; }
+  #waterSection .target-row{ margin:12px 0 0; }
 </style>
 </head>
 <body>
@@ -2250,7 +2251,11 @@
   const PLAN_LABEL = { track:"飲食+喝水+體重", full:"減重規劃", origin:"完整計畫", weight:"飲食+喝水+體重", calorie:"飲食+喝水+體重" };
   async function loadPlans(){
     try{ const r=await window.storage.get("plans",false); if(r&&r.value) plans=JSON.parse(r.value)||[]; }catch(e){ plans=[]; }
-    if(!plans.length) plans=[{id:"default",name:"減重計畫",type:"origin"}];
+    if(!plans.length){
+      // 分享/空白模式(網址帶 blank):給朋友一個中性的減重規劃起手式,不帶專屬的回台範本
+      const blank = (location.search+location.hash).toLowerCase().indexOf("blank")>=0;
+      plans = blank ? [{id:"default",name:"我的計畫",type:"full"}] : [{id:"default",name:"減重計畫",type:"origin"}];
+    }
     const _d=plans.find(p=>p.id==="default"); if(_d && _d.name==="回台減重計畫"){ _d.name="減重計畫"; savePlans(); }
     let _mig=false; plans.forEach(p=>{ if(p.type==="weight"||p.type==="calorie"){ p.type="track"; _mig=true; } }); if(_mig) savePlans();
     let cur="default";
