@@ -1858,6 +1858,7 @@
     if(typeof renderTodayMenu==="function") renderTodayMenu();
     if(typeof renderFoodLog==="function") renderFoodLog();
     if(typeof renderWater==="function") renderWater();
+    if(typeof renderDays==="function") renderDays();
     const eb=document.getElementById("inExBurn");
     if(eb){ const v=Math.round((typeof exBurn!=="undefined"&&exBurn[curIso()])||0); eb.value=v>0?v:""; }
   }
@@ -2126,11 +2127,30 @@
   }
   // 運動計畫有變動時呼叫:重新對應每日打卡並重畫
   function syncWorkoutToCheckin(){ applyAiPlanToDays(); if(typeof renderDays==="function"){ try{ renderDays(); }catch(e){} } }
+  // 依日期取得「當天」的資料:計畫範圍內用現成的,範圍外就依星期幾即時算出當天的運動與菜單
+  function resolveDay(iso){
+    let d = days.find(x=>x.iso===iso);
+    if(d) return d;
+    const a=iso.split("-").map(Number); const dt=new Date(a[0],a[1]-1,a[2]); const wd=dt.getDay();
+    const sd=new Date(startDate.getFullYear(),startDate.getMonth(),startDate.getDate());
+    const idx=Math.round((dt-sd)/86400000);
+    let workout=null;
+    if(workoutPlan && Array.isArray(workoutPlan.week)){
+      const ai=workoutPlan.week.find(x=>AI_WEEKDAY[String(x.day||"").replace(/\s/g,"")]===wd);
+      if(ai){ const kind=aiTypeToKind(ai.type||""); workout={type:kind, emoji:kind==="lift"?"💪":(kind==="cardio"?"🏃‍♀️":"🌙"),
+        title:((ai.type||"運動")+(ai.focus?(" · "+ai.focus):"")), note:"這天的安排來自你上方的「運動計畫」,想調整就到那邊改。",
+        exercises:(ai.items&&ai.items.length)?ai.items.map(it=>({name:String(it),detail:""})):[{name:"依運動計畫進行",detail:""}] }; }
+    }
+    if(!workout) workout=workoutForWeekday(wd, Math.max(0,idx));
+    const wn=(lang==="en"?weekdayNames.en:weekdayNames.zh);
+    return { date:dt, iso, weekdayLabel:wn[wd], workout, baseWorkout:workout, diet:dietForDay(((idx%6)+6)%6) };
+  }
   function renderDays(){
     listEl.innerHTML = "";
-    days.forEach(day=>{
+    // 每日打卡只顯示「目前選擇的日期」這一天(依星期幾顯示當天運動計劃)
+    [resolveDay(curIso())].filter(Boolean).forEach(day=>{
       const card = document.createElement("div");
-      card.className = "day-card" + (doneState[day.iso] ? " done" : "");
+      card.className = "day-card open" + (doneState[day.iso] ? " done" : "");
       card.dataset.iso = day.iso;
       const isToday = isoDate(today) === day.iso;
       // 若使用者在每日打卡改過這天,就用改過的;否則用計畫/預設的
