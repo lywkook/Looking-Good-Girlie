@@ -2245,7 +2245,7 @@
       const text = (m && (m.text || m[field])) || "";
       if(!text){
         if(hasPhoto) status.innerHTML = '<span class="err">'+RP('這張真的認不太出來 🙏 靠近菜名「分區拍幾張」通常更讀得到;或直接打「想吃什麼」讓 AI 配。','Couldn\'t read this one 🙏 Close-up shots of menu sections read better; or just type a craving.')+'</span>';
-        else if(rest || regenCtx.foods) showFoodsPrompt(RP('查不到「'+esc(regenCtx.rest||'')+'」的真實菜單,我不亂猜 🙏 最準的做法是用上面「上傳菜單照片」把菜單拍給我;或直接在這裡打這間店有賣什麼,我從裡面幫你挑:','Couldn\'t confirm this place\'s real menu — I won\'t guess 🙏 Best is to use “Upload menu photo” above; or just type what it serves here and I\'ll pick from those:'));
+        else if(rest || regenCtx.foods) showFoodsPrompt(RP('查不到店家菜單,請改上傳菜單照片,或在下方輸入參考品項:','Couldn\'t find the menu — upload a menu photo, or list some items below:'));
         else status.innerHTML = '<span class="err">'+RP('AI 沒給出建議,再按一次試試','No suggestion this time — tap again.')+'</span>';
       } else {
         regenCtx.last = text;
