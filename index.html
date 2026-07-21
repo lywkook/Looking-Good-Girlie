@@ -450,6 +450,10 @@
   .menu-regen-box.show{ display:block; }
   .menu-regen-box input{ width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px;
     padding:11px 13px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); }
+  .wo-quick{ background:var(--pink-soft); border-radius:16px; padding:14px; margin-bottom:16px; }
+  .wo-quick-title{ font-size:var(--fs-body); font-weight:900; color:var(--ink); margin-bottom:10px; line-height:1.45; }
+  .wo-quick input{ width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px;
+    padding:11px 13px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); margin-bottom:8px; }
   .wo-field{ margin:12px 0; }
   .wo-field label{ display:block; font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:6px; }
   .wo-textarea{ width:100%; box-sizing:border-box; min-height:78px; border:1.5px solid var(--line); border-radius:14px;
@@ -589,6 +593,11 @@
   <h2 class="cute" id="woToggle"><span class="dot"></span>運動計畫 🏋️ <span class="pf-caret" id="woCaret">▾</span></h2>
   <div class="pf-mini" id="woMini"></div>
   <div class="weight-box">
+    <div class="wo-quick">
+      <div class="wo-quick-title">不知道怎麼練?直接說你想瘦的部位、或想要的身材 ✨</div>
+      <input id="woGoal" placeholder="例:想瘦肚子和大腿 / 想要馬甲線 / 蜜桃臀 + 直角肩" autocomplete="off">
+      <button type="button" class="ai-photo-btn" id="woGoalBtn">幫我規劃</button>
+    </div>
     <div class="metric-inputs">
       <div class="field"><label>一週想練幾天</label><div class="wrap"><input type="number" id="woDays" placeholder="4" min="1" max="7"><span class="unit">天</span></div></div>
       <div class="field"><label>每次有氧</label><div class="wrap"><input type="number" id="woCardio" placeholder="20"><span class="unit">分鐘</span></div></div>
@@ -2239,9 +2248,9 @@
   async function loadWorkout(){
     workoutPlan=null; focusSel.length=0; strengthSel.length=0; cardioSel.length=0;
     const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=(v==null?"":v); };
-    set("woDays",""); set("woCardio",""); set("woNote",""); set("woSets",""); set("woReps",""); set("woWeight",""); set("woSecs","");
+    set("woDays",""); set("woCardio",""); set("woNote",""); set("woSets",""); set("woReps",""); set("woWeight",""); set("woSecs",""); set("woGoal","");
     try{ const r=await window.storage.get(K("workout"),false); if(r&&r.value){ const p=JSON.parse(r.value);
-      set("woDays",p.days); set("woCardio",p.cardio); set("woNote",p.note); workoutPlan=p.plan||null;
+      set("woDays",p.days); set("woCardio",p.cardio); set("woNote",p.note); set("woGoal",p.goal); workoutPlan=p.plan||null;
       set("woSets",p.sets); set("woReps",p.reps); set("woWeight",p.weight); set("woSecs",p.secs);
       (p.focus||[]).forEach(x=>focusSel.push(x)); (p.strength||[]).forEach(x=>strengthSel.push(x)); (p.cardioEq||[]).forEach(x=>cardioSel.push(x)); } }catch(e){}
     renderEquip("focusChips", FOCUS_PRESET, focusSel);
@@ -2253,7 +2262,7 @@
   }
   async function saveWorkout(){
     const g=id=>{ const el=document.getElementById(id); return el?el.value:""; };
-    const p={ days:g("woDays"), cardio:g("woCardio"), note:g("woNote"), plan:workoutPlan,
+    const p={ days:g("woDays"), cardio:g("woCardio"), note:g("woNote"), goal:g("woGoal"), plan:workoutPlan,
       focus:focusSel, strength:strengthSel, cardioEq:cardioSel,
       sets:g("woSets"), reps:g("woReps"), weight:g("woWeight"), secs:g("woSecs") };
     try{ await window.storage.set(K("workout"), JSON.stringify(p), false); }catch(e){}
@@ -2299,6 +2308,42 @@
     }
     btn.disabled=false; btn.textContent=oldT;
   }
+  // 快速規劃:只輸入「想瘦的部位 / 想要的身材」就產生計畫
+  async function generateFromGoal(){
+    const box=document.getElementById("woResult");
+    const goal=(document.getElementById("woGoal").value||"").trim();
+    if(!goal){ document.getElementById("woGoal").focus(); return; }
+    const days=parseInt(document.getElementById("woDays").value,10)||4;
+    const cardio=parseInt(document.getElementById("woCardio").value,10)||20;
+    await saveWorkout();
+    if(!geminiKey){
+      const map=[["肚|腹|馬甲|核心|腰|游泳圈","腹部/核心"],["大腿|腿|下半身","腿"],["臀|屁股|蜜桃|翹","臀"],["手臂|掰掰|蝴蝶|拜拜","手臂"],["肩|直角","肩"],["胸","胸"],["背|虎背","背"],["全身|瘦身|減肥|全部","全身"]];
+      const picked=[]; map.forEach(mp=>{ if(new RegExp(mp[0]).test(goal) && picked.indexOf(mp[1])<0) picked.push(mp[1]); });
+      if(!picked.length) picked.push("全身");
+      focusSel.length=0; picked.forEach(f=>focusSel.push(f));
+      renderEquip("focusChips", FOCUS_PRESET, focusSel);
+      workoutPlan=localWorkoutPlan(days,cardio,"目標:"+goal); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini();
+      box.insertAdjacentHTML("afterbegin",'<div class="wo-hint">已依「'+esc(goal)+'」用內建規則規劃(鎖定:'+esc(picked.join("、"))+')。貼上免費 AI 金鑰可更精準。</div>');
+      return;
+    }
+    const btn=document.getElementById("woGoalBtn"); const oldT=btn.textContent; btn.disabled=true; btn.textContent="規劃中…";
+    box.innerHTML='<div class="advice"><span class="ai-spin"></span>依你的目標規劃中…</div>';
+    try{
+      const sex=document.getElementById("pfSex").value==="male"?"男":"女";
+      const w=document.getElementById("pfWeight").value, tw=document.getElementById("pfTargetW").value;
+      const eq=[]; if(strengthSel.length) eq.push("重訓器材:"+strengthSel.join("、")); if(cardioSel.length) eq.push("有氧器材/方式:"+cardioSel.join("、"));
+      const prompt='你是專業健身教練。使用者不太懂怎麼練,只說了目標:「'+goal+'」(想瘦的部位或想要的身材)。請用繁體中文,針對這個目標設計「一週 7 天」、循序漸進、新手也做得到的運動計畫,兼顧減重減脂;針對目標部位加強、其餘搭配全身與有氧。'
+        +'使用者:'+sex+'性'+(w?(",目前 "+w+" kg"):"")+(tw?(",目標 "+tw+" kg"):"")+'。每週約 '+days+' 天、每次有氧約 '+cardio+' 分鐘。'+(eq.length?eq.join(";")+"。":"")
+        +'每個 items 動作要寫清楚組數×次數或時間。只回傳 JSON,不要多餘文字。格式:{"summary":"一句話總結(點出如何達成目標)","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](剛好7天),"tips":["..."]}。';
+      const obj=await geminiJSON(prompt,null,0.4);
+      if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
+      workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini();
+    }catch(e){
+      workoutPlan=localWorkoutPlan(days,cardio,"目標:"+goal); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini();
+      box.insertAdjacentHTML("afterbegin",'<div class="wo-hint err">AI 連線失敗('+esc(e.message||e)+'),先給你內建版。</div>');
+    }
+    btn.disabled=false; btn.textContent=oldT;
+  }
   function updateWoMini(){
     const mini=document.getElementById("woMini"); if(!mini) return;
     const d=document.getElementById("woDays").value;
@@ -2314,7 +2359,9 @@
   }
   function initWorkoutModule(){
     const gen=document.getElementById("woGenBtn"); if(gen) gen.addEventListener("click", generateWorkoutPlan);
-    ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
+    const gb=document.getElementById("woGoalBtn"); if(gb) gb.addEventListener("click", generateFromGoal);
+    const gi=document.getElementById("woGoal"); if(gi) gi.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); generateFromGoal(); } });
+    ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs","woGoal"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
     // 部位 / 器材 的「其他」新增
     const wire=(inputId, btnId, preset, sel, boxId)=>{
       const btn=document.getElementById(btnId); if(btn) btn.addEventListener("click", ()=> addEquip(inputId, preset, sel, boxId));
