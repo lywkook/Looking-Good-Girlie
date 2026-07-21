@@ -2683,55 +2683,65 @@
     }).join("");
     box.querySelectorAll(".home-del-bg").forEach(d=> d.addEventListener("click", (e)=>{ e.stopPropagation(); deletePlan(d.dataset.del); }));
     box.querySelectorAll(".home-row").forEach(row=> initSwipeCard(row));
+    hintSwipe();
   }
-  // 主畫面計畫卡:往左滑露出刪除鈕;輕點進入計畫
+  // 進入主畫面時,把第一張可刪除的卡片輕輕往左推一下再彈回,讓使用者看到「往左滑有刪除」
+  function hintSwipe(){
+    if(hintSwipe._done) return;
+    const box=document.getElementById("homeList"); if(!box) return;
+    const bg=box.querySelector(".home-del-bg"); if(!bg) return;
+    hintSwipe._done=true;
+    const card=bg.parentElement.querySelector(".home-card");
+    setTimeout(()=>{ card.style.transform="translateX(-62px)";
+      setTimeout(()=>{ card.style.transform=""; }, 750); }, 450);
+  }
+  // 主畫面計畫卡:往左滑露出刪除鈕;輕點進入計畫(用 touch + mouse,手機最穩)
   function initSwipeCard(row){
     const card=row.querySelector(".home-card");
     const canDel=!!row.querySelector(".home-del-bg");
-    const OPEN=-88, THRESH=44;
-    let startX=0, startY=0, cur=0, dragging=false, decided=false, horiz=false, moved=false;
-    const setX=(x)=>{ cur=x; card.style.transform="translateX("+x+"px)"; };
-    const closeAll=(except)=>{ box_scope().querySelectorAll(".home-card").forEach(c=>{ if(c!==except){ c.style.transform=""; c.dataset.open=""; } }); };
-    function box_scope(){ return document.getElementById("homeList"); }
-    card.addEventListener("pointerdown",(e)=>{
-      if(e.button&&e.button!==0) return;
-      startX=e.clientX; startY=e.clientY; dragging=true; decided=false; horiz=false; moved=false;
-      const opened=card.dataset.open==="1"; setX(opened?OPEN:0);
-    });
-    card.addEventListener("pointermove",(e)=>{
-      if(!dragging) return;
-      const dx=e.clientX-startX, dy=e.clientY-startY;
+    const OPEN=-88, THRESH=40;
+    let startX=0, startY=0, base=0, cur=0, active=false, decided=false, horiz=false, moved=false;
+    const isOpen=()=> card.dataset.open==="1";
+    const setX=(x)=>{ cur=x; card.style.transform = x ? "translateX("+x+"px)" : ""; };
+    function closeSiblings(){ document.querySelectorAll("#homeList .home-card").forEach(c=>{ if(c!==card){ c.style.transform=""; c.dataset.open=""; } }); }
+    function openCard(){ closeSiblings(); card.classList.remove("dragging"); setX(OPEN); card.dataset.open="1"; }
+    function closeCard(){ card.classList.remove("dragging"); setX(0); card.dataset.open=""; }
+    function begin(x,y){ startX=x; startY=y; base=isOpen()?OPEN:0; active=true; decided=false; horiz=false; moved=false; }
+    function move(x,y,ev){
+      if(!active) return;
+      const dx=x-startX, dy=y-startY;
       if(!decided){
-        if(Math.abs(dx)<6&&Math.abs(dy)<6) return;
-        decided=true; horiz=Math.abs(dx)>Math.abs(dy);
-        if(horiz&&canDel){ card.classList.add("dragging"); card.setPointerCapture(e.pointerId); }
+        if(Math.abs(dx)<6 && Math.abs(dy)<6) return;
+        decided=true; horiz=Math.abs(dx) > Math.abs(dy)+2;
+        if(horiz && canDel) card.classList.add("dragging");
       }
-      if(horiz&&canDel){
-        moved=true; e.preventDefault();
-        const base=card.dataset.open==="1"?OPEN:0;
-        let x=base+dx; if(x>0)x=0; if(x<OPEN-30)x=OPEN-30;
-        setX(x);
-      }
-    });
-    function endDrag(){
-      if(!dragging) return; dragging=false;
-      card.classList.remove("dragging");
-      if(horiz&&canDel){
-        const shouldOpen = cur <= -THRESH; // 往左滑超過門檻就固定露出刪除鈕
-        if(shouldOpen){ closeAll(card); card.style.transform="translateX("+OPEN+"px)"; card.dataset.open="1"; }
-        else{ card.style.transform=""; card.dataset.open=""; }
+      if(horiz && canDel){
+        moved=true; if(ev && ev.cancelable) ev.preventDefault();
+        let nx=base+dx; if(nx>0)nx=0; if(nx<OPEN-24)nx=OPEN-24;
+        setX(nx);
       }
     }
-    card.addEventListener("pointerup",(e)=>{
-      const wasHoriz=horiz, didMove=moved, wasOpen=card.dataset.open==="1";
-      endDrag();
-      if(!wasHoriz && !didMove){
-        // a tap: if open, close; else enter plan
-        if(wasOpen){ card.style.transform=""; card.dataset.open=""; }
-        else enterPlan(card.dataset.id);
-      }
+    function end(){
+      if(!active) return; active=false;
+      if(horiz && canDel){ if(cur <= -THRESH) openCard(); else closeCard(); }
+    }
+    // 觸控(手機)
+    card.addEventListener("touchstart",(e)=>{ const t=e.touches[0]; begin(t.clientX,t.clientY); }, {passive:true});
+    card.addEventListener("touchmove",(e)=>{ const t=e.touches[0]; move(t.clientX,t.clientY,e); }, {passive:false});
+    card.addEventListener("touchend", end);
+    card.addEventListener("touchcancel", end);
+    // 滑鼠(電腦)
+    card.addEventListener("mousedown",(e)=>{ if(e.button) return; begin(e.clientX,e.clientY);
+      const mm=(ev)=> move(ev.clientX,ev.clientY,ev);
+      const mu=()=>{ end(); document.removeEventListener("mousemove",mm); document.removeEventListener("mouseup",mu); };
+      document.addEventListener("mousemove",mm); document.addEventListener("mouseup",mu);
     });
-    card.addEventListener("pointercancel", endDrag);
+    // 點一下:剛剛是滑動就忽略;卡片已開就收起;否則進入計畫
+    card.addEventListener("click",()=>{
+      if(moved){ moved=false; return; }
+      if(isOpen()){ closeCard(); return; }
+      enterPlan(card.dataset.id);
+    });
   }
   function openSettings(){
     const t = PLAN ? PLAN.type : "";
