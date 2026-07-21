@@ -442,6 +442,8 @@
   .rm-check input, .rm-item input{ width:20px; height:20px; accent-color:var(--pink); }
   .rm-row{ display:flex; align-items:center; flex-wrap:wrap; gap:10px; font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:12px; }
   .rm-row input[type=time]{ padding:8px 10px; border-radius:12px; border:2px solid var(--line); font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
+  .rm-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .rm-actions .mini-btn{ flex:1; min-width:130px; }
   .rm-item{ display:inline-flex; align-items:center; gap:6px; color:var(--ink); }
   .rm-items{ display:flex; flex-wrap:wrap; gap:8px 14px; }
   .rm-preview-label{ font-size:var(--fs-label); color:var(--ink-soft); margin-bottom:6px; }
@@ -994,7 +996,10 @@
     </div>
     <div class="rm-preview-label">內容預覽(即時反映 App 內更動)</div>
     <div class="rm-preview" id="rmPreview"></div>
-    <button type="button" class="mini-btn" id="rmCopy">複製內容</button>
+    <div class="rm-actions">
+      <button type="button" class="mini-btn" id="rmCal">加入手機行事曆(每天提醒)</button>
+      <button type="button" class="mini-btn" id="rmCopy">複製內容</button>
+    </div>
     <div class="rm-note" id="rmNote"></div>
   </div>
 </div>
@@ -1215,7 +1220,7 @@
     "問我任何問題…":"Ask me anything…","問":"Ask","不懂問 AI":"Ask AI",
     "飲食、運動、健康、生活,都可以問。":"Ask about food, exercise, health or life.",
     // 其他
-    "到":" to ","下":"Down","天":"days","複製內容":"Copy",
+    "到":" to ","下":"Down","天":"days","複製內容":"Copy","加入手機行事曆(每天提醒)":"Add to phone calendar (daily reminder)",
     // 計畫類型
     "飲食+喝水+體重":"Food + Water + Weight","減重規劃":"Weight-loss plan","完整計畫":"Full plan",
     // 狀態
@@ -4512,9 +4517,39 @@
     prev.textContent = lines.length ? lines.join("\n") : "(還沒選要提醒的內容)";
     const note=document.getElementById("rmNote");
     if(note) note.innerHTML = reminderCfg.on
-      ? '已開啟。⚠️ 這是網頁 App,無法在關閉時自動跳 iPhone 通知;請按「複製內容」貼到 iPhone「提醒事項 / 捷徑」,設在每天 '+reminderCfg.time+'。菜單或運動改了,回來再複製一次即可(上面內容會即時更新)。'
-      : '打開後可設定時間與內容;預覽內容會即時反映你在 App 裡改的菜單/運動。';
+      ? (lang==="en"
+        ? 'On. This is a web app, so it can\'t push notifications on its own. To get a real daily alert: tap <b>“Add to phone calendar”</b> → open the file to add it — your phone will remind you at '+reminderCfg.time+' every day to open the app. (To paste today\'s exact menu/workout into Reminders, use <b>“Copy”</b>.)'
+        : '已開啟。這是網頁 App,沒辦法自己跳通知。想要每天自動提醒:按 <b>「加入手機行事曆」</b> → 開啟檔案加入,手機每天 '+reminderCfg.time+' 就會自動通知你打開 App。(想把當天的菜單/運動貼進「提醒事項」,可用 <b>「複製內容」</b>。)')
+      : (lang==="en" ? 'Turn on to set time and content; the preview reflects your app changes live.' : '打開後可設定時間與內容;預覽內容會即時反映你在 App 裡改的菜單/運動。');
     updateRmMini();
+  }
+  // 產生每天重複的行事曆事件(.ics),手機加入後由行事曆發原生通知(免後端)
+  function buildReminderICS(){
+    const time=(reminderCfg.time||"16:20"); const p=time.split(":"); const hh=parseInt(p[0],10)||16, mm=parseInt(p[1],10)||20;
+    const pad=n=>String(n).padStart(2,"0");
+    const d=new Date();
+    const dtstart=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"T"+pad(hh)+pad(mm)+"00";
+    const n=new Date();
+    const stamp=n.getUTCFullYear()+pad(n.getUTCMonth()+1)+pad(n.getUTCDate())+"T"+pad(n.getUTCHours())+pad(n.getUTCMinutes())+pad(n.getUTCSeconds())+"Z";
+    const uid="weightplan-"+n.getTime()+"@app";
+    const summary = lang==="en" ? "Weight plan reminder" : "減重計畫提醒";
+    const desc = lang==="en" ? "Open the app to log today's food, workout and weight." : "打開 App 記錄今天的飲食、運動與體重。";
+    const esc=s=>String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n");
+    return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//WeightPlan//Reminder//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH",
+      "BEGIN:VEVENT","UID:"+uid,"DTSTAMP:"+stamp,"DTSTART:"+dtstart,"DURATION:PT10M","RRULE:FREQ=DAILY",
+      "SUMMARY:"+esc(summary),"DESCRIPTION:"+esc(desc),
+      "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+esc(summary),"TRIGGER:PT0M","END:VALARM",
+      "END:VEVENT","END:VCALENDAR"].join("\r\n");
+  }
+  function downloadReminderICS(){
+    try{
+      const ics=buildReminderICS();
+      const blob=new Blob([ics],{type:"text/calendar;charset=utf-8"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a"); a.href=url; a.download="reminder.ics"; a.rel="noopener";
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ try{ URL.revokeObjectURL(url); a.remove(); }catch(e){} }, 1500);
+    }catch(e){ alert((lang==="en"?"Failed: ":"產生失敗:")+(e.message||e)); }
   }
   function updateRmMini(){ const m=document.getElementById("rmMini"); if(!m) return;
     m.innerHTML = reminderCfg.on ? ('提醒 '+reminderCfg.time+' 已開 <span class="pf-hint">(點開設定)</span>') : '<span class="pf-hint">點這裡展開,設定提醒</span>';
@@ -4547,6 +4582,9 @@
         saveReminder(); renderReminder();
       });
     });
+    const cal=document.getElementById("rmCal");
+    if(cal) cal.addEventListener("click", ()=>{ downloadReminderICS();
+      const o=cal.textContent; cal.textContent=lang==="en"?"Calendar file created ✅":"已產生行事曆檔 ✅"; setTimeout(()=>cal.textContent=o,1800); });
     const cp=document.getElementById("rmCopy");
     if(cp) cp.addEventListener("click", async ()=>{ const txt=reminderLines().join("\n");
       try{ await navigator.clipboard.writeText(txt); cp.textContent="已複製 ✅"; setTimeout(()=>cp.textContent="複製內容",1500); }
