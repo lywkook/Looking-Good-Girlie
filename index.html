@@ -59,6 +59,19 @@
   *{box-sizing:border-box;}
   input, textarea, select, button{ font-family: var(--font-main), "Noto Sans TC", -apple-system, sans-serif; }
   .bg-adjust{ margin-top:10px; }
+  /* 固定不動的背景圖層:貼滿手機畫面、不受捲動影響 */
+  #bgLayer{ position:fixed; inset:0; overflow:hidden; z-index:-1; pointer-events:none; background:var(--cream); }
+  #bgLayer img{ position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; transform-origin:center center; will-change:transform; }
+  /* 兩指縮放/拖曳 調整背景(像調大頭貼) */
+  #bgEditor{ position:fixed; inset:0; z-index:400; background:#000; display:none; }
+  #bgEditor.show{ display:block; }
+  .bg-edit-stage{ position:absolute; inset:0; overflow:hidden; touch-action:none; }
+  .bg-edit-stage img{ position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; transform-origin:center center; user-select:none; -webkit-user-drag:none; pointer-events:none; }
+  .bg-edit-hint{ position:absolute; top:14px; left:16px; right:16px; text-align:center; color:#fff; font-size:var(--fs-label); line-height:1.5; text-shadow:0 1px 4px rgba(0,0,0,0.7); pointer-events:none; }
+  .bg-edit-bar{ position:absolute; left:0; right:0; bottom:0; display:flex; gap:12px; padding:16px 18px calc(16px + env(safe-area-inset-bottom)); background:linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0)); }
+  .bg-edit-bar button{ flex:1; height:52px; border:none; border-radius:16px; font-family:inherit; font-size:var(--fs-body); font-weight:700; cursor:pointer; }
+  .bg-edit-cancel{ background:rgba(255,255,255,0.9); color:#333; }
+  .bg-edit-save{ background:var(--pink); color:#fff; }
   /* 匯出 PDF:列印時只顯示整理好的內容 */
   #printArea{ display:none; }
   @media print{
@@ -77,9 +90,6 @@
     #printArea .p-note{ font-size:12px; margin:3px 0; }
     #printArea .p-day{ break-inside:avoid; }
   }
-  .bg-slider-row{ display:flex; align-items:center; gap:10px; margin:8px 0; }
-  .bg-slider-row label{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; width:36px; flex:none; }
-  .bg-slider-row input[type=range]{ flex:1; accent-color:var(--pink); }
   .bg-adjust-hint{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:4px; line-height:1.5; }
   body{
     margin:0;
@@ -603,6 +613,8 @@
 </head>
 <body>
 
+<div id="bgLayer"><img id="bgImg" alt=""></div>
+
 <div id="homeScreen">
   <div class="home-head">
     <div class="home-title cute">我的計畫</div>
@@ -970,10 +982,8 @@
         <button type="button" class="mini-btn" id="bgClear">清除</button>
       </div>
       <div class="bg-adjust" id="bgAdjust" style="display:none;">
-        <div class="bg-slider-row"><label>縮放</label><input type="range" id="bgScale" min="100" max="300" step="5" value="100"></div>
-        <div class="bg-slider-row"><label>左右</label><input type="range" id="bgPosX" min="0" max="100" step="1" value="50"></div>
-        <div class="bg-slider-row"><label>上下</label><input type="range" id="bgPosY" min="0" max="100" step="1" value="0"></div>
-        <div class="bg-adjust-hint">背景圖固定手機寬度、不變形;往下滑會看到照片下半部。拉「縮放/左右/上下」調整想露出的位置。</div>
+        <button type="button" class="mini-btn" id="bgEditBtn">🖐️ 調整背景照片(縮放/移動)</button>
+        <div class="bg-adjust-hint">背景圖固定在手機畫面上、上下滑動都不會跑掉。點上面按鈕後,用兩隻手指縮放、單指拖曳位置,就像調整社群大頭貼一樣。</div>
       </div>
     </div>
 
@@ -1014,6 +1024,15 @@
       <div class="set-title">刪除計畫</div>
       <button type="button" id="setDeleteBtn" class="danger-btn">🗑 刪除這個計畫</button>
     </div>
+  </div>
+</div>
+
+<div id="bgEditor">
+  <div class="bg-edit-stage" id="bgEditStage"><img id="bgEditImg" alt=""></div>
+  <div class="bg-edit-hint">兩指縮放 · 單指拖曳位置</div>
+  <div class="bg-edit-bar">
+    <button type="button" class="bg-edit-cancel" id="bgEditCancel">取消</button>
+    <button type="button" class="bg-edit-save" id="bgEditSave">儲存</button>
   </div>
 </div>
 
@@ -3389,18 +3408,73 @@
     if(bp) bp.addEventListener("input", ()=> setBg(bp.value));
     if(bBtn) bBtn.addEventListener("click", ()=> setBg(bh.value));
     if(bh) bh.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); setBg(bh.value); } });
-    // 背景圖 位置/縮放 調整
-    const sc=document.getElementById("bgScale"), px=document.getElementById("bgPosX"), py=document.getElementById("bgPosY");
-    const onAdjust=async ()=>{ if(sc) bgScale=parseInt(sc.value,10)||100; if(px) bgPosX=parseInt(px.value,10); if(py) bgPosY=parseInt(py.value,10);
-      applyTheme(); await saveTheme(); };
-    if(sc) sc.addEventListener("input", onAdjust);
-    if(px) px.addEventListener("input", onAdjust);
-    if(py) py.addEventListener("input", onAdjust);
   }
   function refreshBgAdjustUI(){
     const wrap=document.getElementById("bgAdjust"); if(wrap) wrap.style.display = bgImage ? "" : "none";
-    const sc=document.getElementById("bgScale"), px=document.getElementById("bgPosX"), py=document.getElementById("bgPosY");
-    if(sc) sc.value=bgScale; if(px) px.value=bgPosX; if(py) py.value=bgPosY;
+  }
+  // ---------- 背景照片 兩指縮放 / 單指拖曳 調整器(像調大頭貼) ----------
+  function clampBgTransform(stage, img){
+    // 依實際圖片比例算出「填滿(cover)」後的尺寸,再把平移限制在圖片範圍內,避免露出黑邊
+    const W=stage.clientWidth, H=stage.clientHeight;
+    const nw=img.naturalWidth||W, nh=img.naturalHeight||H;
+    if(!nw||!nh) return;
+    const cover=Math.max(W/nw, H/nh);
+    const dispW=nw*cover*bgZoom, dispH=nh*cover*bgZoom;
+    const maxX=Math.max(0,(dispW-W)/2), maxY=Math.max(0,(dispH-H)/2);
+    if(bgTX>maxX) bgTX=maxX; if(bgTX<-maxX) bgTX=-maxX;
+    if(bgTY>maxY) bgTY=maxY; if(bgTY<-maxY) bgTY=-maxY;
+  }
+  function initBgEditor(){
+    const ed=document.getElementById("bgEditor"), stage=document.getElementById("bgEditStage"), img=document.getElementById("bgEditImg");
+    const saveB=document.getElementById("bgEditSave"), cancelB=document.getElementById("bgEditCancel");
+    if(!ed||!stage||!img||ed.dataset.init) return; ed.dataset.init="1";
+    const st={ lastDist:0, lastMid:null, lastPan:null };
+    const apply=()=>{ clampBgTransform(stage,img); img.style.transform="translate("+bgTX+"px,"+bgTY+"px) scale("+bgZoom+")"; };
+    const dist=(a,b)=>Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY);
+    const mid=(a,b)=>({ x:(a.clientX+b.clientX)/2 - W2(), y:(a.clientY+b.clientY)/2 - H2() });
+    const W2=()=>stage.clientWidth/2, H2=()=>stage.clientHeight/2;
+    stage.addEventListener("touchstart",(e)=>{ e.preventDefault();
+      if(e.touches.length===1){ st.lastPan={x:e.touches[0].clientX, y:e.touches[0].clientY}; st.lastDist=0; st.lastMid=null; }
+      else if(e.touches.length>=2){ st.lastDist=dist(e.touches[0],e.touches[1]); st.lastMid=mid(e.touches[0],e.touches[1]); st.lastPan=null; }
+    },{passive:false});
+    stage.addEventListener("touchmove",(e)=>{ e.preventDefault();
+      if(e.touches.length===1 && st.lastPan){
+        const t=e.touches[0]; bgTX+=t.clientX-st.lastPan.x; bgTY+=t.clientY-st.lastPan.y; st.lastPan={x:t.clientX,y:t.clientY}; apply();
+      } else if(e.touches.length>=2){
+        const d=dist(e.touches[0],e.touches[1]), m=mid(e.touches[0],e.touches[1]);
+        if(st.lastDist){
+          const ratio=d/st.lastDist, nz=Math.min(6, Math.max(1, bgZoom*ratio));
+          // 以兩指中點為中心縮放,維持手指下的畫面點不動
+          bgTX = m.x - (nz/bgZoom)*(m.x - bgTX);
+          bgTY = m.y - (nz/bgZoom)*(m.y - bgTY);
+          bgZoom = nz;
+          if(st.lastMid){ bgTX += m.x-st.lastMid.x; bgTY += m.y-st.lastMid.y; }
+        }
+        st.lastDist=d; st.lastMid=m; apply();
+      }
+    },{passive:false});
+    stage.addEventListener("touchend",(e)=>{ if(e.touches.length===0){ st.lastPan=null; st.lastDist=0; st.lastMid=null; }
+      else if(e.touches.length===1){ st.lastPan={x:e.touches[0].clientX, y:e.touches[0].clientY}; st.lastDist=0; st.lastMid=null; } },{passive:false});
+    // 桌機/測試用:滑鼠拖曳 + 滾輪縮放
+    let mouseDown=false;
+    stage.addEventListener("mousedown",(e)=>{ mouseDown=true; st.lastPan={x:e.clientX,y:e.clientY}; });
+    window.addEventListener("mousemove",(e)=>{ if(!mouseDown||!st.lastPan) return; bgTX+=e.clientX-st.lastPan.x; bgTY+=e.clientY-st.lastPan.y; st.lastPan={x:e.clientX,y:e.clientY}; apply(); });
+    window.addEventListener("mouseup",()=>{ mouseDown=false; });
+    stage.addEventListener("wheel",(e)=>{ e.preventDefault(); const nz=Math.min(6,Math.max(1, bgZoom*(e.deltaY<0?1.08:0.926))); bgZoom=nz; apply(); },{passive:false});
+    saveB.addEventListener("click", async ()=>{ ed.classList.remove("show"); applyTheme(); await saveTheme(); });
+    cancelB.addEventListener("click", ()=>{ ed.classList.remove("show"); if(bgEditBackup){ bgZoom=bgEditBackup.z; bgTX=bgEditBackup.x; bgTY=bgEditBackup.y; } applyTheme(); });
+  }
+  let bgEditBackup=null;
+  function openBgEditor(){
+    if(!bgImage){ return; }
+    const ed=document.getElementById("bgEditor"), stage=document.getElementById("bgEditStage"), img=document.getElementById("bgEditImg");
+    if(!ed||!stage||!img) return;
+    bgEditBackup={z:bgZoom, x:bgTX, y:bgTY};
+    const render=()=>{ img.style.transform="translate("+bgTX+"px,"+bgTY+"px) scale("+bgZoom+")"; };
+    img.onload=()=>{ clampBgTransform(stage,img); render(); };
+    img.src=bgImage; ed.classList.add("show");
+    // 開啟後套用一次(圖片可能已在快取中,onload 不一定觸發)
+    requestAnimationFrame(()=>{ clampBgTransform(stage,img); render(); });
   }
 
   // ---------- 字體切換(粗線體 / 紅豆奶霜體,可比較) ----------
@@ -3421,22 +3495,19 @@
 
   // ---------- 背景主題(顏色 / 自訂照片,自動儲存) ----------
   const BG_PRESETS = ["#F5F1EB","#EDE6DA","#E6E9E4","#ECE4E6","#E3E9EE","#EAE6EE","#F3E8E2","#DED7CB"];
-  let bgColor="#F5F1EB", bgImage="", bgScale=100, bgPosX=50, bgPosY=0;
+  let bgColor="#F5F1EB", bgImage="", bgZoom=1, bgTX=0, bgTY=0;
   function applyTheme(){
     document.documentElement.style.setProperty("--cream", bgColor);
-    const body=document.body;
+    const body=document.body, layer=document.getElementById("bgLayer"), img=document.getElementById("bgImg");
+    if(layer) layer.style.background = bgColor;
     if(bgImage){
-      // 背景圖直接鋪在 body:寬度貼齊手機、不變形(100% auto),隨內容捲動,往下滑看到照片下半部
-      body.style.backgroundImage = "url('"+bgImage+"')";
-      body.style.backgroundColor = bgColor;
-      body.style.backgroundRepeat = "no-repeat";
-      body.style.backgroundAttachment = "scroll";
-      body.style.backgroundSize = bgScale + "% auto";
-      body.style.backgroundPosition = bgPosX + "% " + bgPosY + "%";
+      // 背景圖放進固定圖層(position:fixed):貼滿手機畫面、上下捲動都不會跑掉
+      if(img){ img.src = bgImage; img.style.transform = "translate("+bgTX+"px,"+bgTY+"px) scale("+bgZoom+")"; }
+      // body 設為透明,才看得到後面固定的背景圖層
+      body.style.background = "transparent";
     } else {
-      body.style.backgroundImage = "none";
-      body.style.backgroundColor = "";
-      body.style.backgroundSize = ""; body.style.backgroundPosition = ""; body.style.backgroundAttachment = "";
+      if(img){ img.removeAttribute("src"); img.style.transform = ""; }
+      body.style.background = "";
     }
     renderSwatches();
   }
@@ -3446,25 +3517,28 @@
     box.querySelectorAll(".bg-sw").forEach(s=> s.addEventListener("click", async ()=>{ bgColor=s.dataset.c; bgImage=""; applyTheme(); await saveTheme(); }));
   }
   async function loadTheme(){
-    bgColor="#F5F1EB"; bgImage=""; bgScale=100; bgPosX=50; bgPosY=0;
+    bgColor="#F5F1EB"; bgImage=""; bgZoom=1; bgTX=0; bgTY=0;
     try{ const r=await window.storage.get(tkey("bgcolor"),false); if(r&&r.value) bgColor=r.value; }catch(e){}
     try{ const r=await window.storage.get(tkey("bgimage"),false); if(r&&r.value) bgImage=r.value; }catch(e){}
-    try{ const r=await window.storage.get(tkey("bgscale"),false); if(r&&r.value) bgScale=parseInt(r.value,10)||100; }catch(e){}
-    try{ const r=await window.storage.get(tkey("bgposx"),false); if(r&&r.value!=null&&r.value!=="") bgPosX=parseInt(r.value,10); }catch(e){}
-    try{ const r=await window.storage.get(tkey("bgposy"),false); if(r&&r.value!=null&&r.value!=="") bgPosY=parseInt(r.value,10); }catch(e){}
+    try{ const r=await window.storage.get(tkey("bgzoom"),false); if(r&&r.value) bgZoom=parseFloat(r.value)||1; }catch(e){}
+    try{ const r=await window.storage.get(tkey("bgtx"),false); if(r&&r.value!=null&&r.value!=="") bgTX=parseFloat(r.value)||0; }catch(e){}
+    try{ const r=await window.storage.get(tkey("bgty"),false); if(r&&r.value!=null&&r.value!=="") bgTY=parseFloat(r.value)||0; }catch(e){}
     applyTheme();
   }
   async function saveTheme(){ try{
     await window.storage.set(tkey("bgcolor"), bgColor, false); await window.storage.set(tkey("bgimage"), bgImage, false);
-    await window.storage.set(tkey("bgscale"), String(bgScale), false);
-    await window.storage.set(tkey("bgposx"), String(bgPosX), false); await window.storage.set(tkey("bgposy"), String(bgPosY), false);
+    await window.storage.set(tkey("bgzoom"), String(bgZoom), false);
+    await window.storage.set(tkey("bgtx"), String(bgTX), false); await window.storage.set(tkey("bgty"), String(bgTY), false);
   }catch(e){} }
   function initThemeModule(){
     const up=document.getElementById("bgUpload"), upBtn=document.getElementById("bgUploadBtn"), clr=document.getElementById("bgClear");
     if(upBtn) upBtn.addEventListener("click", ()=> up.click());
     if(up) up.addEventListener("change", async ()=>{ const f=up.files[0]; up.value=""; if(!f) return;
-      try{ bgImage=await resizeImageToBase64(f, 1400); bgScale=100; bgPosX=50; bgPosY=0; applyTheme(); await saveTheme(); refreshBgAdjustUI(); }catch(e){} });
-    if(clr) clr.addEventListener("click", async ()=>{ bgImage=""; bgColor="#F5F1EB"; bgScale=100; bgPosX=50; bgPosY=0; applyTheme(); await saveTheme(); refreshBgAdjustUI(); });
+      try{ bgImage=await resizeImageToBase64(f, 1400); bgZoom=1; bgTX=0; bgTY=0; applyTheme(); await saveTheme(); refreshBgAdjustUI(); openBgEditor(); }catch(e){} });
+    if(clr) clr.addEventListener("click", async ()=>{ bgImage=""; bgColor="#F5F1EB"; bgZoom=1; bgTX=0; bgTY=0; applyTheme(); await saveTheme(); refreshBgAdjustUI(); });
+    const editBtn=document.getElementById("bgEditBtn");
+    if(editBtn) editBtn.addEventListener("click", openBgEditor);
+    initBgEditor();
     const delBtn=document.getElementById("setDeleteBtn");
     if(delBtn) delBtn.addEventListener("click", ()=>{ if(PLAN) deletePlan(PLAN.id); });
     const expBtn=document.getElementById("exportPdfBtn");
