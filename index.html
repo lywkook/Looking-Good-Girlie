@@ -685,10 +685,11 @@
       <div class="ai-photo-status" id="aiPhotoStatus"></div>
       <div class="ai-key-line">
         <span class="ai-key-toggle" id="aiKeyToggle">🔑 AI 金鑰設定</span>
-        <a class="ai-key-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">(Google AI Studio)</a>
+        <a class="ai-key-link" href="https://console.groq.com/keys" target="_blank" rel="noopener">(Groq · 額度高,推薦)</a>
+        <a class="ai-key-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">(Google)</a>
       </div>
       <div class="ai-key-row" id="aiKeyRow">
-        <input type="password" id="inGeminiKey" placeholder="貼上免費的 Google AI 金鑰" autocomplete="off">
+        <input type="password" id="inGeminiKey" placeholder="貼上免費金鑰(Groq gsk_… 或 Google AIza…)" autocomplete="off">
         <button type="button" class="mini-btn" id="saveGeminiKey">儲存</button>
       </div>
     </div>
@@ -1877,11 +1878,36 @@
   // 依序嘗試目前仍在免費額度內的模型(舊的 gemini-2.0-flash 免費額度已歸零,擺最後備援)
   const GEMINI_MODELS = ["gemini-2.5-flash-lite","gemini-2.0-flash-lite","gemini-2.5-flash","gemini-flash-latest"];
   let geminiLastGood = null;
+  const GROQ_VISION = ["meta-llama/llama-4-scout-17b-16e-instruct","meta-llama/llama-4-maverick-17b-128e-instruct"];
+  const GROQ_TEXT = ["llama-3.3-70b-versatile","meta-llama/llama-4-scout-17b-16e-instruct"];
+  // 依金鑰前綴自動選服務:gsk_ = Groq(免費額度高很多)、其他 = Google
   async function geminiJSON(prompt, extraParts, temp){
+    const key = cleanKey(geminiKey);
+    if(!key) throw new Error("尚未設定 API 金鑰");
+    let b64=null; if(extraParts) extraParts.forEach(p=>{ if(p&&p.inline_data&&p.inline_data.data) b64=p.inline_data.data; });
+    if(key.slice(0,4)==="gsk_") return await groqJSON(prompt, b64, key, temp);
+    return await googleJSON(prompt, extraParts, temp, key);
+  }
+  async function groqJSON(prompt, b64, key, temp){
+    const content = b64 ? [{type:"text",text:prompt},{type:"image_url",image_url:{url:"data:image/jpeg;base64,"+b64}}] : [{type:"text",text:prompt}];
+    const models = b64 ? GROQ_VISION : GROQ_TEXT;
+    let lastMsg="連線失敗", quota=false;
+    for(const mdl of models){
+      let res;
+      try{ res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:mdl,messages:[{role:"user",content}],temperature:temp==null?0.3:temp})}); }
+      catch(netErr){ lastMsg="無法連線到 Groq(可能是瀏覽器限制)"; continue; }
+      if(res.ok){ const data=await res.json(); const txt=(((data.choices||[])[0]||{}).message||{}).content||""; const o=parseLooseJSON(txt); if(o!=null) return o; throw new Error("AI 回傳格式看不懂,請再試一次"); }
+      let msg="錯誤 "+res.status; const st=res.status; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
+      lastMsg=msg;
+      if(st===401||st===403) throw new Error("Groq 金鑰無效,請確認是 gsk_ 開頭的金鑰(到 console.groq.com/keys 申請)。");
+      if(st===429) quota=true;
+    }
+    if(quota) throw new Error("Groq 也額度滿了,稍等再試。");
+    throw new Error(lastMsg);
+  }
+  async function googleJSON(prompt, extraParts, temp, key){
     const parts=[{text:prompt}]; if(extraParts) extraParts.forEach(p=>parts.push(p));
     const body = { contents:[{ parts }], generationConfig:{ responseMimeType:"application/json", temperature: temp==null?0.3:temp } };
-    const key = (geminiKey||"").trim().replace(/\s+/g,"");
-    if(!key) throw new Error("尚未設定 API 金鑰");
     let models = GEMINI_MODELS.slice();
     if(geminiLastGood && models.indexOf(geminiLastGood)>=0) models = [geminiLastGood].concat(models.filter(m=>m!==geminiLastGood));
     let lastMsg="連線失敗", quotaHit=false;
@@ -1902,16 +1928,12 @@
       let msg="錯誤 "+res.status; const status=res.status;
       try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
       lastMsg=msg;
-      // 401/400/403 = 金鑰驗證/權限問題 → 換模型也沒用,直接停並給明確指引
       if(status===401||status===400||status===403){
-        const looksLikeKey = /^AIza[0-9A-Za-z\-_]{20,}$/.test(key);
-        throw new Error("金鑰無法通過 Google 驗證。請到 Google AI Studio 重新複製 API 金鑰(通常以 AIza 開頭、整串沒有空格),再貼一次。"
-          + (looksLikeKey ? "(你這把格式看起來對,可能是還沒啟用或被限制,建議在 AI Studio 重新「Create API key」一把新的)" : "(你目前貼的這串看起來不是有效金鑰)")
-          + " 原始訊息:" + msg);
+        throw new Error("Google 金鑰無法通過驗證,請重新複製(AIza 開頭)、或改用 Groq 免費金鑰(gsk_,額度更高)。");
       }
-      if(status===429) quotaHit=true;   // 這個模型免費額度用完/歸零 → 換下一個
+      if(status===429) quotaHit=true;
     }
-    if(quotaHit) throw new Error("剛剛太密集了 🙏 免費額度是「每分鐘」有上限,等約 1 分鐘再拍一次就好(不是用完了,每分鐘和每天都會自動重置)。");
+    if(quotaHit) throw new Error("Google 免費額度又滿了 😥 這是 Google 對免費金鑰的限制(很小氣)。強烈建議改用 Groq 免費金鑰(gsk_ 開頭、額度高很多):到「AI 金鑰設定」旁的 Groq 連結申請,貼上就會自動切換。");
     throw new Error(lastMsg);
   }
   async function analyzeFoodPhoto(b64){
@@ -1945,7 +1967,7 @@
       btn.disabled=true;
       status.innerHTML='<span class="ai-spin"></span>分析中…(約幾秒)';
       try{
-        const big=await resizeImageToBase64(file,512);
+        const big=await resizeImageToBase64(file,448);
         const thumb=await resizeImageToBase64(file,220);
         const obj=await analyzeFoodPhoto(big.split(",")[1]);
         const name=(obj.name||"").trim();
