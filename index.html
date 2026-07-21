@@ -255,6 +255,14 @@
     color:var(--ink); font-size:var(--fs-body); font-weight:900; line-height:1; cursor:pointer; font-family:inherit; }
   .fc-qty{ font-size:var(--fs-label); font-weight:900; color:var(--ink); min-width:26px; text-align:center; }
   .food-card .fc-kcal{ font-size:var(--fs-label); color:var(--pink); font-weight:900; }
+  .food-card .fc-kcal-num{ border-bottom:1.5px dashed var(--pink); padding:0 1px; min-width:14px; display:inline-block; outline:none; }
+  .food-card .fc-kcal-edit{ font-size:var(--fs-hint); color:var(--ink-soft); font-weight:700;
+    border:1px solid var(--line); border-radius:10px; padding:0 6px; margin-left:2px; cursor:pointer; }
+  .food-card .fc-kcal-edit:active{ opacity:0.6; }
+  .clear-row{ display:flex; justify-content:center; margin-top:12px; }
+  .clear-all-btn{ font-size:var(--fs-label); color:#9E5A5A; background:#F7ECEC; border:1px solid #E4CFCF;
+    border-radius:20px; padding:7px 16px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .clear-all-btn:active{ opacity:0.7; }
   .food-card .fc-macro{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; }
   .food-card .fc-note{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:3px; }
   .food-card .fc-right{ display:flex; flex-direction:column; align-items:flex-end; justify-content:space-between; align-self:stretch; gap:8px; }
@@ -654,6 +662,7 @@
       <button class="save-btn cute" id="woGenBtn">依細項產生計畫 ✨</button>
     </div>
     <div id="woResult"></div>
+    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearWorkoutBtn">🗑 清除運動計畫,重新選取</button></div>
 
     <div id="checkinBlock">
       <div class="wo-sub">每日打卡</div>
@@ -719,6 +728,7 @@
     <div id="kcalSummary"></div>
     <div id="foodAdvice"></div>
     <div id="foodLogArea"></div>
+    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearFoodBtn">🗑 清空今天,重新記錄</button></div>
   </div>
 </div>
 
@@ -1765,7 +1775,7 @@
           ${f.thumb?`<img src="${f.thumb}">`:''}
           <div class="fc-main">
             <div class="fc-name" data-fid="${f.id}">${esc(f.name)}</div>
-            <div class="fc-kcal">${Math.round(unit*qty)} kcal${qty>1?`(×${qty})`:''}</div>
+            <div class="fc-kcal"><span class="fc-kcal-num" data-fid="${f.id}">${Math.round(unit*qty)}</span> kcal${qty>1?`(×${qty})`:''} <span class="fc-kcal-edit" data-fid="${f.id}">改</span></div>
             <div class="fc-qtyrow" data-fid="${f.id}" style="display:none;">
               <button type="button" class="fc-q" data-fid="${f.id}" data-d="-1">−</button>
               <span class="fc-qty">×${qty}</span>
@@ -1813,6 +1823,26 @@
       t.addEventListener("click", (e)=>{ e.stopPropagation();
         const row=area.querySelector('.fc-qtyrow[data-fid="'+t.dataset.fid+'"]');
         if(row) row.style.display = (row.style.display==="none") ? "flex" : "none";
+      });
+    });
+    // 直接改熱量(手動或拍照估的都能改):總熱量會回推每單位熱量
+    const startKcalEdit=(el)=>{ el.contentEditable="true"; el.focus(); document.getSelection().selectAllChildren(el); };
+    area.querySelectorAll(".fc-kcal-edit").forEach(btn=>{
+      btn.addEventListener("click",(e)=>{ e.stopPropagation();
+        const num=area.querySelector('.fc-kcal-num[data-fid="'+btn.dataset.fid+'"]'); if(num) startKcalEdit(num);
+      });
+    });
+    area.querySelectorAll(".fc-kcal-num").forEach(el=>{
+      el.addEventListener("click",(e)=>{ e.stopPropagation(); startKcalEdit(el); });
+      el.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); el.blur(); } });
+      el.addEventListener("blur", async ()=>{
+        el.contentEditable="false";
+        const f=foodLog.find(x=>x.id===el.dataset.fid); if(!f){ return; }
+        const total=parseInt((el.textContent||"").replace(/[^0-9]/g,""),10);
+        if(isNaN(total)||total<0){ renderFoodLog(); return; }
+        const qty=foodQty(f);
+        f.qty=qty; f.unit = qty>0 ? (total/qty) : total; f.kcal = Math.round(f.unit*qty);
+        await saveFoodLog(); renderFoodLog();
       });
     });
     area.querySelectorAll(".fc-drag").forEach(h=>{
@@ -2152,6 +2182,13 @@
     if(eb){ const upd=async ()=>{ const iso=isoDate(today); let v=parseInt(eb.value,10); if(isNaN(v)||v<0) v=0;
         if(v>0) exBurn[iso]=v; else delete exBurn[iso]; await saveExBurn(); renderFoodLog(); };
       eb.addEventListener("input", upd); eb.addEventListener("change", upd); }
+    const clearFood=document.getElementById("clearFoodBtn");
+    if(clearFood) clearFood.addEventListener("click", async ()=>{
+      const iso=isoDate(today); const todays=foodLog.filter(f=>f.date===iso);
+      if(!todays.length){ clearFood.textContent="今天還沒有紀錄"; setTimeout(()=>{ clearFood.textContent="🗑 清空今天,重新記錄"; },1500); return; }
+      if(!confirm("清空今天已記錄的 "+todays.length+" 項食物?可以重新記錄")) return;
+      foodLog=foodLog.filter(f=>f.date!==iso); await saveFoodLog(); renderFoodLog();
+    });
   }
 
 
@@ -2445,6 +2482,19 @@
     }
     btn.disabled=false; btn.textContent=oldT;
   }
+  // 一鍵清除運動計畫與所有選取,重新來
+  async function clearWorkout(){
+    if(!confirm("清除目前的運動計畫,以及所有選取(器材、部位、強度、目標)?可以重新選")) return;
+    workoutPlan=null;
+    focusSel.length=0; strengthSel.length=0; cardioSel.length=0;
+    ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs","woGoal"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+    renderEquip("focusChips", FOCUS_PRESET, focusSel);
+    renderEquip("strengthChips", STRENGTH_PRESET, strengthSel);
+    renderEquip("cardioChips", CARDIO_PRESET, cardioSel);
+    renderWorkout(null); updateWoMini();
+    const st=document.getElementById("woPhotoStatus"); if(st) st.innerHTML="";
+    await saveWorkout();
+  }
   // 快速規劃:只輸入「想瘦的部位 / 想要的身材」就產生計畫
   async function generateFromGoal(){
     const box=document.getElementById("woResult");
@@ -2547,6 +2597,7 @@
     const gen=document.getElementById("woGenBtn"); if(gen) gen.addEventListener("click", generateWorkoutPlan);
     const gb=document.getElementById("woGoalBtn"); if(gb) gb.addEventListener("click", generateFromGoal);
     const gi=document.getElementById("woGoal"); if(gi) gi.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); generateFromGoal(); } });
+    const cw=document.getElementById("clearWorkoutBtn"); if(cw) cw.addEventListener("click", clearWorkout);
     initWorkoutPhoto();
     ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs","woGoal"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
     // 部位 / 器材 的「其他」新增
