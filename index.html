@@ -767,7 +767,7 @@
   <div class="weight-box" id="todayMenuBox" style="border-style:solid;">
     <!-- filled by JS -->
   </div>
-  <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;">不想吃這些?換一份</button>
+  <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;width:100%;padding:14px 18px;font-size:var(--fs-body);font-weight:700;">不想吃這些?換一份</button>
   <div class="menu-regen-box" id="menuRegenBox">
     <div class="meal-tabs" id="regenMealTabs">
       <button type="button" class="meal-tab" data-rmeal="breakfast">早餐</button>
@@ -883,7 +883,7 @@
       <button class="meal-tab active" data-meal="早餐">早餐</button>
       <button class="meal-tab" data-meal="午餐">午餐</button>
       <button class="meal-tab" data-meal="晚餐">晚餐</button>
-      <button class="meal-tab" data-meal="點心">點心</button>
+      <button class="meal-tab" data-meal="點心">點心/水果</button>
     </div>
     <div class="food-input-row">
       <input class="fname" id="inFoodName" placeholder="吃了什麼?打字會跳建議選" autocomplete="off">
@@ -1182,7 +1182,7 @@
     "冰箱有什麼 · 煮什麼":"What's in the fridge","推薦可以煮的菜":"Suggested dishes",
     "剩餘天數":"Days left","完成天數":"Days done","最新體重":"Latest weight","每日打卡":"Daily check-in",
     // 餐 / 食物
-    "早餐":"Breakfast","午餐":"Lunch","晚餐":"Dinner","點心":"Snack","水果":"Fruit","水果點心":"Fruit / snack",
+    "早餐":"Breakfast","午餐":"Lunch","晚餐":"Dinner","點心":"Snack","點心/水果":"Snack / fruit","水果":"Fruit","水果點心":"Fruit / snack",
     "吃了什麼?打字會跳建議選":"What did you eat? Type to see suggestions","數量":"Qty","熱量":"kcal","加入":"Add",
     "份 / 顆 / 個(熱量會 ×數量)":"servings / pcs (kcal × qty)","加入這一餐":"Add this meal",
     "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
@@ -2825,7 +2825,7 @@
         </div>`;
       }).join("") : '<div class="mg-empty">拖食物到這裡,或按「＋ 補食材」</div>';
       const addBtn = base.includes(m) ? `<span class="mg-add" data-meal="${esc(m)}">＋ 補食材</span>` : '';
-      return `<div class="meal-group" data-meal="${esc(m)}"><div class="meal-group-title">${m} ${addBtn}</div>${rows}</div>`;
+      return `<div class="meal-group" data-meal="${esc(m)}"><div class="meal-group-title">${m==="點心"?"點心/水果":esc(m)} ${addBtn}</div>${rows}</div>`;
     }).join("");
 
     area.querySelectorAll(".fc-del").forEach(btn=>{
