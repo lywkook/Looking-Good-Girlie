@@ -564,6 +564,9 @@
   .ai-key-row{ display:none; gap:8px; margin-top:10px; }
   .ai-key-row.show{ display:flex; }
   .ai-key-row input{ flex:1; min-width:0; border:1.5px solid var(--line); border-radius:12px; padding:9px 12px; font-size:var(--fs-label); font-family:inherit; background:#fff; color:var(--ink); }
+  .set-key-row{ display:flex; gap:8px; }
+  .set-key-row input{ flex:1; min-width:0; border:1.5px solid var(--line); border-radius:12px; padding:10px 12px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); }
+  .ai-key-hint{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.55; margin-top:8px; }
   .fridge-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
   .fchip{ display:inline-flex; align-items:center; gap:5px; padding:8px 14px; border-radius:20px;
     background:#FFFDFA; border:2px solid var(--line); color:var(--ink-soft);
@@ -805,7 +808,7 @@
       <button type="button" class="mini-btn" id="menuPhotoBtn">上傳菜單照片</button>
       <span class="menu-photo-preview" id="menuPhotoPreview"></span>
     </div>
-    <div class="menu-regen-sub">貼餐廳連結、或上傳菜單照片,AI 會讀那份菜單、幫你挑一道最適合減重的餐點(讀連結建議用 Google 金鑰)。</div>
+    <div class="menu-regen-sub">貼餐廳連結、或上傳菜單照片,AI 都會讀菜單幫你挑一道。菜單照片 Google / Groq 都讀得到;只有「讀網頁連結」用 Google 比較穩。</div>
     <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">讓 AI 換這一餐</button>
     <div class="ai-photo-status" id="menuRegenStatus"></div>
   </div>
@@ -1078,6 +1081,20 @@
   <div class="modal-inner">
     <div class="modal-head"><span class="modal-title cute"><span id="setModalTitle">設定</span> ⚙️</span><button type="button" class="modal-close" id="setClose">✕</button></div>
 
+    <div class="set-block" id="setKeyBlock">
+      <div class="set-title">AI 金鑰</div>
+      <div class="set-key-row">
+        <input type="password" id="setKeyInput" placeholder="貼上免費金鑰(Google 或 Groq)" autocomplete="off">
+        <button type="button" class="mini-btn" id="setKeySave">儲存</button>
+      </div>
+      <div class="ai-key-hint" id="aiKeyHint"></div>
+      <div class="ai-key-line">
+        免費申請:
+        <a class="ai-key-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>
+        <a class="ai-key-link" href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>
+      </div>
+    </div>
+
     <div class="set-block" id="setProfileBlock">
       <div class="set-title">個人資料</div>
       <div class="metric-inputs">
@@ -1235,14 +1252,14 @@
     "還想吃什麼?(可留空,AI 幫你決定)":"Anything else you fancy? (optional — AI decides if blank)",
     "要外食?貼餐廳 Google Maps 或官網連結":"Eating out? Paste the restaurant's Google Maps or website link",
     "上傳菜單照片":"Upload menu photo",
-    "上傳菜單照片需要一把免費 AI 金鑰(建議 Google)。到下方「飲食紀錄」的 🔑 貼上即可。":"Uploading a menu photo needs a free AI key (Google recommended). Paste one at the 🔑 in Food log below.",
-    "讀取餐廳連結或菜單照片需要一把免費 AI 金鑰(建議用 Google)。到下方「飲食紀錄」的 🔑 貼上金鑰即可。":"Reading a restaurant link or menu photo needs a free AI key (Google recommended). Paste one at the 🔑 in Food log below.",
-    "貼餐廳連結、或上傳菜單照片,AI 會讀那份菜單、幫你挑一道最適合減重的餐點(讀連結建議用 Google 金鑰)。":"Paste a restaurant link or upload a menu photo — AI reads the menu and picks the best dish for your goal (reading links works best with a Google key).",
+    "上傳菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(Google / Groq 都行)。":"Uploading a menu photo needs a free AI key. Paste one under “AI key” at the top of ⚙️ Settings (works on Google or Groq).",
+    "讀取餐廳連結或菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(菜單照片 Google / Groq 都行)。":"Reading a restaurant link or menu photo needs a free AI key. Paste one under “AI key” at the top of ⚙️ Settings (menu photos work on Google or Groq).",
+    "貼餐廳連結、或上傳菜單照片,AI 都會讀菜單幫你挑一道。菜單照片 Google / Groq 都讀得到;只有「讀網頁連結」用 Google 比較穩。":"Paste a restaurant link or upload a menu photo — AI reads the menu and picks a dish. Menu photos work on both Google and Groq; only reading web links is more reliable with Google.",
     "清空今天,重新記錄":"Clear today & restart","存進今天的紀錄":"Save to today's log","清空今日所有紀錄":"Clear today's records","清空運動計劃,重新選取":"Clear workout & reselect",
     // 拍照 / AI 金鑰
     "拍照估熱量":"Photo calories","加照片(選填)":"Add photo (optional)",
     "上傳食物照片估熱量(可多張)":"Upload food photos to auto-estimate calories (multiple ok)",
-    "AI 金鑰設定":"AI key","貼上免費金鑰(Google 或 Groq)":"Paste your free key (Google or Groq)",
+    "AI 金鑰設定":"AI key","AI 金鑰":"AI key","免費申請:":"Get a free key: ","貼上免費金鑰(Google 或 Groq)":"Paste your free key (Google or Groq)",
     "(需要先在「飲食紀錄」貼上免費金鑰)":"(First paste a free key in Food Log)",
     // 喝水
     "每日目標(1 杯 250ml)":"Daily goal (1 cup = 250ml)","杯":"cups",
@@ -2106,7 +2123,7 @@
     const field = regenField, label = MEAL_LABEL[field];
     if(!anyKey()){
       if(rest || hasPhoto){
-        status.innerHTML = '<span class="err">讀取餐廳連結或菜單照片需要一把免費 AI 金鑰(建議用 Google)。到下方「飲食紀錄」的 🔑 貼上金鑰即可。</span>';
+        status.innerHTML = '<span class="err">讀取餐廳連結或菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(菜單照片 Google / Groq 都行)。</span>';
         return;
       }
       applyMeal(field, localNewMeal(field));
@@ -2121,18 +2138,24 @@
         status.innerHTML = '<span class="ai-spin"></span>正在讀菜單照片、幫你挑'+label+'…';
         const m = await menuPhotoPick(menuPhotos, wish, label, target);
         const text = (m && m.text) || "";
-        if(!text) throw new Error("菜單照片看不清楚");
-        applyMeal(field, text);
-        const why = (m && m.why) ? ' <span style="color:var(--ink-soft);font-size:var(--fs-hint)">'+esc(m.why)+'</span>' : '';
-        status.innerHTML = '<span class="ok">從你的菜單照片挑了 ✅ 已套用到上面</span>'+why;
+        if(!text){
+          status.innerHTML = '<span class="err">這份菜單照片看不太清楚。拍近一點、光線亮一點、把菜名拍清楚再試 🙏</span>';
+        } else {
+          applyMeal(field, text);
+          const why = (m && m.why) ? ' <span style="color:var(--ink-soft);font-size:var(--fs-hint)">'+esc(m.why)+'</span>' : '';
+          status.innerHTML = '<span class="ok">從你的菜單照片挑了 ✅ 已套用到上面</span>'+why;
+        }
       } else if(rest){
         status.innerHTML = '<span class="ai-spin"></span>正在讀取餐廳菜單、幫你挑'+label+'…';
         const m = await restaurantPick(rest, wish, label, target);
         const text = (m && m.text) || "";
-        if(!text) throw new Error("讀不到這間餐廳的菜單");
-        applyMeal(field, text);
-        const why = (m && m.why) ? ' <span style="color:var(--ink-soft);font-size:var(--fs-hint)">'+esc(m.why)+'</span>' : '';
-        status.innerHTML = '<span class="ok">幫你從這間餐廳挑了 ✅ 已套用到上面</span>'+why;
+        if(!text){
+          status.innerHTML = '<span class="err">這個連結讀不到菜單(Google Maps 短連結常常只有店名、沒有完整菜單)。改貼餐廳「官網 / 菜單頁」網址,或直接用上面「上傳菜單照片」把菜單拍給 AI 讀,通常更準。</span>';
+        } else {
+          applyMeal(field, text);
+          const why = (m && m.why) ? ' <span style="color:var(--ink-soft);font-size:var(--fs-hint)">'+esc(m.why)+'</span>' : '';
+          status.innerHTML = '<span class="ok">幫你從這間餐廳挑了 ✅ 已套用到上面</span>'+why;
+        }
       } else {
         status.innerHTML = '<span class="ai-spin"></span>重新設計'+label+'中…';
         const prompt = '幫減重的人設計今天的「'+label+'」,每日約 '+target+' 大卡,原型食物、好準備。'
@@ -2147,9 +2170,9 @@
       }
     }catch(e){
       if(hasPhoto){
-        status.innerHTML = '<span class="err">讀不出這份菜單('+esc(e.message||e)+')。拍近一點、光線亮一點、字清楚一點再試 🙏</span>';
+        status.innerHTML = '<span class="err">讀取失敗('+esc(e.message||e)+')。換張更清楚的菜單照片再試 🙏</span>';
       } else if(rest){
-        status.innerHTML = '<span class="err">讀不到這間餐廳的菜單('+esc(e.message||e)+')。試試改貼餐廳「官網或菜單頁」的網址,通常比 Google Maps 更容易讀到。</span>';
+        status.innerHTML = '<span class="err">讀取失敗('+esc(e.message||e)+')。可改貼餐廳「官網 / 菜單頁」網址,或直接用「上傳菜單照片」拍菜單給 AI 讀。</span>';
       } else {
         applyMeal(field, localNewMeal(field));
         status.innerHTML = '<span class="err">AI 失敗('+esc(e.message||e)+'),先幫你換一種現成的。</span>';
@@ -2174,7 +2197,7 @@
     const photoInput = document.getElementById("menuPhotoInput");
     if(photoBtn && photoInput){
       photoBtn.addEventListener("click", ()=>{
-        if(!anyKey()){ document.getElementById("menuRegenStatus").innerHTML='<span class="err">上傳菜單照片需要一把免費 AI 金鑰(建議 Google)。到下方「飲食紀錄」的 🔑 貼上即可。</span>'; return; }
+        if(!anyKey()){ document.getElementById("menuRegenStatus").innerHTML='<span class="err">上傳菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(Google / Groq 都行)。</span>'; return; }
         photoInput.click();
       });
       photoInput.addEventListener("change", async ()=>{
@@ -3455,6 +3478,18 @@
       keyInput.value=""; updateAIKeyHint();
       status.innerHTML = v ? '<span class="ok">金鑰已儲存 ✅ 現在可以上傳照片了</span>' : '<span class="err">已清除金鑰</span>';
     });
+    // 設定裡最上方那一組金鑰輸入(永遠顯示,不用展開)
+    const setKeyInput=document.getElementById("setKeyInput");
+    const setKeySave=document.getElementById("setKeySave");
+    if(setKeySave && setKeyInput){
+      setKeySave.addEventListener("click", async ()=>{
+        const v=cleanKey(setKeyInput.value);
+        geminiKey=v;
+        try{ await window.storage.set("geminikey", v, false); }catch(e){}
+        setKeyInput.value=""; updateAIKeyHint();
+      });
+      setKeyInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); setKeySave.click(); } });
+    }
     btn.addEventListener("click", ()=>{
       if(!anyKey()){ keyRow.classList.add("show"); status.innerHTML='<span class="err">請先貼上免費金鑰(下方 🔑 展開)</span>'; keyInput.focus(); return; }
       input.click();
@@ -4343,6 +4378,10 @@
     if(db) db.style.display=(!isHome && PLAN)?"":"none";
     const eb=document.getElementById("setExportBlock");
     if(eb) eb.style.display=(!isHome && PLAN)?"":"none";
+    const kb=document.getElementById("setKeyBlock");
+    if(kb) kb.style.display=(!isHome && PLAN)?"":"none";
+    const ski=document.getElementById("setKeyInput"); if(ski) ski.value="";
+    updateAIKeyHint();
     const ttl=document.getElementById("setModalTitle"); if(ttl) ttl.textContent = isHome ? t("主畫面外觀") : t("設定");
     renderAccentSwatches(); renderSwatches(); refreshBgAdjustUI();
     document.getElementById("settingsModal").classList.add("show");
