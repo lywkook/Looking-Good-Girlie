@@ -356,15 +356,19 @@
   .home-title{ font-size:32px; font-weight:400; color:var(--ink); }
   .home-sub{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:4px; }
   .home-list{ display:flex; flex-direction:column; gap:12px; }
-  .home-card{ background:var(--card); border-radius:20px; padding:20px 22px; box-shadow:var(--shadow);
-    border:2px solid var(--pink-soft); cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  .home-card:active{ transform:scale(0.99); }
+  .home-row{ position:relative; border-radius:20px; overflow:hidden; }
+  .home-del-bg{ position:absolute; top:0; right:0; bottom:0; width:88px; display:flex;
+    flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    background:#D98C8C; color:#fff; cursor:pointer; }
+  .home-del-bg svg{ width:22px; height:22px; }
+  .home-del-bg span{ font-size:var(--fs-label); font-weight:700; }
+  .home-card{ position:relative; background:var(--card); border-radius:20px; padding:20px 22px; box-shadow:var(--shadow);
+    border:2px solid var(--pink-soft); cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    touch-action:pan-y; transition:transform .22s cubic-bezier(.22,.61,.36,1); will-change:transform; }
+  .home-card.dragging{ transition:none; }
   .home-card-name{ font-size:var(--fs-title); font-weight:900; color:var(--ink); }
   .home-card-type{ font-size:var(--fs-label); color:#fff; background:var(--pink); border-radius:20px; padding:3px 12px; white-space:nowrap; }
   .home-card .home-arrow{ color:var(--pink); font-size:var(--fs-title); }
-  .home-card .home-del{ font-size:var(--fs-label); color:var(--ink-soft); background:var(--pink-soft);
-    border-radius:20px; padding:3px 10px; white-space:nowrap; cursor:pointer; }
-  .home-card .home-del:active{ opacity:0.6; }
   .danger-btn{ width:100%; border:1.5px solid #D9B3B3; background:#F7ECEC; color:#9E5A5A;
     border-radius:14px; padding:12px; font-size:var(--fs-body); font-weight:700; cursor:pointer; }
   .danger-btn:active{ opacity:0.7; }
@@ -2612,18 +2616,73 @@
   async function saveThemeColor(){ try{ await window.storage.set(K("themecolor"), themeColor, false); }catch(e){} }
 
   // ---------- 主畫面(顯示所有計畫,點選進入) ----------
+  const DEL_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6M10 11v6M14 11v6"/></svg>';
   function renderHome(){
     const box=document.getElementById("homeList"); if(!box) return;
-    box.innerHTML = plans.map(p=>`<div class="home-card" data-id="${p.id}">
-        <div class="home-card-name">${esc(p.name)}</div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="home-card-type">${esc(PLAN_LABEL[p.type]||'')}</span>
-          ${p.id!=="default"?`<span class="home-del" data-del="${p.id}">刪除</span>`:''}
-          <span class="home-arrow">›</span>
+    box.innerHTML = plans.map(p=>{
+      const canDel = p.id!=="default";
+      return `<div class="home-row" data-id="${p.id}">
+        ${canDel?`<div class="home-del-bg" data-del="${p.id}">${DEL_SVG}<span>刪除</span></div>`:''}
+        <div class="home-card" data-id="${p.id}">
+          <div class="home-card-name">${esc(p.name)}</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="home-card-type">${esc(PLAN_LABEL[p.type]||'')}</span>
+            <span class="home-arrow">›</span>
+          </div>
         </div>
-      </div>`).join("");
-    box.querySelectorAll(".home-card").forEach(c=> c.addEventListener("click", (e)=>{ if(e.target.classList.contains("home-del")) return; enterPlan(c.dataset.id); }));
-    box.querySelectorAll(".home-del").forEach(d=> d.addEventListener("click", (e)=>{ e.stopPropagation(); deletePlan(d.dataset.del); }));
+      </div>`;
+    }).join("");
+    box.querySelectorAll(".home-del-bg").forEach(d=> d.addEventListener("click", (e)=>{ e.stopPropagation(); deletePlan(d.dataset.del); }));
+    box.querySelectorAll(".home-row").forEach(row=> initSwipeCard(row));
+  }
+  // 主畫面計畫卡:往左滑露出刪除鈕;輕點進入計畫
+  function initSwipeCard(row){
+    const card=row.querySelector(".home-card");
+    const canDel=!!row.querySelector(".home-del-bg");
+    const OPEN=-88, THRESH=44;
+    let startX=0, startY=0, cur=0, dragging=false, decided=false, horiz=false, moved=false;
+    const setX=(x)=>{ cur=x; card.style.transform="translateX("+x+"px)"; };
+    const closeAll=(except)=>{ box_scope().querySelectorAll(".home-card").forEach(c=>{ if(c!==except){ c.style.transform=""; c.dataset.open=""; } }); };
+    function box_scope(){ return document.getElementById("homeList"); }
+    card.addEventListener("pointerdown",(e)=>{
+      if(e.button&&e.button!==0) return;
+      startX=e.clientX; startY=e.clientY; dragging=true; decided=false; horiz=false; moved=false;
+      const opened=card.dataset.open==="1"; setX(opened?OPEN:0);
+    });
+    card.addEventListener("pointermove",(e)=>{
+      if(!dragging) return;
+      const dx=e.clientX-startX, dy=e.clientY-startY;
+      if(!decided){
+        if(Math.abs(dx)<6&&Math.abs(dy)<6) return;
+        decided=true; horiz=Math.abs(dx)>Math.abs(dy);
+        if(horiz&&canDel){ card.classList.add("dragging"); card.setPointerCapture(e.pointerId); }
+      }
+      if(horiz&&canDel){
+        moved=true; e.preventDefault();
+        const base=card.dataset.open==="1"?OPEN:0;
+        let x=base+dx; if(x>0)x=0; if(x<OPEN-30)x=OPEN-30;
+        setX(x);
+      }
+    });
+    function endDrag(){
+      if(!dragging) return; dragging=false;
+      card.classList.remove("dragging");
+      if(horiz&&canDel){
+        const shouldOpen = cur <= -THRESH; // 往左滑超過門檻就固定露出刪除鈕
+        if(shouldOpen){ closeAll(card); card.style.transform="translateX("+OPEN+"px)"; card.dataset.open="1"; }
+        else{ card.style.transform=""; card.dataset.open=""; }
+      }
+    }
+    card.addEventListener("pointerup",(e)=>{
+      const wasHoriz=horiz, didMove=moved, wasOpen=card.dataset.open==="1";
+      endDrag();
+      if(!wasHoriz && !didMove){
+        // a tap: if open, close; else enter plan
+        if(wasOpen){ card.style.transform=""; card.dataset.open=""; }
+        else enterPlan(card.dataset.id);
+      }
+    });
+    card.addEventListener("pointercancel", endDrag);
   }
   function openSettings(){
     const t = PLAN ? PLAN.type : "";
