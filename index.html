@@ -2104,7 +2104,14 @@
       + '\n只回 JSON、不要多餘文字:{"text":"菜單上的餐點名稱+簡短吃法建議(例:去醬、飲料換無糖),不超過25字","why":"為什麼推薦這道,不超過30字"}。'
       + '\n若照片看不清楚、看不出是菜單,text 請回空字串。';
     const parts = b64s.map(b=>({inline_data:{mime_type:"image/jpeg", data:b}}));
-    return await geminiJSON(prompt, parts, 0.4);
+    try{ return await geminiJSON(prompt, parts, 0.2); }
+    catch(e){
+      const msg=String((e&&e.message)||e);
+      if(!/格式看不懂|沒有回覆|看不懂/.test(msg)) throw e;   // 金鑰/額度/網路錯誤就不重試
+      // 菜單照片有時第一次讀不乾淨,用更硬的指令、溫度 0 再試一次
+      const strict = prompt + '\n重要:只輸出「一個」JSON 物件,格式 {"text":"...","why":"..."},前後不要任何說明文字。';
+      return await geminiJSON(strict, parts, 0);
+    }
   }
   function updateMenuPhotoPreview(){
     const el = document.getElementById("menuPhotoPreview"); if(!el) return;
@@ -2170,7 +2177,7 @@
       }
     }catch(e){
       if(hasPhoto){
-        status.innerHTML = '<span class="err">讀取失敗('+esc(e.message||e)+')。換張更清楚的菜單照片再試 🙏</span>';
+        status.innerHTML = '<span class="err">AI 這次沒讀好('+esc(e.message||e)+')。菜單照片還在,直接再按一次「讓 AI 換這一餐」通常就好;若一直失敗,拍近一點、光線亮一點再試 🙏</span>';
       } else if(rest){
         status.innerHTML = '<span class="err">讀取失敗('+esc(e.message||e)+')。可改貼餐廳「官網 / 菜單頁」網址,或直接用「上傳菜單照片」拍菜單給 AI 讀。</span>';
       } else {
@@ -3196,12 +3203,31 @@
   }
   // 容錯 JSON 解析:AI 有時會多回 ```json 圍欄或前後多字,盡量抓出 JSON 主體
   function parseLooseJSON(txt){
-    if(!txt) return null;
-    try{ return JSON.parse(txt); }catch(e){}
-    let t = String(txt).replace(/```json/gi,"").replace(/```/g,"").trim();
+    if(txt==null) return null;
+    if(typeof txt==="object") return txt;
+    let t = String(txt);
     try{ return JSON.parse(t); }catch(e){}
-    const m = t.match(/[\{\[][\s\S]*[\}\]]/);
-    if(m){ try{ return JSON.parse(m[0]); }catch(e){} }
+    t = t.replace(/```json/gi,"").replace(/```/g,"").trim();
+    try{ return JSON.parse(t); }catch(e){}
+    // 抓最外層 {...}(從第一個 { 到最後一個 }),再修常見小毛病後重試
+    const first=t.indexOf("{"), last=t.lastIndexOf("}");
+    if(first>=0 && last>first){
+      const cand=t.slice(first,last+1);
+      try{ return JSON.parse(cand); }catch(e){}
+      // 全形引號/冒號/逗號、單引號、尾逗號 → 修成合法 JSON 再試
+      const fixed=cand
+        .replace(/[“”]/g,'"').replace(/[‘’]/g,'"')
+        .replace(/：/g,":").replace(/，/g,",")
+        .replace(/,\s*([}\]])/g,"$1");
+      try{ return JSON.parse(fixed); }catch(e){}
+    }
+    // 陣列格式
+    const fa=t.indexOf("["), la=t.lastIndexOf("]");
+    if(fa>=0 && la>fa){ try{ return JSON.parse(t.slice(fa,la+1)); }catch(e){} }
+    // 最後手段:即使 JSON 壞了,也把 "text":"..." / "name":"..." 這種欄位撈出來,避免直接失敗
+    const grab=(k)=>{ const m=t.match(new RegExp('["\']?'+k+'["\']?\\s*[:\\uFF1A]\\s*["\']([^"\'\\n]{1,80})["\']')); return m?m[1].trim():null; };
+    const text=grab("text")||grab("name"), why=grab("why")||grab("note");
+    if(text) return why ? { text, why } : { text };
     return null;
   }
   // 依序嘗試目前仍在免費額度內的模型(舊的 gemini-2.0-flash 免費額度已歸零,擺最後備援)
@@ -3250,17 +3276,32 @@
       GROQ_TEXT.forEach(m=>{ if(models.indexOf(m)<0) models.push(m); });
       if(groqGoodText) models = [groqGoodText].concat(models.filter(m=>m!==groqGoodText));
     }
-    let lastMsg="連線失敗", quota=false;
+    let lastMsg="連線失敗", quota=false, parseFail=false;
     for(const mdl of models){
-      let res;
-      try{ res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:mdl,messages:[{role:"user",content}],temperature:temp==null?0.3:temp})}); }
-      catch(netErr){ lastMsg="無法連線到 Groq(可能是瀏覽器限制)"; continue; }
-      if(res.ok){ const data=await res.json(); const txt=(((data.choices||[])[0]||{}).message||{}).content||""; const o=parseLooseJSON(txt); if(o!=null){ if(hasImg) groqGoodVision=mdl; else groqGoodText=mdl; return o; } throw new Error("AI 回傳格式看不懂,請再試一次"); }
-      let msg="錯誤 "+res.status; const st=res.status; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
-      lastMsg=msg;
-      if(st===401||st===403) throw new Error("Groq 金鑰無效,請確認是 gsk_ 開頭的金鑰(到 console.groq.com/keys 申請)。");
-      if(st===429) quota=true;
+      // 先用 Groq 的 JSON 模式(逼模型只回合法 JSON);模型不支援時再退回一般模式試同一個
+      for(const useJson of [true, false]){
+        const body={ model:mdl, messages:[{role:"user",content}], temperature:temp==null?0.3:temp };
+        if(useJson) body.response_format={type:"json_object"};
+        let res;
+        try{ res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify(body)}); }
+        catch(netErr){ lastMsg="無法連線到 Groq(可能是瀏覽器限制)"; break; }
+        if(res.ok){
+          const data=await res.json(); const txt=(((data.choices||[])[0]||{}).message||{}).content||"";
+          const o=parseLooseJSON(txt);
+          if(o!=null){ if(hasImg) groqGoodVision=mdl; else groqGoodText=mdl; return o; }
+          parseFail=true;
+          if(useJson) continue;   // JSON 模式還是壞 → 退回一般模式再試同一個模型
+          break;                  // 一般模式也解析不出來 → 換下一個模型
+        }
+        let msg="錯誤 "+res.status; const st=res.status; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
+        lastMsg=msg;
+        if(st===401||st===403) throw new Error("Groq 金鑰無效,請確認是 gsk_ 開頭的金鑰(到 console.groq.com/keys 申請)。");
+        if(st===429){ quota=true; break; }
+        if(useJson && /json|response_format|not support/i.test(msg)) continue;   // 這個模型不支援 JSON 模式 → 用一般模式重試
+        break;   // 其他錯誤 → 換下一個模型
+      }
     }
+    if(parseFail && !quota) throw new Error("AI 回傳格式看不懂,請再按一次試試");
     if(quota) throw new Error("Groq 額度滿了,稍等再試。");
     if(hasImg){
       throw new Error("這把 Groq 金鑰無法看圖(帳號沒有看圖模型)。拍照請改用 Google 金鑰(到 Google AI Studio 免費申請,貼上即可)。");
