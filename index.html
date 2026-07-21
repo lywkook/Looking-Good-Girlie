@@ -268,6 +268,10 @@
 
   .history{ margin-top:14px; }
   .dt-title{ font-size:var(--fs-label); font-weight:800; color:var(--ink); margin:16px 0 6px; }
+  .history-toggle{ width:100%; margin-top:16px; padding:12px 14px; border:2px solid var(--line); border-radius:12px;
+    background:#FFFDFA; color:var(--ink); font-size:var(--fs-label); font-weight:800; font-family:inherit; cursor:pointer;
+    display:flex; justify-content:space-between; align-items:center; }
+  #historyBody{ margin-top:8px; }
   .data-table-wrap{ max-height:260px; overflow:auto; border:1px solid var(--line); border-radius:12px; }
   .data-table{ width:100%; border-collapse:collapse; font-size:var(--fs-label); }
   .data-table th, .data-table td{ padding:9px 6px; text-align:center; white-space:nowrap; border-bottom:1px solid var(--line); }
@@ -2799,6 +2803,16 @@
     const y=v=> h-padY - ((v-minV)/(maxV-minV))*(h-padY*2);
     const path = pts.map((p,idx)=>(idx===0?"M":"L")+x(idx).toFixed(1)+","+y(p.v).toFixed(1)).join(" ");
     const dots = pts.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="4" fill="${cfg.color}" stroke="#fff" stroke-width="1.5"/>`).join("");
+    // 每個資料點上標數值(點多就每隔幾點標一次,避免擠在一起)
+    const step = n<=14 ? 1 : Math.ceil(n/10);
+    const labels = pts.map((p,idx)=>{
+      if(idx!==0 && idx!==n-1 && idx%step!==0) return "";
+      const xx=x(idx), yy=y(p.v);
+      const anchor = n===1?"middle":(idx===0?"start":(idx===n-1?"end":"middle"));
+      const ty = (yy-10 > 12) ? (yy-9) : (yy+18);   // 靠上緣就標到點的下方,避免被切掉
+      const dx = idx===0?2:(idx===n-1?-2:0);
+      return `<text x="${(xx+dx).toFixed(1)}" y="${ty.toFixed(1)}" font-size="12.5" font-weight="800" fill="#6E655B" text-anchor="${anchor}">${p.v}</text>`;
+    }).join("");
     let goalLine="";
     if(goal!=null){
       const gy=y(goal).toFixed(1);
@@ -2810,6 +2824,7 @@
         ${goalLine}
         <path d="${path}" fill="none" stroke="${cfg.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         ${dots}
+        ${labels}
       </svg>`;
     if(analysis) analysis.innerHTML = metricAnalysis(chartMetric, pts, cfg, goal);
   }
@@ -2830,20 +2845,31 @@
       </div>`;
   }
 
+  let historyOpen = false;   // 歷史紀錄預設收合,由使用者自己點開
   function drawHistory(){
     const area = document.getElementById("historyArea");
     if(!log.length){ area.innerHTML=""; return; }
     const P=(zh,en)=> (typeof lang!=="undefined"&&lang==="en")?en:zh;
-    const sorted = [...log].sort((a,b)=>b.date.localeCompare(a.date));
+    // 計畫開始第一天到「今天」的所有紀錄,舊到新排序
+    const startIso = (typeof PLAN!=="undefined" && PLAN && PLAN.start) ? PLAN.start : "";
+    const todayIso = (typeof today!=="undefined" && typeof isoDate==="function") ? isoDate(today) : "9999-12-31";
+    const sorted = [...log]
+      .filter(p=> (!startIso || p.date>=startIso) && p.date<=todayIso)
+      .sort((a,b)=>a.date.localeCompare(b.date));
+    if(!sorted.length){ area.innerHTML=""; return; }
     const cell=v=> (v==null||v==="") ? '<span class="dt-none">—</span>' : v;
     const rows = sorted.map(p=>{
       const d = new Date(p.date+"T00:00:00");
       return `<tr><td class="dt-date">${fmtDate(d)}</td><td>${cell(p.weight)}</td><td>${cell(p.fat)}</td><td>${cell(p.bmi)}</td><td>${cell(p.muscle)}</td></tr>`;
     }).join("");
-    area.innerHTML = `<div class="dt-title">${P('歷史紀錄','History')}</div>`
-      + `<div class="data-table-wrap"><table class="data-table">`
+    const table = `<div class="data-table-wrap"><table class="data-table">`
       + `<thead><tr><th>${P('日期','Date')}</th><th>${P('體重','Weight')}<br>kg</th><th>${P('體脂','Fat')}<br>%</th><th>BMI</th><th>${P('肌肉','Muscle')}<br>kg</th></tr></thead>`
       + `<tbody>${rows}</tbody></table></div>`;
+    area.innerHTML = `<button type="button" class="history-toggle" id="historyToggle">`
+      + `<span>${P('歷史紀錄','History')} (${sorted.length})</span><span class="pf-caret">${historyOpen?'▾':'▸'}</span></button>`
+      + `<div id="historyBody"${historyOpen?'':' style="display:none"'}>${table}</div>`;
+    const tg=document.getElementById("historyToggle");
+    if(tg) tg.addEventListener("click", ()=>{ historyOpen=!historyOpen; drawHistory(); });
   }
 
   document.getElementById("addWeightBtn").addEventListener("click", async ()=>{
