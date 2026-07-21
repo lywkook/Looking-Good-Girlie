@@ -529,6 +529,16 @@
   .wo-plan-title{ font-size:var(--fs-body); font-weight:900; color:var(--ink); }
   .wo-plan-caret{ font-size:var(--fs-label); color:var(--pink); font-weight:800; white-space:nowrap; }
   .wo-plan-body{ margin-top:4px; }
+  .wo-adjust{ margin-top:12px; background:var(--pink-soft); border-radius:14px; padding:12px 14px; }
+  .wo-adjust-title{ font-size:var(--fs-label); font-weight:800; color:var(--ink); margin-bottom:8px; }
+  .wo-adjust-row{ display:flex; gap:8px; }
+  .wo-adjust-row input{ flex:1; min-width:0; padding:9px 12px; border-radius:12px; border:2px solid var(--line);
+    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
+  .wo-adjust-row input:focus{ outline:none; border-color:var(--pink); }
+  .wo-adjust-quick{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .wo-chip-btn{ font-size:var(--fs-label); background:#fff; border:1.5px solid var(--pink); color:var(--pink);
+    border-radius:20px; padding:4px 12px; cursor:pointer; font-weight:700; }
+  .wo-chip-btn:active{ opacity:0.6; }
   .wo-week{ margin-top:12px; }
   .wo-day{ background:#FFFBF6; border:2px solid var(--line); border-radius:14px; padding:11px 13px; margin-bottom:9px; }
   .wo-day-h{ font-size:var(--fs-body); margin-bottom:5px; }
@@ -718,6 +728,19 @@
     </div>
     <button class="save-btn cute" id="woGenBtn" style="margin-top:14px;">✨ 生成運動計劃</button>
     <div id="woResult"></div>
+    <div class="wo-adjust" id="woAdjustBox" style="display:none;">
+      <div class="wo-adjust-title">🔁 臨時要改?說一下今天/這週的變動,幫你重新整合安排</div>
+      <div class="wo-adjust-row">
+        <input id="woAdjustInput" placeholder="例:今天想休息 / 只想練上半身 / 這週只能練 3 天" autocomplete="off">
+        <button type="button" class="mini-btn" id="woAdjustBtn">重新調整 ✨</button>
+      </div>
+      <div class="wo-adjust-quick" id="woAdjustQuick">
+        <span class="wo-chip-btn" data-q="今天想休息,把今天的訓練分配到本週其他天">今天休息</span>
+        <span class="wo-chip-btn" data-q="今天只想做輕鬆的伸展或散步">今天輕鬆做</span>
+        <span class="wo-chip-btn" data-q="這週只能練 3 天,幫我重新排">這週練 3 天</span>
+      </div>
+      <div class="ai-photo-status" id="woAdjustStatus"></div>
+    </div>
     <div class="clear-row"><button type="button" class="clear-all-btn" id="clearWorkoutBtn">🗑 清除運動計畫,重新選取</button></div>
 
     <div id="checkinBlock">
@@ -2625,6 +2648,7 @@
   }
   function renderWorkout(plan){
     const box=document.getElementById("woResult"); if(!box) return;
+    const ab=document.getElementById("woAdjustBox"); if(ab) ab.style.display = plan ? "" : "none";
     if(!plan){ box.innerHTML=""; return; }
     const collapsed=woPlanCollapsed;
     let h='<div class="wo-plan-head" id="woPlanToggle"><span class="wo-plan-title">📋 你的運動計畫</span><span class="wo-plan-caret">'+(collapsed?'展開 ▸':'收起 ▾')+'</span></div>';
@@ -2826,6 +2850,38 @@
       if(btn){ btn.disabled=false; btn.textContent=oldT; }
     }
   }
+  // 臨時調整計畫:給 AI 目前計畫 + 使用者的變動,重新整合評估、推薦新的一週安排
+  async function adjustWorkoutPlan(changeArg){
+    const status=document.getElementById("woAdjustStatus");
+    const inp=document.getElementById("woAdjustInput");
+    const change=((changeArg!=null?changeArg:(inp?inp.value:""))||"").trim();
+    if(!change){ if(inp) inp.focus(); return; }
+    if(!anyKey()){ status.innerHTML='<span class="err">重新整合需要 AI 金鑰(到「飲食紀錄」的 🔑 貼上免費金鑰)</span>'; return; }
+    if(!workoutPlan || !Array.isArray(workoutPlan.week)){ status.innerHTML='<span class="err">還沒有計畫可以調整,先按上面「✨ 生成運動計劃」</span>'; return; }
+    const btn=document.getElementById("woAdjustBtn"); const oldT=btn?btn.textContent:""; if(btn){ btn.disabled=true; btn.textContent="調整中…"; }
+    status.innerHTML='<span class="ai-spin"></span>重新整合你的計畫…';
+    try{
+      const wd="週"+["日","一","二","三","四","五","六"][today.getDay()];
+      const cur=JSON.stringify((workoutPlan.week||[]).map(d=>({day:d.day,type:d.type,focus:d.focus,items:d.items})));
+      const days=parseInt(document.getElementById("woDays").value,10)||4;
+      const cardio=parseInt(document.getElementById("woCardio").value,10)||20;
+      const focusStr = focusSel.length ? ("想加強:"+focusSel.join("、")+"。") : "";
+      const prompt='你是健身教練。以下是使用者「目前的一週運動計畫」(JSON):'+cur+'。今天是'+wd+'。'
+        +'使用者臨時想調整:「'+change+'」。請「重新整合、評估」整週安排,產生調整後的新計畫:'
+        +'若某天改成休息或改練別的,請把原本那天的訓練量/部位「合理地分配到本週其他天」(避免連續兩天高強度、維持整週的訓練量與部位平衡),缺的部位要補回來,不要只是把某天刪掉。'
+        +'每週約'+days+'天訓練、每次有氧'+cardio+'分。'+focusStr+intensityLine()+equipConstraint()
+        +'每個動作都要寫「具體動作名稱」(例:深蹲、弓箭步、二頭彎舉)與「組數×次數」或「時間」。'
+        +'只回 JSON:{"summary":"一句話說明你怎麼調整的","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
+      const obj=await geminiJSON(prompt, null, 0.3);
+      if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
+      workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
+      if(inp) inp.value="";
+      status.innerHTML='<span class="ok">已重新整合並更新計畫 ✅ 每日打卡也同步了</span>';
+    }catch(e){
+      status.innerHTML='<span class="err">調整失敗:'+esc(e.message||e)+'</span>';
+    }
+    if(btn){ btn.disabled=false; btn.textContent=oldT; }
+  }
   function updateWoMini(){
     const mini=document.getElementById("woMini"); if(!mini) return;
     const d=document.getElementById("woDays").value;
@@ -2853,6 +2909,9 @@
     const gen=document.getElementById("woGenBtn"); if(gen) gen.addEventListener("click", generateWorkoutUnified);
     const gi=document.getElementById("woGoal"); if(gi) gi.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); generateWorkoutUnified(); } });
     const cw=document.getElementById("clearWorkoutBtn"); if(cw) cw.addEventListener("click", clearWorkout);
+    const adj=document.getElementById("woAdjustBtn"); if(adj) adj.addEventListener("click", ()=> adjustWorkoutPlan());
+    const adjIn=document.getElementById("woAdjustInput"); if(adjIn) adjIn.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); adjustWorkoutPlan(); } });
+    document.querySelectorAll("#woAdjustQuick .wo-chip-btn").forEach(c=> c.addEventListener("click", ()=>{ const inp=document.getElementById("woAdjustInput"); if(inp) inp.value=c.dataset.q; adjustWorkoutPlan(c.dataset.q); }));
     const ct=document.getElementById("checkinToggle"); if(ct) ct.addEventListener("click", ()=>{ const blk=document.getElementById("checkinBlock"); setCheckinCollapsed(!blk.classList.contains("collapsed"), true); });
     initWorkoutPhoto();
     ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs","woGoal"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
