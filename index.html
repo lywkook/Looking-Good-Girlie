@@ -2086,8 +2086,8 @@
   }
   // 讀餐廳連結(Google Maps 或官網)→ 讀那間店的菜單 → 挑一道適合減重的
   async function restaurantPick(url, wish, label, target){
-    const key = keyFor("browse");   // 讀網頁連結:優先 Google(url_context 較穩),沒有才用 Groq compound
-    if(!key) throw new Error("尚未設定 AI 金鑰");
+    const sel = keyFor("browse");   // 讀網頁連結:優先 Google(url_context 較穩),沒有才用 Groq compound
+    if(!sel) throw new Error("尚未設定 AI 金鑰");
     const prompt =
       '你是減重營養教練。使用者今天想在這間餐廳吃「'+label+'」。\n'
       + '餐廳連結:'+url+'\n'
@@ -2096,9 +2096,9 @@
       + (wish ? ('使用者偏好:'+wish+',在此偏好內挑。') : '')
       + '\n只回 JSON、不要多餘文字:{"text":"餐點名稱+簡短吃法建議(例:去醬、飲料換無糖),不超過25字","why":"為什麼推薦這道,不超過30字"}。'
       + '\n若真的讀不到這間餐廳的菜單,text 請回空字串。';
-    const run=async k=> isGroq(k) ? await groqBrowseJSON(prompt, k) : await googleBrowseJSON(prompt, k, 0.4);
-    try{ return await run(key); }
-    catch(e){ const alt=otherKey(key); if(alt) return await run(alt); throw e; }
+    const run=async s=> s.provider==="groq" ? await groqBrowseJSON(prompt, s.key) : await googleBrowseJSON(prompt, s.key, 0.4);
+    try{ return await run(sel); }
+    catch(e){ const alt=otherSel(sel); if(alt) return await run(alt); throw e; }
   }
   // 讀菜單照片(可多張)→ 認出菜單上的餐點 → 挑一道適合減重的
   async function menuPhotoPick(b64s, wish, label, target){
@@ -3189,15 +3189,27 @@
   // 只設定一把時就全部用那一把;首選失敗且有另一把時會自動 fallback。
   let groqKey = "", googleKey = "";
   function cleanKey(v){ return String(v==null?"":v).trim().replace(/\s+/g,"").replace(/^["']+|["']+$/g,""); }
-  function isGroq(k){ return String(k||"").slice(0,4)==="gsk_"; }
+  function isGroq(k){ return String(k||"").slice(0,4)==="gsk_"; }   // 只當「猜不到時」的備援判斷,平常靠實際驗證
   function anyKey(){ return groqKey || googleKey; }
-  // kind: 'vision' | 'browse' → 優先 Google;其餘(文字)→ 優先 Groq
+  // 回傳 {provider, key}:看圖/讀連結優先 Google、文字優先 Groq
   function keyFor(kind){
-    if(kind==="vision" || kind==="browse") return googleKey || groqKey;
-    return groqKey || googleKey;
+    const googleFirst = (kind==="vision" || kind==="browse");
+    const order = googleFirst ? [["google",googleKey],["groq",groqKey]] : [["groq",groqKey],["google",googleKey]];
+    for(const [prov,k] of order){ if(k) return {provider:prov, key:k}; }
+    return null;
   }
-  function otherKey(k){ return isGroq(k) ? googleKey : groqKey; }
-  // 向後相容:老版本存單一 geminikey。讀取時依開頭分流到 groqKey / googleKey。
+  function otherSel(sel){
+    if(!sel) return null;
+    if(sel.provider==="groq") return googleKey ? {provider:"google",key:googleKey} : null;
+    return groqKey ? {provider:"groq",key:groqKey} : null;
+  }
+  // 不靠開頭判斷:直接問兩邊的 API,誰認得這把金鑰就歸誰(順便驗證金鑰有沒有效)
+  async function detectProvider(key){
+    const tryGroq = fetch("https://api.groq.com/openai/v1/models",{headers:{"Authorization":"Bearer "+key}}).then(r=>r.ok?"groq":null).catch(()=>null);
+    const tryGoogle = fetch("https://generativelanguage.googleapis.com/v1beta/models",{headers:{"x-goog-api-key":key}}).then(r=>r.ok?"google":null).catch(()=>null);
+    const [g, o] = await Promise.all([tryGroq, tryGoogle]);
+    return g || o || null;
+  }
   async function loadGeminiKey(){
     groqKey = ""; googleKey = "";
     const read=async k=>{ try{ const r=await window.storage.get(k,false); return (r&&r.value)?cleanKey(r.value):""; }catch(e){ return ""; } };
@@ -3210,16 +3222,19 @@
     const gi=document.getElementById("inGeminiKey"); if(gi) gi.value="";
     updateAIKeyHint();
   }
-  // 存一把金鑰:依開頭自動放進 Groq 或 Google 欄位(兩把可並存)
+  // 存一把金鑰:先用 API 驗證這把是 Groq 還是 Google,再放進對應欄位(兩把可並存)。
+  // 驗不過(可能網路/瀏覽器擋)時退回用開頭猜,仍存起來讓他能用。
   async function saveKeyValue(v){
     v = cleanKey(v);
     if(!v) return { ok:false, empty:true };
-    // 不限定開頭:gsk_ 一律當 Groq,其餘(AIza / AQ… 各種 Google/Gemini 金鑰格式)一律當 Google
-    if(isGroq(v)){ groqKey=v; try{ await window.storage.set("groqkey", v, false); }catch(e){} }
+    let which = await detectProvider(v);
+    let verified = !!which;
+    if(!which) which = isGroq(v) ? "groq" : "google";
+    if(which==="groq"){ groqKey=v; try{ await window.storage.set("groqkey", v, false); }catch(e){} }
     else { googleKey=v; try{ await window.storage.set("googlekey", v, false); }catch(e){} }
     try{ await window.storage.set("geminikey", v, false); }catch(e){}
     updateAIKeyHint();
-    return { ok:true, which: isGroq(v)?"groq":"google" };
+    return { ok:true, which, verified };
   }
   async function clearAllKeys(){
     groqKey=""; googleKey="";
@@ -3297,19 +3312,19 @@
   const GROQ_TEXT = ["llama-3.3-70b-versatile","openai/gpt-oss-120b","llama-3.1-8b-instant"];
   let groqGoodVision = null, groqGoodText = null;
   // 依工作分流金鑰:看圖優先 Google、文字優先 Groq;首選失敗且有另一把時自動 fallback。
-  async function callOneKey(key, prompt, extraParts, b64s, temp){
-    return isGroq(key) ? await groqJSON(prompt, b64s, key, temp) : await googleJSON(prompt, extraParts, temp, key);
+  async function callSel(sel, prompt, extraParts, b64s, temp){
+    return sel.provider==="groq" ? await groqJSON(prompt, b64s, sel.key, temp) : await googleJSON(prompt, extraParts, temp, sel.key);
   }
   async function geminiJSON(prompt, extraParts, temp){
     const b64s=[]; if(extraParts) extraParts.forEach(p=>{ if(p&&p.inline_data&&p.inline_data.data) b64s.push(p.inline_data.data); });
     const hasImg = b64s.length>0;
-    const key = keyFor(hasImg ? "vision" : "text");
-    if(!key) throw new Error("尚未設定 API 金鑰");
+    const sel = keyFor(hasImg ? "vision" : "text");
+    if(!sel) throw new Error("尚未設定 API 金鑰");
     try{
-      return await callOneKey(key, prompt, extraParts, b64s, temp);
+      return await callSel(sel, prompt, extraParts, b64s, temp);
     }catch(e){
-      const alt = otherKey(key);
-      if(alt){ return await callOneKey(alt, prompt, extraParts, b64s, temp); }
+      const alt = otherSel(sel);
+      if(alt){ return await callSel(alt, prompt, extraParts, b64s, temp); }
       throw e;
     }
   }
@@ -3474,14 +3489,14 @@
   }
   // ---------- 不懂問 AI:一般問答(純文字回覆) ----------
   async function askAIText(question){
-    const key=keyFor("text");   // 純文字問答:優先 Groq(額度高)
-    if(!key) throw new Error("尚未設定 AI 金鑰。請到右上角 ⚙️ 設定最上面「AI 金鑰」貼上一把免費金鑰(Google 或 Groq)。");
+    const sel=keyFor("text");   // 純文字問答:優先 Groq(額度高)
+    if(!sel) throw new Error("尚未設定 AI 金鑰。請到右上角 ⚙️ 設定最上面「AI 金鑰」貼上一把免費金鑰(Google 或 Groq)。");
     const prompt=(lang==="en"
       ? "You are a friendly assistant. Reply in English, be brief and to the point — a sentence or two, at most 3-4 short lines or 3 bullets; no filler. For health/medical topics, advise seeing a doctor if serious. The user may write in mixed Chinese/English — understand both. Question:\n"
       : "你是親切的中文小幫手。請用繁體中文回答,務必「簡短扼要、只講重點」,能一兩句講完就別長篇大論,最多 3-4 個短句或 3 個重點;避免客套與贅字。若涉及健康醫療,嚴重時提醒看醫生。問題:\n")+question;
-    const run=async k=> isGroq(k) ? await groqChat(prompt, k) : await googleChat(prompt, k);
-    try{ return await run(key); }
-    catch(e){ const alt=otherKey(key); if(alt) return await run(alt); throw e; }
+    const run=async s=> s.provider==="groq" ? await groqChat(prompt, s.key) : await googleChat(prompt, s.key);
+    try{ return await run(sel); }
+    catch(e){ const alt=otherSel(sel); if(alt) return await run(alt); throw e; }
   }
   async function googleChat(prompt, key){
     const body={ contents:[{parts:[{text:prompt}]}], generationConfig:{ temperature:0.6 } };
@@ -3583,8 +3598,12 @@
     keySave.addEventListener("click", async ()=>{
       const raw=cleanKey(keyInput.value);
       if(!raw){ await clearAllKeys(); keyInput.value=""; status.innerHTML='<span class="err">已清除金鑰</span>'; return; }
+      status.innerHTML='<span class="ai-spin"></span>驗證金鑰中…';
       const r=await saveKeyValue(raw); keyInput.value="";
-      status.innerHTML = '<span class="ok">'+(r.which==="groq"?"Groq":"Google")+' 金鑰已儲存 ✅</span>';
+      const name=r.which==="groq"?"Groq":"Google";
+      status.innerHTML = r.verified
+        ? '<span class="ok">'+name+' 金鑰驗證成功、已儲存 ✅</span>'
+        : '<span class="ok">已存為 '+name+' 金鑰(這次沒驗證成功,若 AI 用不了請確認有沒有貼完整)</span>';
     });
     // 設定裡最上方那一組金鑰輸入(永遠顯示,不用展開)
     const setKeyInput=document.getElementById("setKeyInput");
@@ -3594,8 +3613,12 @@
       setKeySave.addEventListener("click", async ()=>{
         const raw=cleanKey(setKeyInput.value);
         if(!raw){ await clearAllKeys(); setKeyInput.value=""; if(setKeyMsg) setKeyMsg.innerHTML='<span class="err">已清除金鑰</span>'; return; }
+        if(setKeyMsg) setKeyMsg.innerHTML='<span class="ai-spin"></span>驗證金鑰中…';
         const r=await saveKeyValue(raw); setKeyInput.value="";
-        if(setKeyMsg) setKeyMsg.innerHTML = '<span class="ok">'+(r.which==="groq"?"Groq":"Google")+' 金鑰已儲存 ✅ 可以再貼另一把</span>';
+        const name=r.which==="groq"?"Groq":"Google";
+        if(setKeyMsg) setKeyMsg.innerHTML = r.verified
+          ? '<span class="ok">'+name+' 金鑰驗證成功、已儲存 ✅ 可以再貼另一把</span>'
+          : '<span class="ok">已存為 '+name+' 金鑰(這次沒驗證成功,若用不了請確認有沒有貼完整)</span>';
       });
       setKeyInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); setKeySave.click(); } });
     }
