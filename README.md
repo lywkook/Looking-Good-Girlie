@@ -44,6 +44,7 @@
 | `waterlog`            | JSON `{ "<iso>": 杯數 }`,每日喝水杯數          | false  |
 | `watergoal`           | 每日喝水目標杯數(1 杯 250ml)                  | false  |
 | `geminikey`           | 使用者自備的免費 AI 金鑰(單一把;gsk_ 開頭走 Groq,其餘走 Google;拍照與文字都用同一把,只存本機) | false |
+| `aiphotocache`        | 拍照估熱量的結果快取 `{ 圖片雜湊: {name,kcal,note} }`,同一張照片回同一結果(最多 50 張,只存本機) | false |
 | `groqkey` / `googlekey` | 舊版雙金鑰欄位(仍讀取,啟動時自動併回單一 geminikey) | false |
 | `workout`             | JSON `{days,cardio,note,plan}`,運動需求輸入 + 產生的客製課表 | false |
 | `wocollapsed`         | 運動計畫區塊是否收合 ("1"/"0")               | false  |

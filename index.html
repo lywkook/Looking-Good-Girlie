@@ -2003,19 +2003,43 @@
     if(quotaHit) throw new Error("Google 免費額度又滿了 😥 這是 Google 對免費金鑰的限制(很小氣)。強烈建議改用 Groq 免費金鑰(gsk_ 開頭、額度高很多):到「AI 金鑰設定」旁的 Groq 連結申請,貼上就會自動切換。");
     throw new Error(lastMsg);
   }
+  // 圖片內容雜湊:同一張照片得到同一把 key,配合快取讓熱量估計每次一致
+  function hashStr(s){
+    let h1=0xdeadbeef, h2=0x41c6ce57;
+    for(let i=0;i<s.length;i++){ const ch=s.charCodeAt(i); h1=Math.imul(h1^ch,2654435761); h2=Math.imul(h2^ch,1597334677); }
+    h1=Math.imul(h1^(h1>>>16),2246822507); h1^=Math.imul(h2^(h2>>>13),3266489909);
+    h2=Math.imul(h2^(h2>>>16),2246822507); h2^=Math.imul(h1^(h1>>>13),3266489909);
+    return (h2>>>0).toString(36)+(h1>>>0).toString(36);
+  }
+  let aiPhotoCache = {};   // { 圖片雜湊: {name,kcal,note} }(同張照片直接回同一結果)
+  async function loadAiPhotoCache(){
+    try{ const r=await window.storage.get("aiphotocache",false); if(r&&r.value) aiPhotoCache=JSON.parse(r.value)||{}; }catch(e){ aiPhotoCache={}; }
+  }
+  function saveAiPhotoCache(){
+    try{
+      const keys=Object.keys(aiPhotoCache);
+      if(keys.length>50) keys.slice(0,keys.length-50).forEach(k=>delete aiPhotoCache[k]); // 只留最近 50 張
+      window.storage.set("aiphotocache", JSON.stringify(aiPhotoCache), false);
+    }catch(e){}
+  }
   async function analyzeFoodPhoto(b64s){
     if(typeof b64s==="string") b64s=[b64s];
     const many=b64s.length>1;
+    const cacheKey="f"+hashStr(b64s.join("|"));
+    if(aiPhotoCache[cacheKey]) return Object.assign({}, aiPhotoCache[cacheKey]);   // 同張照片 → 同一個結果
     const prompt = (many
         ? '這裡有'+b64s.length+'張食物照片,可能是同一餐的不同角度、或是一桌的多道菜。請綜合所有照片,判斷這一「整餐」是什麼、估計加起來的總熱量(大卡),不要重複計算同一道菜。'
         : '看這張食物照片,用繁體中文判斷是什麼餐點並估計整份總熱量(大卡)。')
       + '照片可能是手機截圖或外送/菜單畫面,忽略介面與文字浮水印,只看食物本身。重要:多數人會低估份量,請把烹調用油、醬料、糖、隱藏配料都算進去,寧可估高也不要估低,以餐廳/外食的實際份量為準。'
       + '用繁體中文,只回 JSON:{"name":"餐點名不超過12字","kcal":整數,"note":"一句話依據"}。看不出是食物就 name 回空字串。';
     const parts=b64s.map(b=>({inline_data:{mime_type:"image/jpeg", data:b}}));
-    return await geminiJSON(prompt, parts, 0.2);
+    const obj=await geminiJSON(prompt, parts, 0);   // 溫度 0:同一張照片估計盡量一致
+    if(obj && (obj.name||"").trim() && Number(obj.kcal)>0){ aiPhotoCache[cacheKey]=Object.assign({}, obj); saveAiPhotoCache(); }
+    return obj;
   }
   function initAIPhotoModule(){
     const box=document.getElementById("aiPhotoBox"); if(!box) return;
+    loadAiPhotoCache();
     const input=document.getElementById("aiPhotoInput");
     const btn=document.getElementById("aiPhotoBtn");
     const status=document.getElementById("aiPhotoStatus");
