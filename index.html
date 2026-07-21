@@ -2507,10 +2507,6 @@
         </div>`;
       }).join("");
       const exEditRow = `<div class="day-ex-editrow"><button type="button" class="day-edit-btn" data-editday="${day.iso}">✏️ 編輯這天運動</button>${dayExOverride[day.iso]?`<button type="button" class="day-edit-reset" data-resetday="${day.iso}">回到計畫</button>`:''}</div>`;
-      const dietFields = [["breakfast","早餐"],["lunch","午餐"],["dinner","晚餐"],["fruit","水果點心"]];
-      const dietBlocks = dietFields.map(([f,label])=>`
-        <div class="blk"><div class="blk-title">${label} <span class="edit-pencil" data-field="${f}" data-iso="${day.iso}">✏️</span></div>
-        <div class="editable-content" data-field="${f}" data-iso="${day.iso}">${day.diet[f]}</div></div>`).join("");
       card.innerHTML = `
         <div class="day-head">
           <div class="left">
@@ -2528,7 +2524,6 @@
             <div class="day-ex-list" data-exlist="${day.iso}">${exRows}</div>
             ${exEditRow}
           </div>
-          ${dietBlocks}
         </div>
       `;
       const head = card.querySelector(".day-head");
@@ -2572,26 +2567,6 @@
           try{ await window.storage.set("exover:"+iso+":"+exi, val, false); }catch(err){}
         });
         el.addEventListener("click", (e)=>e.stopPropagation());
-      });
-      card.querySelectorAll(".edit-pencil[data-field]").forEach(p=>{
-        p.addEventListener("click", (e)=>{
-          e.stopPropagation();
-          const el = card.querySelector(`.editable-content[data-field="${p.dataset.field}"][data-iso="${p.dataset.iso}"]`);
-          el.contentEditable = "true"; el.focus();
-          document.getSelection().selectAllChildren(el);
-        });
-      });
-      card.querySelectorAll(".editable-content").forEach(el=>{
-        el.addEventListener("click", (e)=>e.stopPropagation());
-        el.addEventListener("blur", async ()=>{
-          el.contentEditable = "false";
-          const field = el.dataset.field, iso = el.dataset.iso;
-          const val = el.textContent.trim();
-          const d = days.find(x=>x.iso===iso);
-          if(d) d.diet[field] = val;
-          try{ await window.storage.set("dietover:"+iso+":"+field, val, false); }catch(err){}
-          if(iso === curIso()) renderTodayMenu();
-        });
       });
       // ✏️ 直接編輯這天的運動(每行一個動作)
       const editBtn = card.querySelector(".day-edit-btn");
