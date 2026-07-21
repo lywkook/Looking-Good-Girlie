@@ -3298,5 +3298,13 @@
   init();
 })();
 </script>
+<script>
+  // 註冊離線快取:開過一次後,之後沒網路或伺服器掛掉也能開
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
+</script>
 </body>
 </html>
