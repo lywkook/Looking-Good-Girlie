@@ -209,11 +209,12 @@
   .scroll-top-btn:active{ transform:scale(0.92); }
   .section{ padding:22px 20px 0; }
   .section h2{
-    font-size:var(--fs-title); margin:0 0 12px; font-weight:400;
-    display:flex; align-items:center; gap:6px;
+    font-size:calc(var(--fs-title) + 3px); margin:0 0 12px; font-weight:900;
+    color:var(--ink); letter-spacing:.3px;
+    display:flex; align-items:center; gap:8px;
   }
   .section h2 .dot{
-    width:8px; height:8px; border-radius:50%; background:var(--pink); display:inline-block;
+    width:11px; height:11px; border-radius:50%; background:var(--pink); display:inline-block; flex:none;
   }
 
   .weight-box{
@@ -2413,7 +2414,7 @@
   function updateFrMini(){
     const mini=document.getElementById("frMini"); if(!mini) return;
     if(fridgeHave.length) mini.innerHTML='冰箱有 <b>'+fridgeHave.length+'</b> 樣食材 <span class="pf-hint">(點此展開)</span>';
-    else mini.innerHTML='<span class="pf-hint">點此展開</span>';
+    else mini.innerHTML='<span class="pf-hint">(點此展開)</span>';
   }
   function setFridgeCollapsed(collapsed, persist){
     const sec=document.getElementById("fridgeSection"); if(!sec) return;
@@ -2729,9 +2730,9 @@
       let s = `最新 <b>${l.weight}</b>kg`;
       if(l.fat) s += ` · 體脂 ${l.fat}%`;
       if(l.muscle) s += ` · 肌肉 ${l.muscle}kg`;
-      mini.innerHTML = s + `<span class="pf-hint pf-hint-nl">點此展開</span>`;
+      mini.innerHTML = s + `<span class="pf-hint pf-hint-nl">(點此展開)</span>`;
     } else {
-      mini.innerHTML = `<span class="pf-hint">點此展開</span>`;
+      mini.innerHTML = `<span class="pf-hint">(點此展開)</span>`;
     }
   }
   function setMetricsCollapsed(collapsed, persist){
@@ -3951,7 +3952,7 @@
     const rec = document.getElementById("inKcalTarget").value;
     const tw  = document.getElementById("pfTargetW").value;
     if(rec && tw) mini.innerHTML = `每日建議吃 <b>${rec}</b> kcal · 目標 <b>${tw}</b>kg <span class="pf-hint">(點此展開)</span>`;
-    else mini.innerHTML = `<span class="pf-hint">點此展開</span>`;
+    else mini.innerHTML = `<span class="pf-hint">(點此展開)</span>`;
   }
   function setProfileCollapsed(collapsed, persist){
     const sec = document.getElementById("profileSection");
@@ -4342,7 +4343,7 @@
     const mini=document.getElementById("woMini"); if(!mini) return;
     const d=document.getElementById("woDays").value;
     if(workoutPlan && d) mini.innerHTML='運動計畫:每週 <b>'+esc(d)+'</b> 天已排好 <span class="pf-hint">(點此展開)</span>';
-    else mini.innerHTML='<span class="pf-hint">點此展開</span>';
+    else mini.innerHTML='<span class="pf-hint">(點此展開)</span>';
   }
   function setWorkoutCollapsed(collapsed, persist){
     const sec=document.getElementById("workoutSection"); if(!sec) return;
@@ -4360,8 +4361,8 @@
       const day = (typeof resolveDay==="function") ? resolveDay(curIso()) : null;
       const w = day && day.workout ? day.workout : null;
       mm.innerHTML = (lang==="en")
-        ? ('Today: '+(w?esc(w.title||'workout'):'workout')+' <span class="pf-hint">· tap to open the checklist</span>')
-        : ('今天:'+(w?esc(w.title||'運動'):'運動')+' <span class="pf-hint">· 點此展開打卡清單</span>');
+        ? ('Today: '+(w?esc(w.title||'workout'):'workout')+' <span class="pf-hint">(tap to open)</span>')
+        : ('今天:'+(w?esc(w.title||'運動'):'運動')+' <span class="pf-hint">(點此展開)</span>');
     }
     if(persist){ try{ window.storage.set(K("checkincollapsed"), collapsed?"1":"0", false); }catch(e){} }
   }
@@ -5140,7 +5141,7 @@
     }catch(e){ alert((lang==="en"?"Failed: ":"產生失敗:")+(e.message||e)); return false; }
   }
   function updateRmMini(){ const m=document.getElementById("rmMini"); if(!m) return;
-    m.innerHTML = reminderCfg.on ? ('提醒 '+reminderCfg.time+' 已開 <span class="pf-hint">(點此展開)</span>') : '<span class="pf-hint">點此展開</span>';
+    m.innerHTML = reminderCfg.on ? ('提醒 '+reminderCfg.time+' 已開 <span class="pf-hint">(點此展開)</span>') : '<span class="pf-hint">(點此展開)</span>';
   }
   function setReminderCollapsed(c,persist){ const s=document.getElementById("reminderSection"); if(!s) return;
     s.classList.toggle("collapsed",c); const el=document.getElementById("rmCaret"); if(el) el.textContent=c?"▸":"▾"; updateRmMini();
@@ -5194,7 +5195,7 @@
       const setC=(c)=>{ s.classList.toggle("collapsed",c); const cc=document.getElementById(caret); if(cc) cc.textContent=c?"▸":"▾";
         const mm=document.getElementById(mini); if(mm){
           if(sec==="waterSection" && c && typeof waterMiniHTML==="function") mm.innerHTML = waterMiniHTML();
-          else mm.innerHTML='<span class="pf-hint">'+label+' · 點此展開</span>';
+          else mm.innerHTML='<span class="pf-hint">(點此展開)</span>';
         } };
       const tg=document.getElementById(tog); if(tg) tg.addEventListener("click", async ()=>{ const c=!s.classList.contains("collapsed"); setC(c); try{ await window.storage.set(key, c?"1":"0", false);}catch(e){} });
       const mn=document.getElementById(mini); if(mn) mn.addEventListener("click", async ()=>{ setC(false); try{ await window.storage.set(key,"0",false);}catch(e){} });
