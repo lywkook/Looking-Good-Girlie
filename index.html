@@ -246,6 +246,15 @@
   .ex-row.done .ex-check{ background:var(--mint); border-color:var(--mint); color:#fff; }
   .ex-text b{ font-size:var(--fs-body); }
   .ex-detail{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; line-height:1.5; }
+  .day-ex-editrow{ display:flex; gap:8px; margin-top:8px; }
+  .day-edit-btn, .day-edit-reset{ font-size:var(--fs-label); background:var(--pink-soft); color:var(--ink);
+    border:none; border-radius:20px; padding:5px 14px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .day-edit-reset{ background:#fff; border:1.5px solid var(--line); color:var(--ink-soft); }
+  .day-edit-btn:active, .day-edit-reset:active{ opacity:0.6; }
+  .day-ex-textarea{ width:100%; box-sizing:border-box; padding:10px 12px; border-radius:12px; border:2px solid var(--pink);
+    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; line-height:1.6; resize:vertical; }
+  .day-ex-textarea:focus{ outline:none; }
+  .day-ex-actions{ display:flex; gap:8px; margin-top:8px; }
 
   .food-card{
     display:flex; gap:10px; background:#FFFBF6; border:2px solid var(--line);
@@ -1328,6 +1337,8 @@
   const listEl = document.getElementById("dayList");
   const doneState = {};
   const exerciseDone = {};
+  let dayExOverride = {};   // 使用者在每日打卡直接改的當天運動 { "<iso>": ["動作1","動作2"] }
+  async function saveDayExOverride(){ try{ await window.storage.set(K("dayexoverride"), JSON.stringify(dayExOverride), false); }catch(e){} }
 
   function tagFor(type){
     if(type==="lift") return '<span class="day-tag tag-lift">重訓</span>';
@@ -1365,16 +1376,21 @@
       card.className = "day-card" + (doneState[day.iso] ? " done" : "");
       card.dataset.iso = day.iso;
       const isToday = isoDate(today) === day.iso;
-      const exRows = day.workout.exercises.map((ex,exi)=>{
+      // 若使用者在每日打卡改過這天,就用改過的;否則用計畫/預設的
+      const exList = dayExOverride[day.iso]
+        ? dayExOverride[day.iso].map(t=>({name:t, detail:""}))
+        : (day.workout.exercises||[]);
+      const exRows = exList.map((ex,exi)=>{
         const exKey = "ex:"+day.iso+":"+exi;
         const checked = !!exerciseDone[exKey];
         return `
         <div class="ex-row${checked?' done':''}" data-exkey="${exKey}">
           <div class="ex-check">✓</div>
-          <div class="ex-text"><b>${ex.name}</b> <span class="edit-pencil" data-exedit="${day.iso}:${exi}">✏️</span>
-            <div class="ex-detail" data-exedit-content="${day.iso}:${exi}">${ex.detail}</div></div>
+          <div class="ex-text"><b>${esc(ex.name)}</b>${ex.detail?` <span class="edit-pencil" data-exedit="${day.iso}:${exi}">✏️</span>
+            <div class="ex-detail" data-exedit-content="${day.iso}:${exi}">${esc(ex.detail)}</div>`:''}</div>
         </div>`;
       }).join("");
+      const exEditRow = `<div class="day-ex-editrow"><button type="button" class="day-edit-btn" data-editday="${day.iso}">✏️ 編輯這天運動</button>${dayExOverride[day.iso]?`<button type="button" class="day-edit-reset" data-resetday="${day.iso}">回到計畫</button>`:''}</div>`;
       const dietFields = [["breakfast","早餐"],["lunch","午餐"],["dinner","晚餐"],["fruit","水果點心"]];
       const dietBlocks = dietFields.map(([f,label])=>`
         <div class="blk"><div class="blk-title">${label} <span class="edit-pencil" data-field="${f}" data-iso="${day.iso}">✏️</span></div>
@@ -1393,7 +1409,8 @@
           <div class="blk">
             <div class="blk-title">運動:${day.workout.title}</div>
             <div style="color:var(--ink-soft); margin-bottom:8px;">${day.workout.note}</div>
-            ${exRows}
+            <div class="day-ex-list" data-exlist="${day.iso}">${exRows}</div>
+            ${exEditRow}
           </div>
           ${dietBlocks}
         </div>
@@ -1460,9 +1477,32 @@
           if(iso === isoDate(today)) renderTodayMenu();
         });
       });
+      // ✏️ 直接編輯這天的運動(每行一個動作)
+      const editBtn = card.querySelector(".day-edit-btn");
+      if(editBtn) editBtn.addEventListener("click", (e)=>{ e.stopPropagation(); openDayExEditor(card, day.iso, exList); });
+      const resetBtn = card.querySelector(".day-edit-reset");
+      if(resetBtn) resetBtn.addEventListener("click", async (e)=>{ e.stopPropagation();
+        delete dayExOverride[day.iso]; await saveDayExOverride(); renderDays(); reopenDay(day.iso); });
       listEl.appendChild(card);
     });
     updateDoneCount();
+  }
+  function reopenDay(iso){ const c=document.querySelector('.day-card[data-iso="'+iso+'"]'); if(c) c.classList.add("open"); }
+  function openDayExEditor(card, iso, exList){
+    const listWrap = card.querySelector('.day-ex-list[data-exlist="'+iso+'"]');
+    const editRow = card.querySelector('.day-ex-editrow');
+    if(!listWrap) return;
+    const lines=(exList||[]).map(e=> e.detail ? (e.name+" "+e.detail) : e.name).join("\n");
+    listWrap.innerHTML='<textarea class="day-ex-textarea" rows="5" placeholder="每行一個動作,例:&#10;深蹲 4組×12&#10;弓箭步 3組×12&#10;(想休息就清空)">'+esc(lines)+'</textarea>'
+      +'<div class="day-ex-actions"><button type="button" class="mini-btn day-ex-save">儲存</button><button type="button" class="mini-btn day-ex-cancel">取消</button></div>';
+    if(editRow) editRow.style.display="none";
+    const ta=listWrap.querySelector('.day-ex-textarea'); if(ta) ta.focus();
+    listWrap.addEventListener("click",(e)=>e.stopPropagation());
+    listWrap.querySelector('.day-ex-save').addEventListener("click", async (e)=>{ e.stopPropagation();
+      const items=ta.value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      dayExOverride[iso]=items; await saveDayExOverride(); renderDays(); reopenDay(iso);
+    });
+    listWrap.querySelector('.day-ex-cancel').addEventListener("click", (e)=>{ e.stopPropagation(); renderDays(); reopenDay(iso); });
   }
 
   function updateDoneCount(){
@@ -2693,6 +2733,7 @@
   }
   async function loadWorkout(){
     workoutPlan=null; woPlanCollapsed=false; focusSel.length=0; strengthSel.length=0; cardioSel.length=0;
+    dayExOverride={}; try{ const r=await window.storage.get(K("dayexoverride"),false); if(r&&r.value) dayExOverride=JSON.parse(r.value)||{}; }catch(e){ dayExOverride={}; }
     try{ const c=await window.storage.get(K("woplancollapsed"),false); if(c&&c.value==="1") woPlanCollapsed=true; }catch(e){}
     const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=(v==null?"":v); };
     set("woDays",""); set("woCardio",""); set("woNote",""); set("woSets",""); set("woReps",""); set("woWeight",""); set("woSecs",""); set("woGoal","");
@@ -2749,6 +2790,7 @@
   async function clearWorkout(){
     if(!confirm("清除目前的運動計畫,以及所有選取(器材、部位、強度、目標、照片)?可以重新選")) return;
     workoutPlan=null; woPhotos=[]; { const st=document.getElementById("woPhotoStatus"); if(st) st.innerHTML=""; }
+    dayExOverride={}; saveDayExOverride();
     focusSel.length=0; strengthSel.length=0; cardioSel.length=0;
     ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs","woGoal"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
     renderEquip("focusChips", FOCUS_PRESET, focusSel);
