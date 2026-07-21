@@ -61,17 +61,18 @@
     background: var(--cream);
     color:var(--ink);
     font-family:var(--font-main), "Noto Sans TC", -apple-system, sans-serif;
-    padding-bottom:100px;
+    padding-bottom:104px;
     -webkit-font-smoothing:antialiased;
   }
-  #bottomNav{ position:fixed; left:0; right:0; bottom:0; height:82px; background:var(--card);
-    border-top:1px solid var(--line); display:flex; z-index:200; box-shadow:0 -2px 10px rgba(94,85,76,0.06); }
-  .nav-btn{ flex:1; border:none; background:none; font-family:inherit; cursor:pointer; color:var(--ink);
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:30px; }
-  .nav-btn span{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
-  .nav-btn:active{ opacity:0.6; }
-  .nav-jump-menu{ position:fixed; right:12px; bottom:92px; background:var(--card); border-radius:16px;
-    box-shadow:var(--shadow); border:2px solid var(--pink-soft); padding:10px; display:none; z-index:201; max-height:62vh; overflow:auto; }
+  #bottomNav{ position:fixed; left:14px; right:14px; bottom:14px; height:72px; background:var(--pink);
+    border-radius:24px; display:flex; z-index:200; box-shadow:0 6px 22px rgba(94,85,76,0.22); overflow:hidden; }
+  .nav-btn{ flex:1; border:none; background:none; font-family:inherit; cursor:pointer; color:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:27px; }
+  .nav-btn + .nav-btn{ border-left:1px solid rgba(255,255,255,0.35); }
+  .nav-btn span{ font-size:var(--fs-label); color:#fff; font-weight:700; }
+  .nav-btn:active{ background:rgba(255,255,255,0.18); }
+  .nav-jump-menu{ position:fixed; right:16px; bottom:98px; background:var(--card); border-radius:16px;
+    box-shadow:var(--shadow); border:2px solid var(--pink); padding:10px; display:none; z-index:201; max-height:62vh; overflow:auto; }
   .nav-jump-menu.show{ display:block; }
   .nav-jump-item{ padding:14px 24px; border-radius:12px; font-size:var(--fs-title); color:var(--ink); cursor:pointer; white-space:nowrap; }
   .nav-jump-item:active{ background:var(--pink-soft); }
