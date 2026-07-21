@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>減重計畫</title>
 <!-- 加到手機主畫面後,像 App 一樣有圖示、全螢幕開啟 -->
-<meta name="theme-color" content="#BCAFD4">
+<meta name="theme-color" content="#C9BEDC">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -19,8 +19,8 @@
   :root{
     --cream:#F5F1EB;
     --card:#FCFAF6;
-    --pink:#BCAFD4;
-    --pink-soft:#EFEBF7;
+    --pink:#C9BEDC;
+    --pink-soft:#F3EFFA;
     --peach:#DAC6B2;
     --mint:#BEC9BC;
     --mint-soft:#E9EDE7;
@@ -149,9 +149,9 @@
   .save-btn{
     width:100%; background:var(--pink); color:#fff; border:none; border-radius:14px;
     padding:12px; font-size:var(--fs-body); font-weight:700; letter-spacing:0.02em;
-    box-shadow:0 4px 0 #A093BE;
+    box-shadow:0 4px 0 #ADA2C7;
   }
-  .save-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #A093BE; }
+  .save-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #ADA2C7; }
 
   svg.chart{ width:100%; height:130px; display:block; margin-top:14px; }
   .chart-empty{ font-size:var(--fs-body); color:var(--ink-soft); padding:14px 0 2px; text-align:center; }
@@ -403,8 +403,8 @@
   .ai-photo-title{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:10px; }
   .ai-badge{ background:var(--pink); color:#fff; font-size:var(--fs-hint); font-weight:900; padding:2px 8px; border-radius:10px; vertical-align:middle; margin-left:4px; }
   .ai-photo-btn{ width:100%; background:var(--pink); color:#fff; border:none; border-radius:14px;
-    padding:13px; font-size:var(--fs-body); font-weight:900; font-family:inherit; cursor:pointer; box-shadow:0 4px 0 #A093BE; }
-  .ai-photo-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #A093BE; }
+    padding:13px; font-size:var(--fs-body); font-weight:900; font-family:inherit; cursor:pointer; box-shadow:0 4px 0 #ADA2C7; }
+  .ai-photo-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #ADA2C7; }
   .ai-photo-btn:disabled{ opacity:.6; cursor:default; }
   .ai-photo-status{ font-size:var(--fs-label); color:var(--ink); margin-top:10px; text-align:center; min-height:1px; }
   .ai-photo-status .ok{ color:var(--ink); font-weight:900; }
@@ -1365,13 +1365,13 @@
     function x(idx){ return n===1? w/2 : padX + (idx/(n-1))*(w-padX*2); }
     function y(v){ return h-padY - ((v-minV)/(maxV-minV))*(h-padY*2); }
     let path = sorted.map((p,idx)=>(idx===0?"M":"L")+x(idx).toFixed(1)+","+y(p.weight).toFixed(1)).join(" ");
-    let dots = sorted.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.weight).toFixed(1)}" r="4" fill="#BCAFD4" stroke="#fff" stroke-width="1.5"/>`).join("");
+    let dots = sorted.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.weight).toFixed(1)}" r="4" fill="#C9BEDC" stroke="#fff" stroke-width="1.5"/>`).join("");
     const goalY = y(goal).toFixed(1);
     area.innerHTML = `
       <svg class="chart" viewBox="0 0 ${w} ${h}">
         <line x1="0" y1="${goalY}" x2="${w}" y2="${goalY}" stroke="#C3BDCB" stroke-width="1.5" stroke-dasharray="4 3"/>
         <text x="4" y="${goalY-4}" font-size="14.3" fill="#A69C90">目標 60kg</text>
-        <path d="${path}" fill="none" stroke="#BCAFD4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${path}" fill="none" stroke="#C9BEDC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         ${dots}
       </svg>`;
   }
@@ -1799,6 +1799,16 @@
     else { h.innerHTML='免費申請:到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 用 Google 帳號登入 →「Create API key」→ 複製貼上、按儲存。金鑰通常以 <b>AIza</b> 開頭。免費、不需信用卡。'; }
   }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+  // 容錯 JSON 解析:AI 有時會多回 ```json 圍欄或前後多字,盡量抓出 JSON 主體
+  function parseLooseJSON(txt){
+    if(!txt) return null;
+    try{ return JSON.parse(txt); }catch(e){}
+    let t = String(txt).replace(/```json/gi,"").replace(/```/g,"").trim();
+    try{ return JSON.parse(t); }catch(e){}
+    const m = t.match(/[\{\[][\s\S]*[\}\]]/);
+    if(m){ try{ return JSON.parse(m[0]); }catch(e){} }
+    return null;
+  }
   // 依序嘗試目前仍在免費額度內的模型(舊的 gemini-2.0-flash 免費額度已歸零,擺最後備援)
   const GEMINI_MODELS = ["gemini-2.5-flash-lite","gemini-2.0-flash-lite","gemini-2.5-flash","gemini-flash-latest"];
   let geminiLastGood = null;
@@ -1820,7 +1830,9 @@
         const rparts = ((((data.candidates||[])[0]||{}).content||{}).parts)||[];
         const txt = (rparts[0]||{}).text || "";
         geminiLastGood = mdl;
-        try{ return JSON.parse(txt); }catch(e){ throw new Error("AI 回傳格式看不懂,請再試一次"); }
+        const obj = parseLooseJSON(txt);
+        if(obj!=null) return obj;
+        throw new Error("AI 回傳格式看不懂,請再試一次");
       }
       let msg="錯誤 "+res.status; const status=res.status;
       try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
