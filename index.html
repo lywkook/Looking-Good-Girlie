@@ -290,7 +290,7 @@
   /* 飲食紀錄 · 熱量 */
   .meal-tabs{ display:flex; gap:6px; margin-bottom:12px; }
   .meal-tab{ flex:1; padding:9px 0; border:none; border-radius:12px; background:var(--pink-soft);
-    color:var(--ink-soft); font-weight:700; font-size:var(--fs-label); font-family:inherit; cursor:pointer; }
+    color:var(--ink-soft); font-weight:700; font-size:var(--fs-body); font-family:inherit; cursor:pointer; }
   .meal-tab.active{ background:var(--pink); color:#fff; }
   .food-input-row{ display:flex; gap:8px; margin-bottom:10px; }
   .food-input-row .fname{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
@@ -301,8 +301,7 @@
   .food-input-row .fname:focus, .kwrap input:focus, .target-row input:focus{ outline:none; border-color:var(--pink); }
   .kwrap .unit{ position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:var(--fs-hint); color:var(--ink-soft); }
   .target-row{ display:flex; align-items:center; justify-content:space-between; margin:16px 0 6px;
-    font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
-  .burn-note{ font-size:var(--fs-hint); color:var(--ink-soft); margin:-2px 0 8px; }
+    font-size:var(--fs-body); color:var(--ink); font-weight:800; }
   .kcal-head{ display:flex; justify-content:space-between; align-items:baseline; margin-top:6px; gap:8px; }
   .kcal-head .big{ font-size:var(--fs-num); font-weight:900; color:var(--ink); }
   .kcal-head .sub{ font-size:var(--fs-label); color:var(--ink-soft); }
@@ -703,7 +702,7 @@
         <a class="ai-key-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>
       </div>
       <div class="ai-key-row" id="aiKeyRow">
-        <input type="password" id="inGeminiKey" placeholder="貼上金鑰(拍照用 Google AIza… / 文字用 Groq gsk_…,可分別貼兩把)" autocomplete="off">
+        <input type="password" id="inGeminiKey" placeholder="貼上你的免費金鑰(Google 或 Groq 都可)" autocomplete="off">
         <button type="button" class="mini-btn" id="saveGeminiKey">儲存</button>
       </div>
     </div>
@@ -716,7 +715,6 @@
       <span>今日運動消耗</span>
       <div class="kwrap"><input type="number" step="10" id="inExBurn" placeholder="0"><span class="unit">kcal</span></div>
     </div>
-    <div class="burn-note">從 iPhone「健康」App → 今天的「活動能量」抄過來,會從今天可吃的熱量一起扣抵</div>
 
     <div id="kcalSummary"></div>
     <div id="foodAdvice"></div>
@@ -1747,8 +1745,7 @@
         <div><span class="big">${Math.round(total)}</span> <span class="sub">/ ${kcalTarget} kcal</span></div>
         <div class="sub">${over ? '超過 '+Math.round(net-kcalTarget) : '還可吃 '+Math.round(kcalTarget-net)} kcal</div>
       </div>
-      <div class="kcal-bar ${over?'over':''}"><span style="width:${pct}%"></span></div>
-      ${burned>0 ? `<div class="burn-note">吃進 ${Math.round(total)} − 運動 ${burned} = 淨 ${Math.round(net)} kcal(已扣運動消耗)</div>` : ''}`;
+      <div class="kcal-bar ${over?'over':''}"><span style="width:${pct}%"></span></div>`;
 
     document.getElementById("foodAdvice").innerHTML = buildAdvice(todays, net);
 
@@ -1884,33 +1881,25 @@
     });
   }
 
-  // ---------- 拍照估熱量 (AI · Google AI Studio 免費金鑰) ----------
-  // 可同時存 Groq(文字功能、額度高)與 Google(拍照看圖穩定)兩把金鑰,拍照自動用 Google
-  let groqKey = "", googleKey = "";
+  // ---------- 拍照估熱量 (AI · 一把免費金鑰,Google 或 Groq 皆可) ----------
+  let geminiKey = "";
   function cleanKey(v){ return String(v==null?"":v).trim().replace(/\s+/g,"").replace(/^["']+|["']+$/g,""); }
-  function anyKey(){ return cleanKey(groqKey) || cleanKey(googleKey); }
+  function anyKey(){ return cleanKey(geminiKey); }
   async function loadGeminiKey(){
-    groqKey = ""; googleKey = "";
-    try{ const r=await window.storage.get("groqkey",false); if(r&&r.value) groqKey=cleanKey(r.value); }catch(e){}
-    try{ const r=await window.storage.get("googlekey",false); if(r&&r.value) googleKey=cleanKey(r.value); }catch(e){}
-    // 舊版單一金鑰 → 依前綴搬到正確欄位
-    try{ const r=await window.storage.get("geminikey",false); if(r&&r.value){ const v=cleanKey(r.value);
-      if(v.slice(0,4)==="gsk_" && !groqKey){ groqKey=v; window.storage.set("groqkey",v,false); }
-      else if(v.slice(0,4)==="AIza" && !googleKey){ googleKey=v; window.storage.set("googlekey",v,false); } } }catch(e){}
+    geminiKey = "";
+    // 相容舊版:優先讀新的單一 geminikey,沒有就沿用之前分開存的 googlekey / groqkey
+    try{ const r=await window.storage.get("geminikey",false); if(r&&r.value) geminiKey=cleanKey(r.value); }catch(e){}
+    if(!geminiKey){ try{ const r=await window.storage.get("googlekey",false); if(r&&r.value){ geminiKey=cleanKey(r.value); window.storage.set("geminikey",geminiKey,false); } }catch(e){} }
+    if(!geminiKey){ try{ const r=await window.storage.get("groqkey",false); if(r&&r.value){ geminiKey=cleanKey(r.value); window.storage.set("geminikey",geminiKey,false); } }catch(e){} }
     const gi=document.getElementById("inGeminiKey"); if(gi) gi.value="";
     updateAIKeyHint();
   }
-  function keySummary(){
-    const parts=[]; if(cleanKey(groqKey)) parts.push("Groq ✅"); if(cleanKey(googleKey)) parts.push("Google ✅");
-    return parts.length ? parts.join(" · ") : "";
-  }
   function updateAIKeyHint(){
     const h=document.getElementById("aiKeyHint"); if(!h) return;
-    const sum=keySummary();
-    if(sum){
-      h.innerHTML='已存金鑰:'+sum+'。'+(cleanKey(googleKey)?'拍照會用 Google(看圖穩定)。':'⚠️ 拍照看圖建議加一把 <b>Google</b> 金鑰(AIza),Groq 帳號多半沒有看圖模型。')+'(只存在這支手機)';
+    if(cleanKey(geminiKey)){
+      h.innerHTML='✅ 金鑰已儲存(只存在這支手機)。拍照、換菜單、運動規劃都用這一把。';
     }
-    else { h.innerHTML='免費申請:拍照看圖用 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>(AIza 開頭);文字功能可用 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>(gsk_,額度高)。兩把都貼最好,拍照會自動選 Google。免費、免信用卡。'; }
+    else { h.innerHTML='免費申請一把金鑰即可(拍照與文字都用它):<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a> 或 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>。免費、免信用卡。'; }
   }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
   // 容錯 JSON 解析:AI 有時會多回 ```json 圍欄或前後多字,盡量抓出 JSON 主體
@@ -1931,13 +1920,11 @@
   const GROQ_VISION_RE = /scout|maverick|vision|llava|llama-?4|pixtral|[-_]vl\b|qwen3|qwen.*vl|omni|gemini/i;
   const GROQ_TEXT = ["llama-3.3-70b-versatile","openai/gpt-oss-120b","llama-3.1-8b-instant"];
   let groqGoodVision = null, groqGoodText = null;
-  // 看圖(有照片)→ 優先用 Google(穩定);純文字 → 優先用 Groq(額度高)。缺哪把就用另一把備援
+  // 一把金鑰走到底:gsk_ 開頭用 Groq,其餘一律用 Google(拍照與文字都用同一把,不切換)
   async function geminiJSON(prompt, extraParts, temp){
-    const gq=cleanKey(groqKey), gg=cleanKey(googleKey);
+    const key=cleanKey(geminiKey);
+    if(!key) throw new Error("尚未設定 API 金鑰");
     const b64s=[]; if(extraParts) extraParts.forEach(p=>{ if(p&&p.inline_data&&p.inline_data.data) b64s.push(p.inline_data.data); });
-    const hasImg=b64s.length>0;
-    const key = hasImg ? (gg || gq) : (gq || gg);
-    if(!key) throw new Error(hasImg ? "拍照看圖需要金鑰,建議用免費的 Google 金鑰(AIza 開頭)。請到 🔑 貼上。" : "尚未設定 API 金鑰");
     if(key.slice(0,4)==="gsk_") return await groqJSON(prompt, b64s, key, temp);
     return await googleJSON(prompt, extraParts, temp, key);
   }
@@ -1981,7 +1968,7 @@
     }
     if(quota) throw new Error("Groq 額度滿了,稍等再試。");
     if(hasImg){
-      throw new Error("你的 Groq 帳號沒有可看圖的模型,拍照功能無法用 Groq。請到 🔑 加一把免費的 Google 金鑰(AIza 開頭),拍照就會自動改用 Google(看圖穩定);Groq 仍可用在換菜單等文字功能。");
+      throw new Error("這把 Groq 金鑰無法看圖(帳號沒有看圖模型)。拍照請改用 Google 金鑰(到 Google AI Studio 免費申請,貼上即可)。");
     }
     throw new Error(lastMsg);
   }
@@ -2041,16 +2028,13 @@
     keyToggle.addEventListener("click", ()=> keyRow.classList.toggle("show"));
     keySave.addEventListener("click", async ()=>{
       const v=cleanKey(keyInput.value);
-      if(v==="" ){ groqKey=""; googleKey=""; try{ await window.storage.set("groqkey","",false); await window.storage.set("googlekey","",false); await window.storage.set("geminikey","",false); }catch(e){}
-        keyInput.value=""; updateAIKeyHint(); status.innerHTML='<span class="err">已清除金鑰</span>'; return; }
-      if(v.slice(0,4)==="gsk_"){ groqKey=v; try{ await window.storage.set("groqkey", v, false); }catch(e){} }
-      else if(v.slice(0,4)==="AIza"){ googleKey=v; try{ await window.storage.set("googlekey", v, false); }catch(e){} }
-      else { status.innerHTML='<span class="err">看不出金鑰類型:Google 以 AIza 開頭、Groq 以 gsk_ 開頭,請重新複製。</span>'; return; }
+      geminiKey=v;
+      try{ await window.storage.set("geminikey", v, false); }catch(e){}
       keyInput.value=""; updateAIKeyHint();
-      status.innerHTML='<span class="ok">已儲存('+keySummary()+')✅ 可繼續貼另一把;拍照建議用 Google</span>';
+      status.innerHTML = v ? '<span class="ok">金鑰已儲存 ✅ 現在可以上傳照片了</span>' : '<span class="err">已清除金鑰</span>';
     });
     btn.addEventListener("click", ()=>{
-      if(!anyKey()){ keyRow.classList.add("show"); status.innerHTML='<span class="err">請先貼上免費金鑰(下方 🔑 展開,拍照建議用 Google)</span>'; keyInput.focus(); return; }
+      if(!anyKey()){ keyRow.classList.add("show"); status.innerHTML='<span class="err">請先貼上免費金鑰(下方 🔑 展開)</span>'; keyInput.focus(); return; }
       input.click();
     });
     input.addEventListener("change", async ()=>{

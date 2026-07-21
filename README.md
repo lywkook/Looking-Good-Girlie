@@ -43,9 +43,8 @@
 | `exburn`              | JSON `{ "<iso>": kcal }`,每日運動消耗(手動填自 iPhone 健康 App,會從當日可吃熱量扣抵) | false |
 | `waterlog`            | JSON `{ "<iso>": 杯數 }`,每日喝水杯數          | false  |
 | `watergoal`           | 每日喝水目標杯數(1 杯 250ml)                  | false  |
-| `groqkey`             | 使用者自備的 Groq 免費金鑰(gsk_,文字功能:換菜單/運動規劃,額度高,只存本機) | false |
-| `googlekey`           | 使用者自備的 Google 免費金鑰(AIza,拍照看圖用,穩定,只存本機) | false |
-| `geminikey`           | 舊版單一金鑰欄位(仍讀取,啟動時依前綴自動搬到 groqkey / googlekey) | false |
+| `geminikey`           | 使用者自備的免費 AI 金鑰(單一把;gsk_ 開頭走 Groq,其餘走 Google;拍照與文字都用同一把,只存本機) | false |
+| `groqkey` / `googlekey` | 舊版雙金鑰欄位(仍讀取,啟動時自動併回單一 geminikey) | false |
 | `workout`             | JSON `{days,cardio,note,plan}`,運動需求輸入 + 產生的客製課表 | false |
 | `wocollapsed`         | 運動計畫區塊是否收合 ("1"/"0")               | false  |
 | `fridge`              | JSON `{have}`,冰箱食材(使用者自己加的)       | false  |
