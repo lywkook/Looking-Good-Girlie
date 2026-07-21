@@ -964,6 +964,7 @@
     <div id="chartArea"><div class="chart-empty">尚無紀錄,填入體重後會顯示趨勢曲線。</div></div>
     <div id="snapshotArea"></div>
     <div class="history" id="historyArea"></div>
+    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearMetricsBtn">清除所有身體數據紀錄</button></div>
   </div>
 </div>
 
@@ -1167,7 +1168,7 @@
     "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
     "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
     "想吃什麼?(可留空)":"Craving anything? (optional)",
-    "清空今天,重新記錄":"Clear today & restart","存進今天的紀錄":"Save to today's log",
+    "清空今天,重新記錄":"Clear today & restart","存進今天的紀錄":"Save to today's log","清除所有身體數據紀錄":"Clear all body-data records",
     // 拍照 / AI 金鑰
     "拍照估熱量":"Photo calories","加照片(選填)":"Add photo (optional)",
     "上傳食物照片估熱量(可多張)":"Upload food photos to auto-estimate calories (multiple ok)",
@@ -2491,6 +2492,20 @@
     ["inWeight","inFat","inBmi","inMuscle"].forEach(id=>document.getElementById(id).value="");
     renderMetrics();
   });
+
+  (function(){
+    const cm=document.getElementById("clearMetricsBtn"); if(!cm) return;
+    cm.addEventListener("click", async ()=>{
+      const orig = cm.textContent;
+      if(!log.length){ cm.textContent = lang==="en"?"No records yet":"目前沒有紀錄"; setTimeout(()=>{ cm.textContent=orig; }, 1500); return; }
+      if(!confirm(lang==="en"?("Clear all "+log.length+" body-data records? This cannot be undone."):("確定清除全部 "+log.length+" 筆身體數據紀錄?此動作無法復原"))) return;
+      log = [];
+      await saveLog();
+      ["inWeight","inFat","inBmi","inMuscle"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+      renderMetrics();
+      if(typeof updateStripForDate==="function") updateStripForDate();
+    });
+  })();
 
   // ---------- 飲食紀錄 · 熱量(手動輸入 + 食物資料庫 + 動態建議) ----------
   // 內建常見食物資料庫(每份大約熱量 kcal;打字時會自動帶入)
