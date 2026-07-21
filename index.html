@@ -1888,9 +1888,26 @@
     if(key.slice(0,4)==="gsk_") return await groqJSON(prompt, b64, key, temp);
     return await googleJSON(prompt, extraParts, temp, key);
   }
+  let groqModelsCache = null;
+  async function groqModelList(key){
+    if(groqModelsCache) return groqModelsCache;
+    try{
+      const res=await fetch("https://api.groq.com/openai/v1/models",{headers:{"Authorization":"Bearer "+key}});
+      if(res.ok){ const d=await res.json(); groqModelsCache=(d.data||[]).map(m=>m.id||m.name).filter(Boolean); }
+    }catch(e){}
+    return groqModelsCache||[];
+  }
   async function groqJSON(prompt, b64, key, temp){
     const content = b64 ? [{type:"text",text:prompt},{type:"image_url",image_url:{url:"data:image/jpeg;base64,"+b64}}] : [{type:"text",text:prompt}];
-    const models = b64 ? GROQ_VISION : GROQ_TEXT;
+    const avail = await groqModelList(key);   // 問這把金鑰實際有哪些模型
+    let models;
+    if(b64){
+      models = avail.filter(id=>/scout|maverick|vision|llava|llama-4/i.test(id) && !/guard|whisper|tts/i.test(id));
+      if(!models.length) models = GROQ_VISION;
+    }else{
+      models = avail.filter(id=>/llama|gemma|qwen|mixtral|instant|versatile|gpt-oss|kimi/i.test(id) && !/vision|guard|whisper|tts/i.test(id));
+      if(!models.length) models = GROQ_TEXT;
+    }
     let lastMsg="連線失敗", quota=false;
     for(const mdl of models){
       let res;
@@ -1902,7 +1919,9 @@
       if(st===401||st===403) throw new Error("Groq 金鑰無效,請確認是 gsk_ 開頭的金鑰(到 console.groq.com/keys 申請)。");
       if(st===429) quota=true;
     }
-    if(quota) throw new Error("Groq 也額度滿了,稍等再試。");
+    if(b64 && avail.length && !avail.some(id=>/scout|maverick|vision|llava|llama-4/i.test(id)))
+      throw new Error("你的 Groq 帳號目前沒有可看圖的模型(可用的:"+avail.slice(0,6).join("、")+"…)。可改貼 Google 金鑰(AIza),或手動輸入熱量。");
+    if(quota) throw new Error("Groq 額度滿了,稍等再試。");
     throw new Error(lastMsg);
   }
   async function googleJSON(prompt, extraParts, temp, key){
