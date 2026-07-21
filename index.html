@@ -614,6 +614,12 @@
       <input id="woGoal" placeholder="例:想瘦肚子和大腿 / 想要馬甲線 / 蜜桃臀 + 直角肩" autocomplete="off">
       <button type="button" class="ai-photo-btn" id="woGoalBtn">幫我規劃</button>
     </div>
+    <div class="wo-quick" style="margin-top:10px;">
+      <div class="wo-quick-title">📷 看到喜歡的動作?拍照上傳,幫你認出來並排組數與強度</div>
+      <input type="file" accept="image/*" id="woPhotoInput" style="display:none">
+      <button type="button" class="ai-photo-btn" id="woPhotoBtn">上傳動作照片,自動規劃</button>
+      <div class="ai-photo-status" id="woPhotoStatus"></div>
+    </div>
     <div class="wo-adv-toggle" id="woAdvToggle">＋ 自己細調(部位・器材・組數)</div>
     <div id="woAdvanced" style="display:none;">
       <div class="metric-inputs">
@@ -2415,6 +2421,48 @@
     }
     btn.disabled=false; btn.textContent=oldT;
   }
+  // 拍照分析動作 → 認出動作 + 排組數/強度,產生一週計畫
+  async function analyzeWorkoutPhoto(b64){
+    const sex=document.getElementById("pfSex")?.value==="male"?"男":"女";
+    const w=document.getElementById("pfWeight")?.value||"", tw=document.getElementById("pfTargetW")?.value||"";
+    const days=parseInt(document.getElementById("woDays").value,10)||4;
+    const cardio=parseInt(document.getElementById("woCardio").value,10)||20;
+    const eq=[]; if(strengthSel.length) eq.push("重訓器材:"+strengthSel.join("、")); if(cardioSel.length) eq.push("有氧:"+cardioSel.join("、"));
+    const prompt='看這張健身/運動照片,用繁體中文判斷這是什麼「動作」(例:深蹲、棒式、二頭彎舉)並認出主要訓練部位。'
+      +'再以這個動作為主軸,幫'+sex+'性'+(w?(" "+w+"kg"):"")+(tw?("→"+tw+"kg"):"")+'設計一週7天計畫(新手做得到、減脂+線條),每週'+days+'天、有氧'+cardio+'分。'
+      +(eq.length?eq.join(";")+"。":"")+'每個動作都要寫清楚「組數×次數」或「時間(秒)」與強度。'
+      +'只回 JSON:{"move":"動作名(看不出就空字串)","target":"主要部位","summary":"一句話說明","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["動作 組數×次數"]}](共7天),"tips":[""]}。';
+    return await geminiJSON(prompt, [{inline_data:{mime_type:"image/jpeg", data:b64}}], 0.3);
+  }
+  function initWorkoutPhoto(){
+    const input=document.getElementById("woPhotoInput");
+    const btn=document.getElementById("woPhotoBtn");
+    const status=document.getElementById("woPhotoStatus");
+    const box=document.getElementById("woResult");
+    if(!input||!btn) return;
+    btn.addEventListener("click", ()=>{
+      if(!geminiKey){ status.innerHTML='<span class="err">請先到下方「飲食紀錄」的 🔑 貼上免費 AI 金鑰,才能認出照片裡的動作</span>'; return; }
+      input.click();
+    });
+    input.addEventListener("change", async ()=>{
+      const file=input.files[0]; input.value=""; if(!file) return;
+      btn.disabled=true; status.innerHTML='<span class="ai-spin"></span>分析動作中…(約幾秒)';
+      box.innerHTML='<div class="advice"><span class="ai-spin"></span>正在認出動作並排計畫…</div>';
+      try{
+        const big=await resizeImageToBase64(file,448);
+        const obj=await analyzeWorkoutPhoto(big.split(",")[1]);
+        if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
+        const move=(obj.move||"").trim(), target=(obj.target||"").trim();
+        if(move){ obj.summary="偵測到的動作:"+move+(target?"(主要練"+target+")":"")+"。"+(obj.summary||""); }
+        workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini();
+        status.innerHTML = move ? '<span class="ok">認出「'+esc(move)+'」,已排入計畫 ✅</span>' : '<span class="ok">已排入計畫 ✅</span>';
+      }catch(e){
+        box.innerHTML='';
+        status.innerHTML='<span class="err">分析失敗:'+esc(e.message||e)+'。換個清楚一點的角度再試 🙏</span>';
+      }
+      btn.disabled=false;
+    });
+  }
   function updateWoMini(){
     const mini=document.getElementById("woMini"); if(!mini) return;
     const d=document.getElementById("woDays").value;
@@ -2432,6 +2480,7 @@
     const gen=document.getElementById("woGenBtn"); if(gen) gen.addEventListener("click", generateWorkoutPlan);
     const gb=document.getElementById("woGoalBtn"); if(gb) gb.addEventListener("click", generateFromGoal);
     const gi=document.getElementById("woGoal"); if(gi) gi.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); generateFromGoal(); } });
+    initWorkoutPhoto();
     ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs","woGoal"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
     // 部位 / 器材 的「其他」新增
     const wire=(inputId, btnId, preset, sel, boxId)=>{
