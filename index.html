@@ -687,7 +687,7 @@
     <div class="ai-photo-box" id="aiPhotoBox">
       <div class="ai-photo-title">📷 拍照估熱量</div>
       <input type="file" accept="image/*" id="aiPhotoInput" style="display:none">
-      <button type="button" class="ai-photo-btn" id="aiPhotoBtn">上傳食物照片,自動估熱量加入<span id="aiMealName">早餐</span></button>
+      <button type="button" class="ai-photo-btn" id="aiPhotoBtn">上傳食物照片,自動估熱量</button>
       <div class="ai-photo-status" id="aiPhotoStatus"></div>
       <div class="ai-key-line">
         <span class="ai-key-toggle" id="aiKeyToggle">🔑 AI 金鑰設定</span>
@@ -1976,7 +1976,7 @@
     throw new Error(lastMsg);
   }
   async function analyzeFoodPhoto(b64){
-    const prompt = '看這張食物照片,用繁體中文判斷是什麼餐點並估計整份總熱量(大卡)。只回 JSON:{"name":"餐點名不超過12字","kcal":整數,"note":"一句話依據"}。看不出是食物就 name 回空字串。';
+    const prompt = '看這張食物照片,用繁體中文判斷是什麼餐點並估計整份總熱量(大卡)。重要:多數人會低估份量,請把烹調用油、醬料、糖、隱藏配料都算進去,寧可估高也不要估低,以餐廳/外食的實際份量為準。只回 JSON:{"name":"餐點名不超過12字","kcal":整數,"note":"一句話依據"}。看不出是食物就 name 回空字串。';
     return await geminiJSON(prompt, [{inline_data:{mime_type:"image/jpeg", data:b64}}], 0.2);
   }
   function initAIPhotoModule(){
