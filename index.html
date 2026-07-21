@@ -145,7 +145,6 @@
   #reminderSection{ order:6; }
   #profileSection{ order:7; }
   #workoutSection{ order:8; }
-  #askSection{ order:9; }
   .section{ padding:22px 20px 0; }
   .section h2{
     font-size:var(--fs-title); margin:0 0 12px; font-weight:400;
@@ -528,26 +527,36 @@
   .wo-hint{ font-size:var(--fs-hint); color:var(--ink-soft); margin:10px 0; line-height:1.5; }
   .wo-hint.err{ color:#B5766F; }
   #checkinBlock{ margin-top:16px; border-top:1px dashed var(--line); padding-top:14px; }
-  .ask-hint{ font-size:var(--fs-label); color:var(--ink-soft); line-height:1.5; margin-bottom:10px; }
-  .ask-log{ display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
-  .ask-log:empty{ display:none; }
-  .ask-bubble{ font-size:var(--fs-body); line-height:1.55; padding:10px 13px; border-radius:14px; white-space:pre-wrap; word-break:break-word; }
-  .ask-q{ align-self:flex-end; background:var(--pink); color:#fff; border-bottom-right-radius:4px; max-width:85%; }
-  .ask-a{ align-self:flex-start; background:#FFFBF6; border:1.5px solid var(--line); color:var(--ink); border-bottom-left-radius:4px; max-width:92%; white-space:normal; }
+  /* 不懂問 AI:全螢幕頁面 */
+  .ask-modal{ position:fixed; inset:0; z-index:300; background:var(--cream); display:none; flex-direction:column; }
+  .ask-modal.show{ display:flex; }
+  .ask-modal-head{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:max(16px,env(safe-area-inset-top)) 18px 12px; border-bottom:1px solid var(--line); background:var(--card); }
+  .ask-modal-title{ font-size:var(--fs-title); font-weight:900; color:var(--ink); }
+  .ask-modal-close{ width:38px; height:38px; border:none; background:var(--pink-soft); color:var(--ink);
+    border-radius:50%; font-size:18px; cursor:pointer; font-family:inherit; flex:none; }
+  .ask-modal-close:active{ opacity:0.6; }
+  .ask-log{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; gap:10px; padding:16px; }
+  .ask-empty{ margin:auto; text-align:center; color:var(--ink-soft); font-size:var(--fs-body); line-height:1.7; padding:0 20px; }
+  .ask-bubble{ font-size:var(--fs-body); line-height:1.55; padding:11px 14px; border-radius:16px; word-break:break-word; }
+  .ask-q{ align-self:flex-end; background:var(--pink); color:#fff; border-bottom-right-radius:5px; max-width:85%; white-space:pre-wrap; }
+  .ask-a{ align-self:flex-start; background:#fff; border:1.5px solid var(--line); color:var(--ink); border-bottom-left-radius:5px; max-width:92%; }
   .ask-a .md-p{ margin:3px 0; }
   .ask-a .md-li{ margin:3px 0 3px 6px; padding-left:2px; }
   .ask-a .md-h{ margin:6px 0 2px; font-weight:900; }
   .ask-a .md-sp{ height:7px; }
   .ask-a b{ font-weight:900; }
-  .ask-input-row{ display:flex; gap:8px; align-items:flex-end; }
-  .ask-textarea{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; resize:vertical; }
+  .ask-bottom{ background:var(--card); border-top:1px solid var(--line); padding:10px 14px max(12px,env(safe-area-inset-bottom)); }
+  .ask-status{ font-size:var(--fs-hint); color:var(--ink-soft); min-height:0; margin-bottom:6px; }
+  .ask-status:empty{ display:none; }
+  .ask-input-bar{ display:flex; gap:8px; align-items:flex-end; }
+  .ask-textarea{ flex:1; min-width:0; max-height:120px; padding:11px 14px; border-radius:16px; border:2px solid var(--line);
+    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; resize:none; line-height:1.5; }
   .ask-textarea:focus{ outline:none; border-color:var(--pink); }
-  .ask-send{ flex:none; padding:11px 18px; border:none; border-radius:12px; background:var(--pink); color:#fff;
+  .ask-send{ flex:none; padding:11px 20px; border:none; border-radius:16px; background:var(--pink); color:#fff;
     font-size:var(--fs-body); font-weight:800; font-family:inherit; cursor:pointer; }
   .ask-send:active{ opacity:0.7; }
   .ask-send:disabled{ opacity:0.5; }
-  .ask-status{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:6px; }
   .wo-sub{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:10px; }
   .wo-sub-toggle{ cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
   .wo-sub-toggle .pf-caret{ font-size:var(--fs-label); color:var(--pink); }
@@ -761,7 +770,7 @@
     <button class="save-btn cute" id="woGenBtn" style="margin-top:14px;">✨ 生成運動計劃</button>
     <div id="woResult"></div>
     <div class="wo-adjust" id="woAdjustBox" style="display:none;">
-      <div class="wo-adjust-title">🔁 臨時要改?說一下今天/這週的變動,幫你重新整合安排</div>
+      <div class="wo-adjust-title">🔁 調整運動計劃</div>
       <div class="wo-adjust-row">
         <input id="woAdjustInput" placeholder="例:今天想休息 / 只想練上半身 / 這週只能練 3 天" autocomplete="off">
         <button type="button" class="mini-btn" id="woAdjustBtn">重新調整 ✨</button>
@@ -914,16 +923,20 @@
   </div>
 </div>
 
-<div class="section" id="askSection">
-  <h2 class="cute" id="askToggle"><span class="dot"></span>不懂問 AI <span class="pf-caret" id="askCaret">▾</span></h2>
-  <div class="weight-box">
-    <div class="ask-hint">任何問題都可以問(飲食、運動、健康、生活…),AI 用中文回答你。需要先在「飲食紀錄」的 🔑 貼上免費金鑰。</div>
-    <div id="askLog" class="ask-log"></div>
-    <div class="ask-input-row">
-      <textarea id="askInput" class="ask-textarea" rows="2" placeholder="例:燕麥怎麼吃比較不會胖? / 深蹲要注意什麼?"></textarea>
+<div class="ask-modal" id="askModal">
+  <div class="ask-modal-head">
+    <span class="ask-modal-title cute">不懂問 AI</span>
+    <button type="button" class="ask-modal-close" id="askClose">✕</button>
+  </div>
+  <div id="askLog" class="ask-log">
+    <div class="ask-empty" id="askEmpty">問我任何問題吧 —— 飲食、運動、健康、生活都可以。<br>(需要先在「飲食紀錄」的 🔑 貼上免費金鑰)</div>
+  </div>
+  <div class="ask-bottom">
+    <div class="ask-status" id="askStatus"></div>
+    <div class="ask-input-bar">
+      <textarea id="askInput" class="ask-textarea" rows="1" placeholder="問我任何問題…"></textarea>
       <button type="button" class="ask-send" id="askBtn">問</button>
     </div>
-    <div class="ask-status" id="askStatus"></div>
   </div>
 </div>
 
@@ -2275,7 +2288,7 @@
   async function askAIText(question){
     const key=cleanKey(geminiKey);
     if(!key) throw new Error("尚未設定 AI 金鑰。請到「飲食紀錄」的 🔑 貼上一把免費金鑰(Google 或 Groq)。");
-    const prompt="你是親切、可靠的中文小幫手。請用「繁體中文」、口語、簡單好懂地回答使用者的問題;需要時可條列重點。若問題涉及健康或醫療,提醒對方嚴重時要看醫生。使用者的問題:\n"+question;
+    const prompt="你是親切的中文小幫手。請用繁體中文回答,務必「簡短扼要、只講重點」,能一兩句講完就別長篇大論,最多 3-4 個短句或 3 個重點;避免客套與贅字。若涉及健康醫療,嚴重時提醒看醫生。問題:\n"+question;
     if(key.slice(0,4)==="gsk_") return await groqChat(prompt, key);
     return await googleChat(prompt, key);
   }
@@ -2315,27 +2328,36 @@
     if(quota) throw new Error("Groq 額度滿了,稍等再試。");
     throw new Error(lastMsg);
   }
+  function openAskModal(){
+    const m=document.getElementById("askModal"); if(!m) return;
+    m.classList.add("show");
+    const inp=document.getElementById("askInput"); if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 250);
+  }
+  function closeAskModal(){ const m=document.getElementById("askModal"); if(m) m.classList.remove("show"); }
   function initAskModule(){
-    const box=document.getElementById("askSection"); if(!box) return;
+    const m=document.getElementById("askModal"); if(!m) return;
     const input=document.getElementById("askInput");
     const btn=document.getElementById("askBtn");
     const log=document.getElementById("askLog");
     const status=document.getElementById("askStatus");
-    const tog=document.getElementById("askToggle");
-    if(tog) tog.addEventListener("click", ()=>{ const c=box.classList.toggle("collapsed"); const cr=document.getElementById("askCaret"); if(cr) cr.textContent=c?"▸":"▾"; });
+    const closeBtn=document.getElementById("askClose");
+    if(closeBtn) closeBtn.addEventListener("click", closeAskModal);
+    const autoGrow=()=>{ if(!input) return; input.style.height="auto"; input.style.height=Math.min(120, input.scrollHeight)+"px"; };
     async function ask(){
       const q=(input.value||"").trim(); if(!q) return;
       if(!anyKey()){ status.innerHTML='<span class="err">請先到「飲食紀錄」的 🔑 貼上免費金鑰,才能問 AI</span>'; return; }
-      input.value=""; btn.disabled=true;
+      const empty=document.getElementById("askEmpty"); if(empty) empty.remove();
+      input.value=""; autoGrow(); btn.disabled=true;
       const qb=document.createElement("div"); qb.className="ask-bubble ask-q"; qb.textContent=q; log.appendChild(qb);
       const ab=document.createElement("div"); ab.className="ask-bubble ask-a"; ab.textContent="…思考中"; log.appendChild(ab);
-      status.innerHTML=""; ab.scrollIntoView({block:"nearest"});
+      status.innerHTML=""; log.scrollTop=log.scrollHeight;
       try{ const ans=await askAIText(q); ab.innerHTML=mdToHtml(ans); }
       catch(e){ ab.textContent="⚠️ "+(e.message||e); }
-      btn.disabled=false; ab.scrollIntoView({block:"nearest"});
+      btn.disabled=false; log.scrollTop=log.scrollHeight;
     }
     if(btn) btn.addEventListener("click", ask);
-    if(input) input.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); ask(); } });
+    if(input){ input.addEventListener("input", autoGrow);
+      input.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); ask(); } }); }
   }
   async function analyzeFoodPhoto(b64s){
     if(typeof b64s==="string") b64s=[b64s];
@@ -3100,7 +3122,6 @@
     show('foodSection', t==='origin'||t==='full'||t==='track');
     show('waterSection', t==='origin'||t==='full'||t==='track');
     show('metricsSection', true);
-    show('askSection', true);
     show('reminderSection', t==='origin');
     const ph=document.getElementById("planHeader");
     if(ph){ if(t==='origin'){ ph.style.display="none"; } else { ph.style.display=""; ph.textContent=PLAN.name; } }
@@ -3332,10 +3353,10 @@
   }
 
   // ---------- 底部主選單(回主畫面 / 新增 / 跳到某區塊) ----------
-  const SECTION_LABELS = { menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", reminderSection:"提醒", profileSection:"個人資料", workoutSection:"運動計畫", askSection:"不懂問 AI" };
+  const SECTION_LABELS = { menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", reminderSection:"提醒", profileSection:"個人資料", workoutSection:"運動計畫" };
   function buildJumpMenu(){
     const box=document.getElementById("navJumpMenu"); if(!box) return;
-    const ids=["menuSection","foodSection","waterSection","metricsSection","fridgeSection","reminderSection","profileSection","workoutSection","askSection"];
+    const ids=["menuSection","foodSection","waterSection","metricsSection","fridgeSection","reminderSection","profileSection","workoutSection"];
     box.innerHTML = ids.filter(id=>{ const el=document.getElementById(id); return el && el.style.display!=="none"; })
       .map(id=>`<div class="nav-jump-item" data-sec="${id}">${SECTION_LABELS[id]}</div>`).join("");
     box.querySelectorAll(".nav-jump-item").forEach(it=> it.addEventListener("click", ()=> jumpToSection(it.dataset.sec)));
@@ -3351,12 +3372,7 @@
     const h=document.getElementById("navHome"); if(h) h.addEventListener("click", goHome);
     const n=document.getElementById("navNew"); if(n) n.addEventListener("click", ()=>{ goHome(); const el=document.getElementById("homeNewName"); if(el){ try{el.scrollIntoView({block:"center"});}catch(_){} el.focus(); } });
     const j=document.getElementById("navJump"); if(j) j.addEventListener("click", (e)=>{ e.stopPropagation(); buildJumpMenu(); document.getElementById("navJumpMenu").classList.toggle("show"); });
-    const ak=document.getElementById("navAsk"); if(ak) ak.addEventListener("click", ()=>{
-      const sec=document.getElementById("askSection"); if(!sec) return;
-      sec.classList.remove("collapsed"); const cr=document.getElementById("askCaret"); if(cr) cr.textContent="▾";
-      try{ sec.scrollIntoView({behavior:"smooth", block:"start"}); }catch(_){ sec.scrollIntoView(); }
-      const inp=document.getElementById("askInput"); if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 300);
-    });
+    const ak=document.getElementById("navAsk"); if(ak) ak.addEventListener("click", openAskModal);
     const s=document.getElementById("navSettings"); if(s) s.addEventListener("click", openSettings);
     document.addEventListener("click", (e)=>{ const menu=document.getElementById("navJumpMenu"); if(menu && menu.classList.contains("show") && !menu.contains(e.target) && e.target.id!=="navJump") menu.classList.remove("show"); });
   }
