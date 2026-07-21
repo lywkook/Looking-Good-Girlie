@@ -362,6 +362,12 @@
   .home-card-name{ font-size:var(--fs-title); font-weight:900; color:var(--ink); }
   .home-card-type{ font-size:var(--fs-label); color:#fff; background:var(--pink); border-radius:20px; padding:3px 12px; white-space:nowrap; }
   .home-card .home-arrow{ color:var(--pink); font-size:var(--fs-title); }
+  .home-card .home-del{ font-size:var(--fs-label); color:var(--ink-soft); background:var(--pink-soft);
+    border-radius:20px; padding:3px 10px; white-space:nowrap; cursor:pointer; }
+  .home-card .home-del:active{ opacity:0.6; }
+  .danger-btn{ width:100%; border:1.5px solid #D9B3B3; background:#F7ECEC; color:#9E5A5A;
+    border-radius:14px; padding:12px; font-size:var(--fs-body); font-weight:700; cursor:pointer; }
+  .danger-btn:active{ opacity:0.7; }
   .home-new{ margin-top:24px; background:var(--card); border-radius:18px; padding:16px; box-shadow:var(--shadow);
     display:flex; flex-direction:column; gap:8px; }
   .home-new-title{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
@@ -829,6 +835,11 @@
         </div>
         <div id="profileResult"></div>
       </div>
+    </div>
+
+    <div class="set-block" id="setDangerBlock" style="display:none;">
+      <div class="set-title">刪除計畫</div>
+      <button type="button" id="setDeleteBtn" class="danger-btn">🗑 刪除這個計畫</button>
     </div>
   </div>
 </div>
@@ -2534,14 +2545,19 @@
       });
     });
     box.querySelectorAll(".pi-del").forEach(d=>{
-      d.addEventListener("click", async (e)=>{ e.stopPropagation();
-        if(!confirm("刪除這個計畫?裡面的紀錄也會一起清掉")) return;
-        const id=d.dataset.del;
-        ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed","waterlog","watergoal","workout","wocollapsed","fridge","frcollapsed","reminder","rmcollapsed","herotitle","themecolor"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
-        plans=plans.filter(p=>p.id!==id); await savePlans();
-        if(PLAN.id===id){ await switchPlan("default"); } else { renderPlanList(); }
-      });
+      d.addEventListener("click", (e)=>{ e.stopPropagation(); deletePlan(d.dataset.del); });
     });
+  }
+  async function deletePlan(id){
+    if(id==="default"){ alert("預設計畫不能刪除"); return; }
+    const pl=plans.find(p=>p.id===id); if(!pl) return;
+    if(!confirm("刪除計畫「"+pl.name+"」?裡面的紀錄會一起清掉,無法復原")) return;
+    ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed","waterlog","watergoal","workout","wocollapsed","fridge","frcollapsed","reminder","rmcollapsed","herotitle","themecolor"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
+    plans=plans.filter(p=>p.id!==id); await savePlans();
+    const sm=document.getElementById("settingsModal"); if(sm) sm.classList.remove("show");
+    const pp=document.getElementById("planPanel"); if(pp) pp.classList.remove("show");
+    if(PLAN && PLAN.id===id){ PLAN=plans.find(p=>p.id==="default")||plans[0]; try{ await window.storage.set("currentplan", PLAN.id, false); }catch(e){} renderPlanList(); goHome(); }
+    else { renderPlanList(); renderHome(); }
   }
   async function switchPlan(id){
     const pl=plans.find(p=>p.id===id); if(!pl) return;
@@ -2599,10 +2615,13 @@
     box.innerHTML = plans.map(p=>`<div class="home-card" data-id="${p.id}">
         <div class="home-card-name">${esc(p.name)}</div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <span class="home-card-type">${esc(PLAN_LABEL[p.type]||'')}</span><span class="home-arrow">›</span>
+          <span class="home-card-type">${esc(PLAN_LABEL[p.type]||'')}</span>
+          ${p.id!=="default"?`<span class="home-del" data-del="${p.id}">刪除</span>`:''}
+          <span class="home-arrow">›</span>
         </div>
       </div>`).join("");
-    box.querySelectorAll(".home-card").forEach(c=> c.addEventListener("click", ()=> enterPlan(c.dataset.id)));
+    box.querySelectorAll(".home-card").forEach(c=> c.addEventListener("click", (e)=>{ if(e.target.classList.contains("home-del")) return; enterPlan(c.dataset.id); }));
+    box.querySelectorAll(".home-del").forEach(d=> d.addEventListener("click", (e)=>{ e.stopPropagation(); deletePlan(d.dataset.del); }));
   }
   function openSettings(){
     const t = PLAN ? PLAN.type : "";
@@ -2611,6 +2630,8 @@
     if(ah) ah.value=themeColor; if(ap) ap.value=themeColor;
     const bh=document.getElementById("bgHex"), bp=document.getElementById("bgPicker");
     if(bh) bh.value=bgImage?"":bgColor; if(bp) bp.value=bgColor;
+    const db=document.getElementById("setDangerBlock");
+    if(db) db.style.display=(PLAN && PLAN.id!=="default")?"":"none";
     renderAccentSwatches(); renderSwatches();
     document.getElementById("settingsModal").classList.add("show");
   }
@@ -2732,6 +2753,8 @@
     if(up) up.addEventListener("change", async ()=>{ const f=up.files[0]; up.value=""; if(!f) return;
       try{ bgImage=await resizeImageToBase64(f, 1200); applyTheme(); await saveTheme(); }catch(e){} });
     if(clr) clr.addEventListener("click", async ()=>{ bgImage=""; bgColor="#F5F1EB"; applyTheme(); await saveTheme(); });
+    const delBtn=document.getElementById("setDeleteBtn");
+    if(delBtn) delBtn.addEventListener("click", ()=>{ if(PLAN) deletePlan(PLAN.id); });
   }
 
   // ---------- 標題可編輯(自動儲存) ----------
