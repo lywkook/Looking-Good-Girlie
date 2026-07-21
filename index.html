@@ -191,15 +191,17 @@
   .metric .lbl{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; }
 
   #appView{ display:flex; flex-direction:column; }
-  #menuSection{ order:1; }
-  #foodSection{ order:2; }
-  #waterSection{ order:3; }
-  #metricsSection{ order:4; }
-  #fridgeSection{ order:5; }
-  #reminderSection{ order:6; }
-  #profileSection{ order:7; }
-  #workoutSection{ order:8; }
-  #checkinSection{ order:9; }
+  #profileSection{ order:1; }
+  #goalSection{ order:2; }
+  #exportSection{ order:3; }
+  #menuSection{ order:4; }
+  #foodSection{ order:5; }
+  #waterSection{ order:6; }
+  #metricsSection{ order:7; }
+  #fridgeSection{ order:8; }
+  #reminderSection{ order:9; }
+  #workoutSection{ order:10; }
+  #checkinSection{ order:11; }
   .scroll-top-btn{ position:fixed; right:18px; bottom:98px; width:46px; height:46px; border-radius:50%; border:none;
     background:var(--pink); color:#fff; font-size:24px; font-weight:900; line-height:1; box-shadow:0 4px 14px rgba(94,85,76,0.28);
     cursor:pointer; z-index:150; display:none; align-items:center; justify-content:center; }
@@ -752,6 +754,47 @@
   </div>
 </header>
 
+<div class="section" id="profileSection">
+  <h2 class="cute" id="pfToggle"><span class="dot"></span>個人資料 <span class="pf-caret" id="pfCaret">▾</span></h2>
+  <div class="pf-mini" id="pfMini"></div>
+  <div class="weight-box">
+    <div class="metric-inputs">
+      <div class="field">
+        <label>性別</label>
+        <div class="wrap"><select id="pfSex"><option value="female">女</option><option value="male">男</option></select></div>
+      </div>
+      <div class="field"><label>年齡</label><div class="wrap"><input type="number" id="pfAge" placeholder="30"><span class="unit">歲</span></div></div>
+      <div class="field"><label>身高</label><div class="wrap"><input type="number" id="pfHeight" placeholder="160"><span class="unit">cm</span></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="goalSection">
+  <h2 class="cute" id="goalToggle"><span class="dot"></span>目標 <span class="pf-caret" id="goalCaret">▾</span></h2>
+  <div class="pf-mini" id="goalMini"></div>
+  <div class="weight-box">
+    <div class="metric-inputs">
+      <div class="field"><label>目前體重</label><div class="wrap"><input type="number" step="0.1" id="pfWeight" placeholder="64"><span class="unit">kg</span></div></div>
+      <div class="field"><label>目標體重</label><div class="wrap"><input type="number" step="0.1" id="pfTargetW" placeholder="60"><span class="unit">kg</span></div></div>
+      <div class="field"><label>目標體脂</label><div class="wrap"><input type="number" step="0.1" id="pfTargetBf" placeholder="22"><span class="unit">%</span></div></div>
+    </div>
+    <div class="field" style="margin-bottom:12px;">
+      <label>希望達成日期</label>
+      <div class="wrap"><input type="date" id="pfDate" value="2026-08-28"></div>
+    </div>
+    <div id="profileResult"></div>
+  </div>
+</div>
+
+<div class="section" id="exportSection">
+  <h2 class="cute" id="exportToggle"><span class="dot"></span>匯出備份 <span class="pf-caret" id="exportCaret">▾</span></h2>
+  <div class="pf-mini" id="exportMini"></div>
+  <div class="weight-box">
+    <button type="button" id="exportPdfBtn" class="save-btn cute" style="width:100%;">匯出成 PDF(可存手機/雲端/分享)</button>
+    <div class="set-hint" style="font-size:var(--fs-hint);color:var(--ink-soft);margin-top:10px;line-height:1.6;">整理成一份文件(個人資料、身體數據、運動計畫、飲食紀錄),用手機的「列印 → 儲存成 PDF」存檔或分享。換手機或清除瀏覽器資料前記得先匯出備份。</div>
+  </div>
+</div>
+
 <div class="section" id="menuSection">
   <h2 class="cute" id="menuToggle"><span class="dot"></span>今日菜單 <span class="pf-caret" id="menuCaret">▾</span></h2>
   <div class="pf-mini" id="menuMini"></div>
@@ -1028,12 +1071,6 @@
   <div class="modal-inner">
     <div class="modal-head"><span class="modal-title cute"><span id="setModalTitle">設定</span> ⚙️</span><button type="button" class="modal-close" id="setClose">✕</button></div>
 
-    <div class="set-block" id="setExportBlock">
-      <div class="set-title">匯出 / 備份</div>
-      <button type="button" id="exportPdfBtn" class="mini-btn" style="width:100%;padding:12px;">匯出成 PDF(可存手機/雲端/分享)</button>
-      <div class="set-hint" style="font-size:var(--fs-hint);color:var(--ink-soft);margin-top:6px;">整理成一份文件,可用「列印 → 儲存成 PDF」存檔或分享。</div>
-    </div>
-
     <div class="set-block">
       <div class="set-title">主題色</div>
       <div class="bg-swatches" id="accentSwatches"></div>
@@ -1076,28 +1113,6 @@
     <div class="set-block">
       <div class="set-title">字體</div>
       <button type="button" class="mini-btn js-font-toggle">粗線體</button>
-    </div>
-
-    <div class="set-block" id="setProfileBlock">
-      <div class="set-title">個人資料 · 減重分析</div>
-      <div class="weight-box">
-        <div class="metric-inputs">
-          <div class="field">
-            <label>性別</label>
-            <div class="wrap"><select id="pfSex"><option value="female">女</option><option value="male">男</option></select></div>
-          </div>
-          <div class="field"><label>年齡</label><div class="wrap"><input type="number" id="pfAge" placeholder="30"><span class="unit">歲</span></div></div>
-          <div class="field"><label>身高</label><div class="wrap"><input type="number" id="pfHeight" placeholder="160"><span class="unit">cm</span></div></div>
-          <div class="field"><label>目前體重</label><div class="wrap"><input type="number" step="0.1" id="pfWeight" placeholder="64"><span class="unit">kg</span></div></div>
-          <div class="field"><label>目標體重</label><div class="wrap"><input type="number" step="0.1" id="pfTargetW" placeholder="60"><span class="unit">kg</span></div></div>
-          <div class="field"><label>目標體脂</label><div class="wrap"><input type="number" step="0.1" id="pfTargetBf" placeholder="22"><span class="unit">%</span></div></div>
-        </div>
-        <div class="field" style="margin-bottom:12px;">
-          <label>希望達成日期</label>
-          <div class="wrap"><input type="date" id="pfDate" value="2026-08-28"></div>
-        </div>
-        <div id="profileResult"></div>
-      </div>
     </div>
 
     <div class="set-block" id="setDangerBlock" style="display:none;">
@@ -1153,7 +1168,7 @@
     "調整背景照片(縮放/移動)":"Adjust background (zoom / move)",
     "兩指縮放、單指拖曳調整位置,背景固定不隨畫面捲動。":"Pinch to zoom, drag to reposition. The background stays fixed while you scroll.",
     "兩指縮放 · 單指拖曳位置":"Pinch to zoom · drag to move","取消":"Cancel","儲存":"Save",
-    "個人資料 · 減重分析":"Profile · Analysis","性別":"Sex","年齡":"Age","身高":"Height","男":"Male","女":"Female",
+    "個人資料 · 減重分析":"Profile · Analysis","個人資料":"Profile","目標":"Goal","匯出備份":"Export & backup","性別":"Sex","年齡":"Age","身高":"Height","男":"Male","女":"Female",
     "目前體重":"Current weight","目標體重":"Goal weight","目標體脂":"Goal body fat","希望達成日期":"Target date",
     "刪除計畫":"Delete plan","🗑 刪除這個計畫":"🗑 Delete this plan","匯出 / 備份":"Export / Backup",
     "匯出成 PDF(可存手機/雲端/分享)":"Export as PDF (save to phone / cloud / share)",
@@ -3426,20 +3441,14 @@
     if(persist){ try{ window.storage.set(K("pfcollapsed"), collapsed?"1":"0", false); }catch(e){} }
   }
   function initProfileModule(){
+    // 個人資料與目標的輸入分屬兩個區塊,但都用同一組 pf* id;變更時即時分析並儲存
     ["pfSex","pfAge","pfHeight","pfWeight","pfTargetW","pfTargetBf","pfDate"].forEach(id=>{
       const el = document.getElementById(id);
       if(!el) return;
       const ev = (el.tagName==="SELECT" || el.type==="date") ? "change" : "input";
-      el.addEventListener(ev, ()=>{ analyzeProfile(); saveProfile(); updatePfMini(); });
+      el.addEventListener(ev, ()=>{ analyzeProfile(); saveProfile(); });
       el.addEventListener("change", saveProfile);
     });
-    const tog = document.getElementById("pfToggle");
-    if(tog) tog.addEventListener("click", ()=>{
-      const sec = document.getElementById("profileSection");
-      setProfileCollapsed(!sec.classList.contains("collapsed"), true);
-    });
-    const mini = document.getElementById("pfMini");
-    if(mini) mini.addEventListener("click", ()=> setProfileCollapsed(false, true));
   }
 
   // ---------- 運動計畫 · 客製化 ----------
@@ -3921,6 +3930,8 @@
     show('checkinSection', t==='origin'||t==='full');
     show('fridgeSection', t==='origin'||t==='full');
     show('profileSection', t==='origin'||t==='full');
+    show('goalSection', t==='origin'||t==='full');
+    show('exportSection', true);
     show('workoutSection', t==='origin'||t==='full');
     show('foodSection', t==='origin'||t==='full'||t==='track');
     show('waterSection', t==='origin'||t==='full'||t==='track');
@@ -4065,17 +4076,13 @@
   }
   function openSettings(){
     const isHome = themeScope==="home";
-    const pt = PLAN ? PLAN.type : "";
-    // 主畫面只調外觀(主題色/背景/字體);個人資料、刪除計畫只在計畫內出現
-    const pb=document.getElementById("setProfileBlock"); if(pb) pb.style.display=(!isHome && (pt==='full'||pt==='origin'))?"":"none";
+    // 主畫面只調外觀(主題色/背景/字體);刪除計畫只在計畫內出現(個人資料/目標/匯出已移到計畫頁面)
     const ah=document.getElementById("accentHex"), ap=document.getElementById("accentPicker");
     if(ah) ah.value=themeColor; if(ap) ap.value=themeColor;
     const bh=document.getElementById("bgHex"), bp=document.getElementById("bgPicker");
     if(bh) bh.value=bgImage?"":bgColor; if(bp) bp.value=bgColor;
     const db=document.getElementById("setDangerBlock");
     if(db) db.style.display=(!isHome && PLAN)?"":"none";
-    const eb=document.getElementById("setExportBlock");
-    if(eb) eb.style.display=(!isHome && PLAN)?"":"none";
     const ttl=document.getElementById("setModalTitle"); if(ttl) ttl.textContent = isHome ? t("主畫面外觀") : t("設定");
     renderAccentSwatches(); renderSwatches(); refreshBgAdjustUI();
     document.getElementById("settingsModal").classList.add("show");
@@ -4278,10 +4285,10 @@
   }
 
   // ---------- 底部主選單(回主畫面 / 新增 / 跳到某區塊) ----------
-  const SECTION_LABELS = { menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", reminderSection:"提醒", profileSection:"個人資料", workoutSection:"運動計畫", checkinSection:"每日打卡" };
+  const SECTION_LABELS = { profileSection:"個人資料", goalSection:"目標", exportSection:"匯出備份", menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", reminderSection:"提醒", workoutSection:"運動計畫", checkinSection:"每日打卡" };
   function buildJumpMenu(){
     const box=document.getElementById("navJumpMenu"); if(!box) return;
-    const ids=["menuSection","foodSection","waterSection","metricsSection","fridgeSection","reminderSection","profileSection","workoutSection","checkinSection"];
+    const ids=["profileSection","goalSection","exportSection","menuSection","foodSection","waterSection","metricsSection","fridgeSection","reminderSection","workoutSection","checkinSection"];
     box.innerHTML = ids.filter(id=>{ const el=document.getElementById(id); return el && el.style.display!=="none"; })
       .map(id=>`<div class="nav-jump-item" data-sec="${id}">${SECTION_LABELS[id]}</div>`).join("");
     box.querySelectorAll(".nav-jump-item").forEach(it=> it.addEventListener("click", ()=> jumpToSection(it.dataset.sec)));
@@ -4549,6 +4556,9 @@
   // ---------- 通用收合(菜單/飲食/喝水) ----------
   async function initSimpleCollapse(){
     const defs=[
+      ["profileSection","pfToggle","pfCaret","pfMini","pfcollapse","個人資料"],
+      ["goalSection","goalToggle","goalCaret","goalMini","goalcollapse","目標"],
+      ["exportSection","exportToggle","exportCaret","exportMini","exportcollapse","匯出備份"],
       ["menuSection","menuToggle","menuCaret","menuMini","menucollapse","今日菜單"],
       ["foodSection","foodToggle","foodCaret","foodMini","foodcollapse","飲食紀錄"],
       ["waterSection","waterToggle","waterCaret","waterMini","watercollapse","今日喝水"]
