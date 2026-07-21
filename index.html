@@ -842,14 +842,14 @@
       <span class="fchip" data-pref="麵食">麵食</span>
       <span class="fchip" data-pref="湯品">湯品</span>
     </div>
-    <input id="menuWish" placeholder="還想吃什麼?(可留空,AI 幫你決定)" autocomplete="off">
+    <input id="menuWish" placeholder="還想吃什麼?(可留空)" autocomplete="off">
     <input id="menuRestaurant" placeholder="要外食?打店名、或貼餐廳連結(官網最準)" autocomplete="off">
     <div class="menu-regen-photo-row">
       <input type="file" accept="image/*" id="menuPhotoInput" multiple style="display:none">
       <button type="button" class="mini-btn" id="menuPhotoBtn">上傳菜單照片</button>
       <span class="menu-photo-preview" id="menuPhotoPreview"></span>
     </div>
-    <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:12px;">讓 AI 換這一餐</button>
+    <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:12px;">換這一餐</button>
     <div class="ai-photo-status" id="menuRegenStatus"></div>
   </div>
 </div>
@@ -1287,8 +1287,7 @@
     "口味喜好(可複選 / 不選)":"Taste preferences (pick any, or none)",
     "高蛋白":"High protein","少油清爽":"Light / low oil","低卡":"Low calorie","低碳水":"Low carb","多蔬菜":"More veg","吃辣":"Spicy OK","不辣":"Not spicy","不吃牛":"No beef","不吃豬":"No pork","海鮮":"Seafood","素食":"Vegetarian","飯類":"Rice dishes","麵食":"Noodles","湯品":"Soup",
     "想吃什麼?(可留空)":"Craving anything? (optional)",
-    "想吃什麼?(可留空,AI 幫你決定)":"Craving anything? (optional — AI decides if blank)",
-    "還想吃什麼?(可留空,AI 幫你決定)":"Anything else you fancy? (optional — AI decides if blank)",
+    "還想吃什麼?(可留空)":"Anything else you fancy? (optional)",
     "要外食?打店名、或貼餐廳連結(官網最準)":"Eating out? Type the store name, or paste a link (official site works best)",
     "上傳菜單照片":"Upload menu photo",
     "上傳菜單照片需要一把免費 AI 金鑰。到右上角 ⚙️ 設定最上面「AI 金鑰」貼上即可(Google / Groq 都行)。":"Uploading a menu photo needs a free AI key. Paste one under “AI key” at the top of ⚙️ Settings (works on Google or Groq).",
@@ -2250,17 +2249,17 @@
       const m = await pickMeal(avoid);
       const text = (m && (m.text || m[field])) || "";
       if(!text){
-        if(hasPhoto) status.innerHTML = '<span class="err">'+RP('這張真的認不太出來 🙏 靠近菜名「分區拍幾張」通常更讀得到;或直接打「想吃什麼」讓 AI 配。','Couldn\'t read this one 🙏 Close-up shots of menu sections read better; or just type a craving.')+'</span>';
+        if(hasPhoto) status.innerHTML = '<span class="err">'+RP('這張認不太出來,靠近菜名分區拍幾張通常更清楚;或直接打想吃什麼。','Couldn\'t read this one — close-up shots of menu sections read better; or just type a craving.')+'</span>';
         else if(rest || regenCtx.foods) showFoodsPrompt(RP('查不到店家菜單,請改上傳菜單照片,或在下方輸入參考品項:','Couldn\'t find the menu — upload a menu photo, or list some items below:'));
-        else status.innerHTML = '<span class="err">'+RP('AI 沒給出建議,再按一次試試','No suggestion this time — tap again.')+'</span>';
+        else status.innerHTML = '<span class="err">'+RP('這次沒有建議,再按一次試試。','No suggestion this time — tap again.')+'</span>';
       } else {
         regenCtx.last = text;
         showRegenResult(text, m.why);
       }
     }catch(e){
-      if(hasPhoto) status.innerHTML = '<span class="err">'+RP('AI 這次沒讀好','Couldn\'t read it this time')+'('+esc(e.message||e)+')。'+RP('菜單照片還在,再按一次通常就好。','Photo is still attached — tap again.')+'</span>';
-      else if(rest) status.innerHTML = '<span class="err">'+RP('讀取失敗','Read failed')+'('+esc(e.message||e)+')。'+RP('可改貼官網 / 菜單頁,或用「上傳菜單照片」。','Try the official/menu page, or upload a menu photo.')+'</span>';
-      else status.innerHTML = '<span class="err">AI '+RP('失敗','failed')+'('+esc(e.message||e)+')。'+RP('再按一次試試。','Tap again.')+'</span>';
+      if(hasPhoto) status.innerHTML = '<span class="err">'+RP('讀取失敗,換張更清楚的菜單照片再試,或直接打想吃什麼。','Read failed — try a clearer menu photo, or just type a craving.')+'</span>';
+      else if(rest) status.innerHTML = '<span class="err">'+RP('讀取失敗,可改貼官網 / 菜單頁,或用「上傳菜單照片」。','Read failed — try the official/menu page, or upload a menu photo.')+'</span>';
+      else status.innerHTML = '<span class="err">'+RP('這次沒成功,再按一次試試。','That didn\'t work — tap again.')+'</span>';
     }
     btn.disabled = false; btn.textContent = old;
   }
@@ -3499,7 +3498,7 @@
         break;   // 其他錯誤 → 換下一個模型
       }
     }
-    if(parseFail && !quota) throw new Error("AI 回傳格式看不懂,請再按一次試試");
+    if(parseFail && !quota) throw new Error("回傳格式看不懂,請再按一次試試");
     if(quota) throw new Error("Groq 額度滿了,稍等再試。");
     if(hasImg){
       throw new Error("Groq 這把金鑰不能看圖。請到 ⚙️ 設定再貼一把免費 Google 金鑰,之後拍照/看菜單會自動用 Google、文字仍用 Groq。");
@@ -3524,7 +3523,7 @@
         geminiLastGood = mdl;
         const obj = parseLooseJSON(txt);
         if(obj!=null) return obj;
-        throw new Error("AI 回傳格式看不懂,請再試一次");
+        throw new Error("回傳格式看不懂,請再試一次");
       }
       let msg="錯誤 "+res.status; const status=res.status;
       try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
@@ -3556,7 +3555,7 @@
         const txt = parts.map(p=>p.text||"").join("").trim();
         const obj = parseLooseJSON(txt);
         if(obj!=null) return obj;
-        throw new Error("AI 回傳格式看不懂,請再試一次");
+        throw new Error("回傳格式看不懂,請再試一次");
       }
       let msg="錯誤 "+res.status; const st=res.status;
       try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
@@ -3576,7 +3575,7 @@
       let res;
       try{ res = await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:mdl,messages:[{role:"user",content:prompt}],temperature:0.4})}); }
       catch(netErr){ lastMsg="無法連線到 Groq"; continue; }
-      if(res.ok){ const d=await res.json(); const txt=(((d.choices||[])[0]||{}).message||{}).content||""; const o=parseLooseJSON(txt); if(o!=null) return o; throw new Error("AI 回傳格式看不懂,請再試一次"); }
+      if(res.ok){ const d=await res.json(); const txt=(((d.choices||[])[0]||{}).message||{}).content||""; const o=parseLooseJSON(txt); if(o!=null) return o; throw new Error("回傳格式看不懂,請再試一次"); }
       let msg="錯誤 "+res.status; const st=res.status;
       try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
       lastMsg=msg;
@@ -3622,7 +3621,7 @@
       let res;
       try{ res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+mdl+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(body)}); }
       catch(e){ lastMsg="無法連線到 Google,請檢查網路"; continue; }
-      if(res.ok){ const d=await res.json(); const parts=((((d.candidates||[])[0]||{}).content||{}).parts)||[]; const txt=parts.map(p=>p.text||"").join("").trim(); geminiLastGood=mdl; if(txt) return txt; throw new Error("AI 沒有回覆內容,換個問法再試"); }
+      if(res.ok){ const d=await res.json(); const parts=((((d.candidates||[])[0]||{}).content||{}).parts)||[]; const txt=parts.map(p=>p.text||"").join("").trim(); geminiLastGood=mdl; if(txt) return txt; throw new Error("沒有回覆內容,換個問法再試"); }
       let msg="錯誤 "+res.status; const st=res.status; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
       lastMsg=msg;
       if(st===401||st===400||st===403) throw new Error("Google 金鑰無法通過驗證,請重新複製、或改用 Groq 金鑰。");
@@ -3641,7 +3640,7 @@
       let res;
       try{ res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:mdl,messages:[{role:"user",content:prompt}],temperature:0.6})}); }
       catch(e){ lastMsg="無法連線到 Groq(可能是瀏覽器限制)"; continue; }
-      if(res.ok){ const d=await res.json(); const txt=((((d.choices||[])[0]||{}).message)||{}).content||""; groqGoodText=mdl; if(txt.trim()) return txt.trim(); throw new Error("AI 沒有回覆內容,換個問法再試"); }
+      if(res.ok){ const d=await res.json(); const txt=((((d.choices||[])[0]||{}).message)||{}).content||""; groqGoodText=mdl; if(txt.trim()) return txt.trim(); throw new Error("沒有回覆內容,換個問法再試"); }
       let msg="錯誤 "+res.status; const st=res.status; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
       lastMsg=msg;
       if(st===401||st===403) throw new Error("Groq 金鑰無效(需 gsk_ 開頭)。");
