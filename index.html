@@ -393,7 +393,7 @@
   .advice.over{ background:#EFE6E1; }
   .advice.warn{ background:var(--lav-soft); }
   .meal-group{ margin-top:14px; }
-  .meal-group-title{ font-size:var(--fs-label); font-weight:900; color:var(--pink); margin-bottom:2px;
+  .meal-group-title{ font-size:var(--fs-title); font-weight:900; color:var(--pink); margin-bottom:4px;
     display:flex; align-items:center; gap:8px; }
   .mg-add{ margin-left:auto; font-weight:700; color:var(--ink); background:var(--pink-soft);
     border-radius:12px; padding:4px 12px; cursor:pointer; font-size:var(--fs-label); }
@@ -666,8 +666,7 @@
     </select>
     <button id="homeAddBtn" class="save-btn cute">＋ 建立新計畫</button>
   </div>
-  <button type="button" class="home-appearance-btn" id="homeAppearanceBtn">⚙️ 設定(外觀・語言・字體大小)</button>
-  <div class="home-sub" style="margin-top:10px;">各計畫外觀:進入計畫後於「⚙️ 設定」調整。</div>
+  <div class="home-sub" style="margin-top:14px;">外觀・語言・字體大小 → 右上角 ⚙️;各計畫外觀進入後於「設定」調整。</div>
   <div class="home-help" id="homeHelp">
     <div class="home-help-head" id="homeHelpToggle">＊ 第一次使用?看這裡 <span class="pf-caret" id="homeHelpCaret">▾</span></div>
     <div class="home-help-body" id="homeHelpBody">
@@ -677,7 +676,7 @@
       <ol>
         <li>到 <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a> 申請(推薦,額度高、也能看圖);或 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>。都是<b>免費、免信用卡</b></li>
         <li>登入 → Create API key → 複製金鑰</li>
-        <li>回到 App → 任一計畫 →「飲食紀錄」的 🔑 → 貼上 → 儲存</li>
+        <li>回到 App → 任一計畫 →「飲食紀錄」的『AI 金鑰設定』→ 貼上 → 儲存</li>
         <li>之後即可使用拍照估熱量、換菜單、運動規劃。</li>
       </ol>
       <p><b>換背景 / 顏色?</b><br>主畫面與各計畫外觀可在「⚙️ 設定」分別調整。</p>
@@ -714,26 +713,26 @@
   <div class="countdown-strip">
     <div class="metric">
       <div class="num" id="daysLeft">--</div>
-      <div class="lbl">剩餘天數 ⏳</div>
+      <div class="lbl">剩餘天數</div>
     </div>
     <div class="metric">
       <div class="num" id="doneCount">0/0</div>
-      <div class="lbl">完成天數 ✅</div>
+      <div class="lbl">完成天數</div>
     </div>
     <div class="metric">
       <div class="num" id="latestWeight">--</div>
-      <div class="lbl">最新體重 ⚖️</div>
+      <div class="lbl">最新體重</div>
     </div>
   </div>
 </header>
 
 <div class="section" id="menuSection">
-  <h2 class="cute" id="menuToggle"><span class="dot"></span>今日菜單 🍽️ <span class="pf-caret" id="menuCaret">▾</span></h2>
+  <h2 class="cute" id="menuToggle"><span class="dot"></span>今日菜單 <span class="pf-caret" id="menuCaret">▾</span></h2>
   <div class="pf-mini" id="menuMini"></div>
   <div class="weight-box" id="todayMenuBox" style="border-style:solid;">
     <!-- filled by JS -->
   </div>
-  <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;">🔄 不想吃這些?換一份</button>
+  <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;">不想吃這些?換一份</button>
   <div class="menu-regen-box" id="menuRegenBox">
     <div class="meal-tabs" id="regenMealTabs">
       <button type="button" class="meal-tab" data-rmeal="breakfast">早餐</button>
@@ -742,13 +741,13 @@
       <button type="button" class="meal-tab" data-rmeal="fruit">水果</button>
     </div>
     <input id="menuWish" placeholder="想吃什麼?(可留空)" autocomplete="off">
-    <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">換這一餐 ✨</button>
+    <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:8px;">換這一餐</button>
     <div class="ai-photo-status" id="menuRegenStatus"></div>
   </div>
 </div>
 
 <div class="section" id="fridgeSection">
-  <h2 class="cute" id="frToggle"><span class="dot"></span>冰箱有什麼 · 煮什麼 🧊 <span class="pf-caret" id="frCaret">▾</span></h2>
+  <h2 class="cute" id="frToggle"><span class="dot"></span>冰箱有什麼 · 煮什麼 <span class="pf-caret" id="frCaret">▾</span></h2>
   <div class="pf-mini" id="frMini"></div>
   <div class="weight-box">
     <div class="fridge-chips" id="fridgeChips"></div>
@@ -758,7 +757,7 @@
     </div>
     <div class="fridge-sugg-label">常用(點一下加入):</div>
     <div class="fridge-sugg" id="fridgeSugg"></div>
-    <button type="button" class="ai-photo-btn" id="fridgeGenBtn" style="margin-top:12px;">推薦可以煮的菜 🍳</button>
+    <button type="button" class="ai-photo-btn" id="fridgeGenBtn" style="margin-top:12px;">推薦可以煮的菜</button>
     <div class="ai-photo-status" id="fridgeStatus"></div>
     <div id="fridgeResult"></div>
   </div>
@@ -767,13 +766,13 @@
 <!-- 個人資料改為 modal,移到 appView 外(見下方) -->
 
 <div class="section" id="workoutSection">
-  <h2 class="cute" id="woToggle"><span class="dot"></span>運動計畫 🏋️ <span class="pf-caret" id="woCaret">▾</span></h2>
+  <h2 class="cute" id="woToggle"><span class="dot"></span>運動計畫 <span class="pf-caret" id="woCaret">▾</span></h2>
   <div class="pf-mini" id="woMini"></div>
   <div class="weight-box">
     <div class="wo-quick">
       <div class="wo-quick-title">看到喜歡的動作?可上傳照片加入運動計劃</div>
       <input type="file" accept="image/*" id="woPhotoInput" multiple style="display:none">
-      <button type="button" class="ai-photo-btn" id="woPhotoBtn">📷 上傳照片</button>
+      <button type="button" class="ai-photo-btn" id="woPhotoBtn">上傳照片</button>
       <div class="ai-photo-status" id="woPhotoStatus"></div>
     </div>
     <div class="wo-quick" style="margin-top:10px;">
@@ -815,13 +814,13 @@
         <textarea id="woNote" class="wo-textarea" placeholder="例:膝蓋不好、不想跳太吵的動作"></textarea>
       </div>
     </div>
-    <button class="save-btn cute" id="woGenBtn" style="margin-top:14px;">✨ 生成運動計劃</button>
+    <button class="save-btn cute" id="woGenBtn" style="margin-top:14px;">生成運動計劃</button>
     <div id="woResult"></div>
     <div class="wo-adjust" id="woAdjustBox" style="display:none;">
-      <div class="wo-adjust-title">🔁 調整運動計劃</div>
+      <div class="wo-adjust-title">調整運動計劃</div>
       <div class="wo-adjust-row">
         <input id="woAdjustInput" placeholder="例:今天休息 / 只練上半身 / 這週練 3 天" autocomplete="off">
-        <button type="button" class="mini-btn" id="woAdjustBtn">重新調整 ✨</button>
+        <button type="button" class="mini-btn" id="woAdjustBtn">重新調整</button>
       </div>
       <div class="wo-adjust-quick" id="woAdjustQuick">
         <span class="wo-chip-btn" data-q="今天想休息,把今天的訓練分配到本週其他天">今天休息</span>
@@ -830,7 +829,7 @@
       </div>
       <div class="ai-photo-status" id="woAdjustStatus"></div>
     </div>
-    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearWorkoutBtn">🗑 清除運動計畫,重新選取</button></div>
+    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearWorkoutBtn">清除運動計畫,重新選取</button></div>
 
     <div id="checkinBlock">
       <div class="wo-sub wo-sub-toggle" id="checkinToggle">每日打卡 <span class="pf-caret" id="checkinCaret">▾</span></div>
@@ -843,7 +842,7 @@
 </div>
 
 <div class="section" id="foodSection">
-  <h2 class="cute" id="foodToggle"><span class="dot"></span>飲食紀錄 🍱 <span class="pf-caret" id="foodCaret">▾</span></h2>
+  <h2 class="cute" id="foodToggle"><span class="dot"></span>飲食紀錄 <span class="pf-caret" id="foodCaret">▾</span></h2>
   <div class="pf-mini" id="foodMini"></div>
   <div class="weight-box">
     <div class="meal-tabs" id="mealTabs">
@@ -865,18 +864,18 @@
     </div>
     <div class="food-photo-row">
       <input type="file" accept="image/*" id="foodPhotoInput" style="display:none">
-      <button type="button" class="mini-btn" id="foodPhotoBtn">📷 加照片(選填)</button>
+      <button type="button" class="mini-btn" id="foodPhotoBtn">加照片(選填)</button>
       <span id="foodPhotoPreview"></span>
     </div>
-    <button class="save-btn cute" id="addFoodBtn">加入這一餐 🍽️</button>
+    <button class="save-btn cute" id="addFoodBtn">加入這一餐</button>
 
     <div class="ai-photo-box" id="aiPhotoBox">
-      <div class="ai-photo-title">📷 拍照估熱量</div>
+      <div class="ai-photo-title">拍照估熱量</div>
       <input type="file" accept="image/*" id="aiPhotoInput" multiple style="display:none">
       <button type="button" class="ai-photo-btn" id="aiPhotoBtn">上傳食物照片估熱量(可多張)</button>
       <div class="ai-photo-status" id="aiPhotoStatus"></div>
       <div class="ai-key-line">
-        <span class="ai-key-toggle" id="aiKeyToggle">🔑 AI 金鑰設定</span>
+        <span class="ai-key-toggle" id="aiKeyToggle">AI 金鑰設定</span>
         <a class="ai-key-link" href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>
         <a class="ai-key-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>
       </div>
@@ -898,12 +897,12 @@
     <div id="kcalSummary"></div>
     <div id="foodAdvice"></div>
     <div id="foodLogArea"></div>
-    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearFoodBtn">🗑 清空今天,重新記錄</button></div>
+    <div class="clear-row"><button type="button" class="clear-all-btn" id="clearFoodBtn">清空今天,重新記錄</button></div>
   </div>
 </div>
 
 <div class="section" id="waterSection">
-  <h2 class="cute" id="waterToggle"><span class="dot"></span>今日喝水 💧 <span class="pf-caret" id="waterCaret">▾</span></h2>
+  <h2 class="cute" id="waterToggle"><span class="dot"></span>今日喝水 <span class="pf-caret" id="waterCaret">▾</span></h2>
   <div class="pf-mini" id="waterMini"></div>
   <div class="weight-box">
     <div class="water-row">
@@ -939,7 +938,7 @@
         <div class="wrap"><input type="number" step="0.1" id="inMuscle" placeholder="24.0"><span class="unit">kg</span></div>
       </div>
     </div>
-    <button class="save-btn cute" id="addWeightBtn">存進今天的紀錄 💗</button>
+    <button class="save-btn cute" id="addWeightBtn">存進今天的紀錄</button>
 
     <div id="chartArea"><div class="chart-empty">尚無紀錄,填入體重後會顯示趨勢曲線。</div></div>
     <div id="snapshotArea"></div>
@@ -948,7 +947,7 @@
 </div>
 
 <div class="section" id="reminderSection">
-  <h2 class="cute" id="rmToggle"><span class="dot"></span>提醒 🔔 <span class="pf-caret" id="rmCaret">▾</span></h2>
+  <h2 class="cute" id="rmToggle"><span class="dot"></span>提醒 <span class="pf-caret" id="rmCaret">▾</span></h2>
   <div class="pf-mini" id="rmMini"></div>
   <div class="weight-box">
     <label class="rm-check"><input type="checkbox" id="rmOn"> 開啟提醒</label>
@@ -966,7 +965,7 @@
     </div>
     <div class="rm-preview-label">內容預覽(即時反映 App 內更動)</div>
     <div class="rm-preview" id="rmPreview"></div>
-    <button type="button" class="mini-btn" id="rmCopy">📋 複製內容</button>
+    <button type="button" class="mini-btn" id="rmCopy">複製內容</button>
     <div class="rm-note" id="rmNote"></div>
   </div>
 </div>
@@ -977,7 +976,7 @@
     <button type="button" class="ask-modal-close" id="askClose">✕</button>
   </div>
   <div id="askLog" class="ask-log">
-    <div class="ask-empty" id="askEmpty">飲食、運動、健康、生活,都可以問。<br>(需要先在「飲食紀錄」的 🔑 貼上免費金鑰)</div>
+    <div class="ask-empty" id="askEmpty">飲食、運動、健康、生活,都可以問。<br>(需要先在「飲食紀錄」貼上免費金鑰)</div>
   </div>
   <div class="ask-bottom">
     <div class="ask-status" id="askStatus"></div>
@@ -1002,6 +1001,12 @@
   <div class="modal-inner">
     <div class="modal-head"><span class="modal-title cute"><span id="setModalTitle">設定</span> ⚙️</span><button type="button" class="modal-close" id="setClose">✕</button></div>
 
+    <div class="set-block" id="setExportBlock">
+      <div class="set-title">匯出 / 備份</div>
+      <button type="button" id="exportPdfBtn" class="mini-btn" style="width:100%;padding:12px;">匯出成 PDF(可存手機/雲端/分享)</button>
+      <div class="set-hint" style="font-size:var(--fs-hint);color:var(--ink-soft);margin-top:6px;">整理成一份文件,可用「列印 → 儲存成 PDF」存檔或分享。</div>
+    </div>
+
     <div class="set-block">
       <div class="set-title">主題色</div>
       <div class="bg-swatches" id="accentSwatches"></div>
@@ -1014,11 +1019,11 @@
       <div class="color-row"><input type="color" id="bgPicker" class="color-pick"><input type="text" id="bgHex" class="hex-in" placeholder="#F5F1EB" maxlength="7" autocomplete="off"><button type="button" class="mini-btn" id="bgApply">套用</button></div>
       <div class="bg-actions">
         <input type="file" accept="image/*" id="bgUpload" style="display:none">
-        <button type="button" class="mini-btn" id="bgUploadBtn">📷 上傳背景照片</button>
+        <button type="button" class="mini-btn" id="bgUploadBtn">上傳背景照片</button>
         <button type="button" class="mini-btn" id="bgClear">清除</button>
       </div>
       <div class="bg-adjust" id="bgAdjust" style="display:none;">
-        <button type="button" class="mini-btn" id="bgEditBtn">🖐️ 調整背景照片(縮放/移動)</button>
+        <button type="button" class="mini-btn" id="bgEditBtn">調整背景照片(縮放/移動)</button>
         <div class="bg-adjust-hint">兩指縮放、單指拖曳調整位置,背景固定不隨畫面捲動。</div>
       </div>
     </div>
@@ -1068,12 +1073,6 @@
       </div>
     </div>
 
-    <div class="set-block" id="setExportBlock">
-      <div class="set-title">匯出 / 備份</div>
-      <button type="button" id="exportPdfBtn" class="mini-btn" style="width:100%;padding:12px;">📄 匯出成 PDF(可存手機/雲端/分享)</button>
-      <div class="set-hint" style="font-size:var(--fs-hint);color:var(--ink-soft);margin-top:6px;">整理成一份文件,可用「列印 → 儲存成 PDF」存檔或分享。</div>
-    </div>
-
     <div class="set-block" id="setDangerBlock" style="display:none;">
       <div class="set-title">刪除計畫</div>
       <button type="button" id="setDeleteBtn" class="danger-btn">🗑 刪除這個計畫</button>
@@ -1103,6 +1102,7 @@
     "紀錄飲食 + 喝水 + 體重":"Track food + water + weight","幫我規劃減重減脂":"Plan my weight & fat loss",
     "＋ 建立新計畫":"＋ Create plan","⚙️ 設定(外觀・語言・字體大小)":"⚙️ Settings (appearance · language · text size)",
     "各計畫外觀:進入計畫後於「⚙️ 設定」調整。":"Per-plan look: open the plan, then “⚙️ Settings”.",
+    "外觀・語言・字體大小 → 右上角 ⚙️;各計畫外觀進入後於「設定」調整。":"Appearance · language · text size → the ⚙️ top-right; each plan's look is set inside its “Settings”.",
     "＊ 第一次使用?看這裡":"＊ First time? Start here",
     "這個 App 幫你什麼?":"What does this app do?",
     "記錄飲食、喝水、體重,規劃減重菜單與運動,拍照估熱量。":"Log food, water and weight; plan meals and workouts; estimate calories from a photo.",
@@ -1111,7 +1111,7 @@
     "② 進入後記錄飲食、喝水、體重":"② Inside, log food, water and weight.",
     "使用拍照估熱量與 AI 運動規劃前,先貼一把免費金鑰:":"Before photo calories and AI workout planning, paste one free key:",
     "登入 → Create API key → 複製金鑰":"Sign in → Create API key → copy the key.",
-    "回到 App → 任一計畫 →「飲食紀錄」的 🔑 → 貼上 → 儲存":"Back in app → any plan → 🔑 in Food Log → paste → save.",
+    "回到 App → 任一計畫 →「飲食紀錄」的『AI 金鑰設定』→ 貼上 → 儲存":"Back in app → any plan → the AI key in Food Log → paste → save.",
     "之後即可使用拍照估熱量、換菜單、運動規劃。":"Then photo calories, meal swaps and workout planning all work.",
     "換背景 / 顏色?":"Change background / colour?",
     "主畫面與各計畫外觀可在「⚙️ 設定」分別調整。":"Set the home and each plan's look separately in “⚙️ Settings”.",
@@ -1123,35 +1123,35 @@
     "減重計畫 ▾":"Weight Plan ▾","64kg → 60kg 大作戰":"64kg → 60kg Challenge",
     // 設定
     "主題色":"Theme colour","背景":"Background","套用":"Apply","清除":"Clear","字體":"Font","粗線體":"CuHsian",
-    "📷 上傳背景照片":"📷 Upload background photo",
-    "🖐️ 調整背景照片(縮放/移動)":"🖐️ Adjust background (zoom / move)",
+    "上傳背景照片":"Upload background photo",
+    "調整背景照片(縮放/移動)":"Adjust background (zoom / move)",
     "兩指縮放、單指拖曳調整位置,背景固定不隨畫面捲動。":"Pinch to zoom, drag to reposition. The background stays fixed while you scroll.",
     "兩指縮放 · 單指拖曳位置":"Pinch to zoom · drag to move","取消":"Cancel","儲存":"Save",
     "個人資料 · 減重分析":"Profile · Analysis","性別":"Sex","年齡":"Age","身高":"Height","男":"Male","女":"Female",
     "目前體重":"Current weight","目標體重":"Goal weight","目標體脂":"Goal body fat","希望達成日期":"Target date",
     "刪除計畫":"Delete plan","🗑 刪除這個計畫":"🗑 Delete this plan","匯出 / 備份":"Export / Backup",
-    "📄 匯出成 PDF(可存手機/雲端/分享)":"📄 Export as PDF (save to phone / cloud / share)",
+    "匯出成 PDF(可存手機/雲端/分享)":"Export as PDF (save to phone / cloud / share)",
     "整理成一份文件,可用「列印 → 儲存成 PDF」存檔或分享。":"Compiles a document you can save or share via “Print → Save as PDF”.",
     // 今日 / 區塊標題
     "今日目標":"Today's target","今日運動":"Today's workout","今日運動消耗":"Today's workout burn",
-    "今日菜單 🍽️":"Today's menu 🍽️","今日早餐":"Breakfast","今日午餐":"Lunch","今晚晚餐":"Dinner",
-    "明日午餐":"Tomorrow's lunch","今日喝水 💧":"Water today 💧","今日身體數據":"Body data today",
-    "飲食紀錄 🍱":"Food log 🍱","運動計畫 🏋️":"Workout plan 🏋️","提醒 🔔":"Reminder 🔔",
-    "冰箱有什麼 · 煮什麼 🧊":"What's in the fridge 🧊","推薦可以煮的菜 🍳":"Suggested dishes 🍳",
-    "剩餘天數 ⏳":"Days left ⏳","完成天數 ✅":"Days done ✅","最新體重 ⚖️":"Latest weight ⚖️","每日打卡":"Daily check-in",
+    "今日菜單":"Today's menu","今日早餐":"Breakfast","今日午餐":"Lunch","今晚晚餐":"Dinner",
+    "明日午餐":"Tomorrow's lunch","今日喝水":"Water today","今日身體數據":"Body data today",
+    "飲食紀錄":"Food log","運動計畫":"Workout plan","提醒":"Reminder",
+    "冰箱有什麼 · 煮什麼":"What's in the fridge","推薦可以煮的菜":"Suggested dishes",
+    "剩餘天數":"Days left","完成天數":"Days done","最新體重":"Latest weight","每日打卡":"Daily check-in",
     // 餐 / 食物
     "早餐":"Breakfast","午餐":"Lunch","晚餐":"Dinner","點心":"Snack","水果":"Fruit","水果點心":"Fruit / snack",
     "吃了什麼?打字會跳建議選":"What did you eat? Type to see suggestions","數量":"Qty","熱量":"kcal","加入":"Add",
-    "份 / 顆 / 個(熱量會 ×數量)":"servings / pcs (kcal × qty)","加入這一餐 🍽️":"Add this meal 🍽️",
+    "份 / 顆 / 個(熱量會 ×數量)":"servings / pcs (kcal × qty)","加入這一餐":"Add this meal",
     "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
-    "🔄 不想吃這些?換一份":"🔄 Not these? Swap","換這一餐 ✨":"Swap this meal ✨",
+    "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
     "想吃什麼?(可留空)":"Craving anything? (optional)",
-    "🗑 清空今天,重新記錄":"🗑 Clear today & restart","存進今天的紀錄 💗":"Save to today's log 💗",
+    "清空今天,重新記錄":"Clear today & restart","存進今天的紀錄":"Save to today's log",
     // 拍照 / AI 金鑰
-    "📷 拍照估熱量":"📷 Photo calories","📷 加照片(選填)":"📷 Add photo (optional)",
+    "拍照估熱量":"Photo calories","加照片(選填)":"Add photo (optional)",
     "上傳食物照片估熱量(可多張)":"Upload food photos to auto-estimate calories (multiple ok)",
-    "🔑 AI 金鑰設定":"🔑 AI key","貼上免費金鑰(Google 或 Groq)":"Paste your free key (Google or Groq)",
-    "(需要先在「飲食紀錄」的 🔑 貼上免費金鑰)":"(First paste a free key under 🔑 in Food Log)",
+    "AI 金鑰設定":"AI key","貼上免費金鑰(Google 或 Groq)":"Paste your free key (Google or Groq)",
+    "(需要先在「飲食紀錄」貼上免費金鑰)":"(First paste a free key in Food Log)",
     // 喝水
     "每日目標(1 杯 250ml)":"Daily goal (1 cup = 250ml)","杯":"cups",
     // 身體數據
@@ -1167,8 +1167,8 @@
     "其他偏好(選填)":"Other preferences (optional)","強度(選填)":"Intensity (optional)",
     "例:膝蓋不好、不想跳太吵的動作":"e.g. bad knees, no loud jumping",
     "看到喜歡的動作?可上傳照片加入運動計劃":"See a move you like? Upload a photo to add it to your plan.",
-    "📷 上傳照片":"📷 Upload photo","✨ 生成運動計劃":"✨ Generate workout plan","重新調整 ✨":"Re-adjust ✨",
-    "🔁 調整運動計劃":"🔁 Adjust workout plan","🗑 清除運動計畫,重新選取":"🗑 Clear workout & reselect",
+    "上傳照片":"Upload photo","生成運動計劃":"Generate workout plan","重新調整":"Re-adjust",
+    "調整運動計劃":"Adjust workout plan","清除運動計畫,重新選取":"Clear workout & reselect",
     "例:今天休息 / 只練上半身 / 這週練 3 天":"e.g. rest today / upper body only / only 3 days this week",
     "今天休息":"Rest today","今天輕鬆做":"Easy today","這週練 3 天":"3 days this week",
     "每次有氧":"Each cardio","組":"sets","組數":"Sets","次數":"Reps","重量":"Weight","秒":"sec","秒數":"Seconds","分":"min","次":"reps",
@@ -1182,12 +1182,12 @@
     "問我任何問題…":"Ask me anything…","問":"Ask","不懂問 AI":"Ask AI",
     "飲食、運動、健康、生活,都可以問。":"Ask about food, exercise, health or life.",
     // 其他
-    "到":" to ","下":"Down","天":"days","📋 複製內容":"📋 Copy",
+    "到":" to ","下":"Down","天":"days","複製內容":"Copy",
     // 計畫類型
     "飲食+喝水+體重":"Food + Water + Weight","減重規劃":"Weight-loss plan","完整計畫":"Full plan",
     // 狀態
     "連線失敗":"Connection failed","分析中…":"Analyzing…","分析失敗":"Analysis failed",
-    "已清除金鑰":"Key cleared","跳到日期":"Jump to date","字體大小":"Text size"
+    "已清除金鑰":"Key cleared","跳到日期":"Jump to date","字體大小":"Text size","你的運動計畫":"Your workout plan"
   };
   const EN2ZH = {}; Object.keys(I18N_EN).forEach(z=>{ if(!(I18N_EN[z] in EN2ZH)) EN2ZH[I18N_EN[z]]=z; });
   let lang = "zh";
@@ -1228,7 +1228,7 @@
     _mo.observe(document.body,{childList:true,subtree:true});
   }
   async function loadLang(){ try{ const r=await window.storage.get("lang",false); if(r&&r.value) lang=r.value; }catch(e){} }
-  async function setLang(v){ lang=(v==="en")?"en":"zh"; try{ await window.storage.set("lang", lang, false); }catch(e){} applyLang(); }
+  async function setLang(v){ lang=(v==="en")?"en":"zh"; try{ await window.storage.set("lang", lang, false); }catch(e){} applyLang(); if(typeof rebuildPlanContent==="function"){ await rebuildPlanContent(); } }
   function aiLang(){ return lang==="en" ? "Reply in English." : "請用繁體中文回答。"; }
 
   // ========== 字體大小(整個 App 統一縮放)==========
@@ -1278,14 +1278,14 @@
     {name:"牛排", note:"約手掌大小一片,煎至七分熟以下,搭配大量蔬菜"},
     {name:"韓式嫩豆腐鍋", note:"豆腐+蛋+蔬菜,清淡版少油少辣,湯喝一半就好(鈉偏高)"}
   ];
-  const fruitRotation = ["蕃茄","橘子","蘋果"];
-  const weekdayNames = ["日","一","二","三","四","五","六"];
+  const fruitRotation = { zh:["蕃茄","橘子","蘋果"], en:["Tomato","Orange","Apple"] };
+  const weekdayNames = { zh:["日","一","二","三","四","五","六"], en:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"] };
 
   function fmtDate(d){ return (d.getMonth()+1)+"/"+d.getDate(); }
   function isoDate(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 
   // 重訓日依照妳常看的教學影片,輪流練 4 個部位:肩膀、大腿內側、手臂(二頭)、拜拜肉(三頭+背)
-  const liftPrograms = [
+  const liftPrograms = { zh:[
     { target:"肩膀(直角肩)", exercises:[
         {name:"啞鈴肩推", detail:"站姿或坐姿,啞鈴舉高過頭再慢慢放下,4 組 x 12-15 下"},
         {name:"啞鈴側平舉", detail:"手臂打直,左右手同時側舉到肩膀高度再放下,4 組 x 15 下,練出肩膀的線條"}
@@ -1302,74 +1302,119 @@
         {name:"啞鈴划船", detail:"上半身往前傾、背打直,啞鈴往腰間拉再放下,4 組 x 15 下,練上背也順便練到拜拜肉"},
         {name:"啞鈴三頭屈臂伸", detail:"手肘朝上固定在耳朵旁,啞鈴在腦後伸直手臂再彎回來,4 組 x 15 下,專門對付拜拜肉"}
       ]}
-  ];
+  ], en:[
+    { target:"Shoulders (square shoulders)", exercises:[
+        {name:"Dumbbell shoulder press", detail:"Standing or seated, press the dumbbells overhead then lower slowly. 4 sets x 12-15."},
+        {name:"Dumbbell lateral raise", detail:"Arms straight, raise both to shoulder height then lower. 4 sets x 15, for shoulder shape."}
+      ]},
+    { target:"Inner thighs (toning)", exercises:[
+        {name:"Sumo squat", detail:"Feet wider than shoulders, toes out, hold a dumbbell in front; squat and stand. 4 sets x 15 — feel the inner thighs work."},
+        {name:"Lateral lunge", detail:"Step out to each side and squat, dumbbell at chest for balance. 4 sets x 12 each side."}
+      ]},
+    { target:"Arm shaping (biceps)", exercises:[
+        {name:"Dumbbell biceps curl", detail:"Elbows fixed at your sides, curl up to your shoulders then lower. 4 sets x 15."},
+        {name:"Alternating curl", detail:"Curl left and right alternately — lasts longer with less fatigue. 4 sets x 12 (each side)."}
+      ]},
+    { target:"Arms & back (triceps + back)", exercises:[
+        {name:"Dumbbell row", detail:"Lean forward, back straight, pull the dumbbells to your waist then lower. 4 sets x 15 — works the upper back too."},
+        {name:"Dumbbell triceps extension", detail:"Elbows up by your ears, extend the dumbbell overhead then bend back. 4 sets x 15 — targets the back of the arms."}
+      ]}
+  ] };
 
-  // 燃脂日:不用啞鈴,靠心跳加快、動作連續來燃脂,對應妳平常看的全身燃脂教學
-  const cardioExercises = [
+  const cardioExercises = { zh:[
     {name:"開合跳", detail:"手腳同時打開再合起來,像做熱身操,40 秒 x 3 組"},
     {name:"原地高抬腿", detail:"膝蓋盡量抬高,像在原地快跑,40 秒 x 3 組"},
     {name:"登山跑(棒式抬膝)", detail:"維持棒式姿勢,左右膝蓋輪流往胸口收,40 秒 x 3 組"},
     {name:"深蹲(或深蹲跳)", detail:"蹲下再站起或往上跳起,落地緩衝,40 秒 x 3 組(膝蓋不舒服就做一般深蹲不跳)"}
-  ];
+  ], en:[
+    {name:"Jumping jacks", detail:"Open and close arms and legs together, like a warm-up. 40 sec x 3 sets."},
+    {name:"High knees", detail:"Knees as high as you can, like running in place. 40 sec x 3 sets."},
+    {name:"Mountain climbers", detail:"Hold a plank, drive knees to chest alternately. 40 sec x 3 sets."},
+    {name:"Squats (or squat jumps)", detail:"Squat and stand, or jump up with a soft landing. 40 sec x 3 sets (skip the jump if knees hurt)."}
+  ] };
+
+  const WO_TXT = { zh:{ restTitle:"休息 / 散步", restNote:"完全休息或飯後散步 20-30 分鐘,讓身體修復,這天不用啞鈴也不用跑步機。",
+      restEx:"散步(選擇性)", restExD:"想動一下就飯後散步 20-30 分鐘,不想動也可以完全休息",
+      liftTitle:"啞鈴重訓:", liftNote:"用手邊 3/5/8 磅啞鈴,盡量選讓最後 2 下有點吃力的磅數,才練得到效果。",
+      core:"核心收尾", coreD:"棒式 3 組 x 30-45 秒 + 捲腹 3 組 x 15 下",
+      cardioTitle:"跑步機間歇 + 全身燃脂", cardioNote:"「燃脂」白話說就是讓心跳加快、有點喘又能撐住的連續動作,不需要啞鈴,重點是動作不要停、休息時間不要拉太長。",
+      tm:"跑步機間歇", tmD:"快走 2 分鐘、慢跑或加速走 1 分鐘,重複 7-8 輪,共 20-25 分鐘" },
+    en:{ restTitle:"Rest / walk", restNote:"Full rest, or a 20-30 min walk after meals to recover. No dumbbells or treadmill today.",
+      restEx:"Walk (optional)", restExD:"Take a 20-30 min walk after a meal if you like, or rest fully.",
+      liftTitle:"Dumbbell training: ", liftNote:"Use 3/5/8 lb dumbbells; pick a weight where the last 2 reps feel tough.",
+      core:"Core finisher", coreD:"Plank 3 x 30-45 sec + crunches 3 x 15.",
+      cardioTitle:"Treadmill intervals + full-body cardio", cardioNote:"“Cardio” just means continuous moves that raise your heart rate — a bit breathless but sustainable. No dumbbells; keep moving and keep rests short.",
+      tm:"Treadmill intervals", tmD:"Brisk walk 2 min, jog or fast walk 1 min; repeat 7-8 rounds, 20-25 min total." } };
 
   function workoutForWeekday(wd, liftCounter){
-    if(wd===0) return {type:"rest", emoji:"🌙", title:"休息 / 散步", note:"完全休息或飯後散步 20-30 分鐘,讓身體修復,這天不用啞鈴也不用跑步機。",
-      exercises:[{name:"散步(選擇性)", detail:"想動一下就飯後散步 20-30 分鐘,不想動也可以完全休息"}]};
+    const W = lang==="en"?WO_TXT.en:WO_TXT.zh;
+    const LP = lang==="en"?liftPrograms.en:liftPrograms.zh;
+    const CE = lang==="en"?cardioExercises.en:cardioExercises.zh;
+    if(wd===0) return {type:"rest", emoji:"🌙", title:W.restTitle, note:W.restNote,
+      exercises:[{name:W.restEx, detail:W.restExD}]};
     if(wd===1 || wd===3 || wd===5){
-      const p = liftPrograms[liftCounter % liftPrograms.length];
-      return {type:"lift", emoji:"💪", title:"啞鈴重訓:" + p.target,
-        note:"用手邊 3/5/8 磅啞鈴,盡量選讓最後 2 下有點吃力的磅數,才練得到效果。",
-        exercises: p.exercises.concat([{name:"核心收尾", detail:"棒式 3 組 x 30-45 秒 + 捲腹 3 組 x 15 下"}])};
+      const p = LP[liftCounter % LP.length];
+      return {type:"lift", emoji:"💪", title:W.liftTitle + p.target, note:W.liftNote,
+        exercises: p.exercises.concat([{name:W.core, detail:W.coreD}])};
     }
-    return {type:"cardio", emoji:"🏃‍♀️", title:"跑步機間歇 + 全身燃脂",
-      note:"「燃脂」白話說就是讓心跳加快、有點喘又能撐住的連續動作,不需要啞鈴,重點是動作不要停、休息時間不要拉太長。",
-      exercises: [{name:"跑步機間歇", detail:"快走 2 分鐘、慢跑或加速走 1 分鐘,重複 7-8 輪,共 20-25 分鐘"}].concat(cardioExercises)};
+    return {type:"cardio", emoji:"🏃‍♀️", title:W.cardioTitle, note:W.cardioNote,
+      exercises: [{name:W.tm, detail:W.tmD}].concat(CE)};
   }
 
-  // 只寫「吃什麼」,對應 proteinRotation 順序:雞肉/鱸魚/牛肉片/蝦仁/牛排/嫩豆腐鍋
-  const lunchText = [
-    "雞胸肉(或雞腿) + 白飯一碗 + 炒青菜",
-    "清蒸鱸魚 + 白飯 + 燙青菜",
-    "燙牛肉片 + 白飯一碗 + 青菜",
-    "蒜炒蝦仁 + 白飯 + 蔬菜",
-    "煎牛排一片 + 白飯一碗 + 大量蔬菜",
-    "韓式嫩豆腐鍋 + 白飯"
-  ];
-  const dinnerText = [
-    "雞肉 + 蔬菜{carb}",
-    "清蒸鱸魚 + 蔬菜{carb}",
-    "牛肉片炒蔬菜{carb}",
-    "蝦仁 + 蔬菜{carb}",
-    "牛排(份量小) + 大量蔬菜{carb}",
-    "嫩豆腐鍋{carb}"
-  ];
+  const lunchText = { zh:[
+    "雞胸肉(或雞腿) + 白飯一碗 + 炒青菜","清蒸鱸魚 + 白飯 + 燙青菜","燙牛肉片 + 白飯一碗 + 青菜",
+    "蒜炒蝦仁 + 白飯 + 蔬菜","煎牛排一片 + 白飯一碗 + 大量蔬菜","韓式嫩豆腐鍋 + 白飯"
+  ], en:[
+    "Chicken breast (or thigh) + a bowl of rice + stir-fried greens","Steamed sea bass + rice + blanched greens","Blanched beef slices + a bowl of rice + vegetables",
+    "Garlic shrimp + rice + vegetables","A seared steak + a bowl of rice + lots of vegetables","Korean soft tofu stew + rice"
+  ] };
+  const dinnerText = { zh:[
+    "雞肉 + 蔬菜{carb}","清蒸鱸魚 + 蔬菜{carb}","牛肉片炒蔬菜{carb}","蝦仁 + 蔬菜{carb}","牛排(份量小) + 大量蔬菜{carb}","嫩豆腐鍋{carb}"
+  ], en:[
+    "Chicken + vegetables{carb}","Steamed sea bass + vegetables{carb}","Stir-fried beef with vegetables{carb}","Shrimp + vegetables{carb}","Steak (small) + lots of vegetables{carb}","Soft tofu stew{carb}"
+  ] };
 
   function dietForDay(idx){
+    const en = lang==="en";
     const lunchIdx = idx % 6;
     const dinnerIdx = (idx + 3) % 6;
-    const fruit = fruitRotation[idx % fruitRotation.length];
+    const fr = en?fruitRotation.en:fruitRotation.zh;
+    const fruit = fr[idx % fr.length];
     const cornDay = (idx % 4 === 3);
-    const carb = cornDay ? " + 玉米" : " + 半碗飯";
+    const carb = cornDay ? (en?" + corn":" + 玉米") : (en?" + half a bowl of rice":" + 半碗飯");
     return {
-      breakfast: "水煮蛋 1 顆",
-      lunch: lunchText[lunchIdx],
-      dinner: dinnerText[dinnerIdx].replace("{carb}", carb),
-      fruit: fruit + " 一份"
+      breakfast: en?"1 boiled egg":"水煮蛋 1 顆",
+      lunch: (en?lunchText.en:lunchText.zh)[lunchIdx],
+      dinner: (en?dinnerText.en:dinnerText.zh)[dinnerIdx].replace("{carb}", carb),
+      fruit: fruit + (en?" (1 serving)":" 一份")
     };
   }
 
   const days = [];
-  let cur = new Date(startDate);
-  let i = 0;
-  let liftCounter = 0;
-  while(cur <= endDate){
-    const wd = cur.getDay();
-    const workout = workoutForWeekday(wd, liftCounter);
-    if(workout.type==="lift") liftCounter++;
-    days.push({ idx:i+1, date:new Date(cur), iso:isoDate(cur), weekdayLabel:weekdayNames[wd],
-      workout, baseWorkout:workout, diet:dietForDay(i) });
-    cur.setDate(cur.getDate()+1); i++;
+  function buildDays(){
+    days.length = 0;
+    const wn = lang==="en"?weekdayNames.en:weekdayNames.zh;
+    let cur = new Date(startDate), i = 0, liftCounter = 0;
+    while(cur <= endDate){
+      const wd = cur.getDay();
+      const workout = workoutForWeekday(wd, liftCounter);
+      if(workout.type==="lift") liftCounter++;
+      days.push({ idx:i+1, date:new Date(cur), iso:isoDate(cur), weekdayLabel:wn[wd],
+        workout, baseWorkout:workout, diet:dietForDay(i) });
+      cur.setDate(cur.getDate()+1); i++;
+    }
   }
+  buildDays();
+  // 切換語言時,重建內建菜單/運動內容並重新套用使用者的編輯,再重繪
+  async function rebuildPlanContent(){
+    try{
+      buildDays();
+      if(typeof loadOverrides==="function") await loadOverrides();
+      if(typeof renderTodayMenu==="function") renderTodayMenu();
+      if(typeof renderDays==="function") renderDays();
+    }catch(e){}
+  }
+  window.__rebuildPlanContent = rebuildPlanContent;
 
   document.getElementById("todayLabel").textContent = fmtDate(today) + " 今天";
   const msPerDay = 1000*60*60*24;
@@ -2714,7 +2759,7 @@
     const clearFood=document.getElementById("clearFoodBtn");
     if(clearFood) clearFood.addEventListener("click", async ()=>{
       const iso=isoDate(today); const todays=foodLog.filter(f=>f.date===iso);
-      if(!todays.length){ clearFood.textContent="今天還沒有紀錄"; setTimeout(()=>{ clearFood.textContent="🗑 清空今天,重新記錄"; },1500); return; }
+      if(!todays.length){ clearFood.textContent="今天還沒有紀錄"; setTimeout(()=>{ clearFood.textContent="清空今天,重新記錄"; },1500); return; }
       if(!confirm("清空今天已記錄的 "+todays.length+" 項食物?可以重新記錄")) return;
       foodLog=foodLog.filter(f=>f.date!==iso); await saveFoodLog(); renderFoodLog();
     });
@@ -2984,7 +3029,7 @@
     const ab=document.getElementById("woAdjustBox"); if(ab) ab.style.display = plan ? "" : "none";
     if(!plan){ box.innerHTML=""; return; }
     const collapsed=woPlanCollapsed;
-    let h='<div class="wo-plan-head" id="woPlanToggle"><span class="wo-plan-title">📋 你的運動計畫</span><span class="wo-plan-caret">'+(collapsed?'展開 ▸':'收起 ▾')+'</span></div>';
+    let h='<div class="wo-plan-head" id="woPlanToggle"><span class="wo-plan-title">你的運動計畫</span><span class="wo-plan-caret">'+(collapsed?'展開 ▸':'收起 ▾')+'</span></div>';
     h+='<div class="wo-plan-body" id="woPlanBody"'+(collapsed?' style="display:none;"':'')+'>';
     h+='<div class="advice">'+esc(plan.summary||"")+'</div><div class="wo-week">';
     (plan.week||[]).forEach(d=>{
@@ -3197,7 +3242,7 @@
     const change=((changeArg!=null?changeArg:(inp?inp.value:""))||"").trim();
     if(!change){ if(inp) inp.focus(); return; }
     if(!anyKey()){ status.innerHTML='<span class="err">重新整合需要 AI 金鑰(到「飲食紀錄」的 🔑 貼上免費金鑰)</span>'; return; }
-    if(!workoutPlan || !Array.isArray(workoutPlan.week)){ status.innerHTML='<span class="err">還沒有計畫可以調整,先按上面「✨ 生成運動計劃」</span>'; return; }
+    if(!workoutPlan || !Array.isArray(workoutPlan.week)){ status.innerHTML='<span class="err">還沒有計畫可以調整,先按上面「生成運動計劃」</span>'; return; }
     const btn=document.getElementById("woAdjustBtn"); const oldT=btn?btn.textContent:""; if(btn){ btn.disabled=true; btn.textContent="調整中…"; }
     status.innerHTML='<span class="ai-spin"></span>重新整合你的計畫…';
     try{
@@ -3947,8 +3992,8 @@
     });
     const cp=document.getElementById("rmCopy");
     if(cp) cp.addEventListener("click", async ()=>{ const txt=reminderLines().join("\n");
-      try{ await navigator.clipboard.writeText(txt); cp.textContent="已複製 ✅"; setTimeout(()=>cp.textContent="📋 複製內容",1500); }
-      catch(e){ cp.textContent="請長按上面預覽複製"; setTimeout(()=>cp.textContent="📋 複製內容",1800); } });
+      try{ await navigator.clipboard.writeText(txt); cp.textContent="已複製 ✅"; setTimeout(()=>cp.textContent="複製內容",1500); }
+      catch(e){ cp.textContent="請長按上面預覽複製"; setTimeout(()=>cp.textContent="複製內容",1800); } });
     const tog=document.getElementById("rmToggle");
     if(tog) tog.addEventListener("click", ()=>{ const s=document.getElementById("reminderSection"); setReminderCollapsed(!s.classList.contains("collapsed"), true); });
     const mini=document.getElementById("rmMini"); if(mini) mini.addEventListener("click", ()=> setReminderCollapsed(false,true));
@@ -4012,6 +4057,7 @@
     await loadUIScale();
     await loadLang();
     applyLang();
+    if(lang==="en" && typeof rebuildPlanContent==="function"){ await rebuildPlanContent(); }
     startLangObserver();
     // 一進來先顯示主畫面(計畫清單),點計畫才進入
     document.getElementById("appView").style.display="none";
