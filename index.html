@@ -79,40 +79,50 @@
     body{ background:#fff !important; padding:0 !important; }
     body > *{ display:none !important; }
     #printArea, #printArea *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    #printArea{ display:block !important; color:var(--ink); font-family:var(--font-main), "Noto Sans TC", sans-serif; line-height:1.5; }
-    .pdf-head{ text-align:center; padding-bottom:12px; margin-bottom:16px; border-bottom:3px solid var(--pink); }
-    .pdf-title{ font-size:26px; color:var(--ink); margin:0; letter-spacing:1px; }
-    .pdf-sub{ font-size:12px; color:var(--ink-soft); margin-top:6px; }
-    .pdf-stats{ display:flex; gap:9px; margin:0 0 16px; }
-    .pdf-stat{ flex:1; background:var(--pink-soft); border-radius:14px; padding:11px 6px; text-align:center; }
-    .pdf-stat .n{ font-size:21px; font-weight:900; color:var(--ink); line-height:1.15; }
-    .pdf-stat .n .u{ font-size:11px; font-weight:400; color:var(--ink-soft); }
-    .pdf-stat .l{ font-size:11px; color:var(--ink-soft); margin-top:3px; }
+    #printArea{ display:block !important; color:var(--ink); font-family:var(--font-main), "Noto Sans TC", sans-serif; line-height:1.55; }
+    .pdf-head{ text-align:center; padding-bottom:14px; margin-bottom:18px; border-bottom:3px solid var(--pink); }
+    .pdf-title{ font-size:32px; color:var(--ink); margin:0; letter-spacing:1px; }
+    .pdf-sub{ font-size:15px; color:var(--ink-soft); margin-top:7px; }
+    .pdf-stats{ display:flex; gap:9px; margin:0 0 18px; }
+    .pdf-stat{ flex:1; background:var(--pink-soft); border-radius:14px; padding:13px 6px; text-align:center; }
+    .pdf-stat .n{ font-size:26px; font-weight:900; color:var(--ink); line-height:1.15; }
+    .pdf-stat .n .u{ font-size:14px; font-weight:400; color:var(--ink-soft); }
+    .pdf-stat .l{ font-size:14px; color:var(--ink-soft); margin-top:4px; }
     .pdf-prog-wrap{ margin:0 0 4px; }
-    .pdf-prog-labels{ display:flex; justify-content:space-between; font-size:11px; color:var(--ink-soft); margin-bottom:5px; }
-    .pdf-prog{ position:relative; height:14px; background:#EEE9E2; border-radius:8px; overflow:hidden; }
+    .pdf-prog-labels{ display:flex; justify-content:space-between; font-size:14px; color:var(--ink-soft); margin-bottom:5px; }
+    .pdf-prog{ position:relative; height:16px; background:#EEE9E2; border-radius:8px; overflow:hidden; }
     .pdf-prog-fill{ position:absolute; left:0; top:0; bottom:0; background:var(--pink); border-radius:8px; }
-    .pdf-prog-pct{ text-align:center; font-size:12px; color:var(--pink-shadow); font-weight:900; margin:5px 0 16px; }
-    .pdf-h2{ font-size:16px; color:var(--ink); margin:18px 0 9px; padding-left:10px; border-left:5px solid var(--pink); }
-    .pdf-card{ background:#FAF8F4; border:1px solid #ECE6DC; border-radius:12px; padding:9px 14px; margin-bottom:7px; break-inside:avoid; }
-    .pdf-card b{ color:var(--ink); font-size:13px; }
-    .pdf-analysis{ background:var(--pink-soft); border-radius:14px; padding:10px 16px 12px; margin-bottom:6px; break-inside:avoid; list-style:none; }
-    .pdf-analysis li{ list-style:none; position:relative; padding-left:18px; margin:6px 0; font-size:13px; color:var(--ink); line-height:1.55; }
-    .pdf-analysis li::before{ content:"●"; position:absolute; left:0; color:var(--pink-shadow); font-size:9px; top:3px; }
-    .pdf-tbl{ width:100%; border-collapse:collapse; font-size:12px; margin:2px 0 8px; }
-    .pdf-tbl th{ background:var(--pink-soft); color:var(--ink); padding:6px 8px; text-align:left; font-weight:900; }
-    .pdf-tbl td{ border-bottom:1px solid #ECE6DC; padding:5px 8px; color:#6b6259; }
-    .pdf-kv{ width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:6px; }
-    .pdf-kv td{ padding:5px 8px; border-bottom:1px solid #F0EBE2; }
-    .pdf-kv td:first-child{ color:var(--ink-soft); width:120px; }
+    .pdf-prog-pct{ text-align:center; font-size:15px; color:var(--pink-shadow); font-weight:900; margin:6px 0 18px; }
+    .pdf-h2{ font-size:20px; color:var(--ink); margin:20px 0 10px; padding-left:11px; border-left:6px solid var(--pink); }
+    .pdf-card{ background:#FAF8F4; border:1px solid #ECE6DC; border-radius:12px; padding:10px 15px; margin-bottom:8px; break-inside:avoid; }
+    .pdf-card b{ color:var(--ink); font-size:16px; }
+    .pdf-analysis{ background:var(--pink-soft); border-radius:14px; padding:11px 17px 13px; margin-bottom:6px; break-inside:avoid; list-style:none; }
+    .pdf-analysis li{ list-style:none; position:relative; padding-left:20px; margin:7px 0; font-size:16px; color:var(--ink); line-height:1.6; }
+    .pdf-analysis li::before{ content:"●"; position:absolute; left:0; color:var(--pink-shadow); font-size:11px; top:4px; }
+    .pdf-tbl{ width:100%; border-collapse:collapse; font-size:15px; margin:2px 0 10px; }
+    .pdf-tbl th{ background:var(--pink-soft); color:var(--ink); padding:7px 9px; text-align:left; font-weight:900; }
+    .pdf-tbl td{ border-bottom:1px solid #ECE6DC; padding:6px 9px; color:#6b6259; }
+    .pdf-kv{ width:100%; border-collapse:collapse; font-size:16px; margin-bottom:6px; }
+    .pdf-kv td{ padding:6px 9px; border-bottom:1px solid #F0EBE2; }
+    .pdf-kv td:first-child{ color:var(--ink-soft); width:140px; }
     .pdf-kv td:last-child{ color:var(--ink); font-weight:700; }
-    #printArea ul{ margin:4px 0 2px; padding-left:18px; }
-    #printArea li{ margin:2px 0; font-size:12px; line-height:1.5; }
+    #printArea ul{ margin:5px 0 3px; padding-left:20px; }
+    #printArea li{ margin:3px 0; font-size:15px; line-height:1.55; }
     .pdf-chart{ width:100%; height:auto; display:block; margin:2px 0 8px; }
     .pdf-chart-card{ background:#FAF8F4; border:1px solid #ECE6DC; border-radius:14px; padding:12px 12px 6px; margin-bottom:6px; break-inside:avoid; }
-    .pdf-foot{ text-align:center; font-size:10px; color:var(--ink-soft); margin-top:22px; padding-top:10px; border-top:1px solid #ECE6DC; }
+    .pdf-foot{ text-align:center; font-size:13px; color:var(--ink-soft); margin-top:22px; padding-top:10px; border-top:1px solid #ECE6DC; }
   }
   .bg-adjust-hint{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:4px; line-height:1.5; }
+  /* 語言 / 字體大小 分段按鈕 */
+  .set-seg{ display:flex; gap:8px; flex-wrap:wrap; }
+  .set-seg button{ flex:1; min-width:64px; padding:10px 8px; border-radius:12px; border:2px solid var(--pink-soft);
+    background:#fff; color:var(--ink); font-family:inherit; font-size:var(--fs-label); font-weight:700; cursor:pointer; }
+  .set-seg button.on{ background:var(--pink); color:#fff; border-color:var(--pink); }
+  .js-fs-btn[data-scale="0.9"]{ font-size:14px; } .js-fs-btn[data-scale="1.15"]{ font-size:18px; } .js-fs-btn[data-scale="1.3"]{ font-size:20px; }
+  .home-lang-quick{ position:absolute; top:0; right:0; display:flex; gap:6px; }
+  .home-lang-quick button{ border:2px solid var(--pink-soft); background:#fff; color:var(--ink); border-radius:20px;
+    padding:5px 12px; font-family:inherit; font-size:var(--fs-hint); font-weight:900; cursor:pointer; }
+  .home-head{ position:relative; }
   body{
     margin:0;
     background: var(--cream);
@@ -639,6 +649,10 @@
 
 <div id="homeScreen">
   <div class="home-head">
+    <div class="home-lang-quick">
+      <button type="button" class="js-lang-quick" id="homeLangQuick">EN</button>
+      <button type="button" id="homeSettingsBtn" aria-label="設定" style="font-size:var(--fs-body);padding:5px 11px;">⚙️</button>
+    </div>
     <div class="home-title cute">我的計畫</div>
     <div class="home-sub">點一個計畫進入</div>
   </div>
@@ -652,7 +666,7 @@
     </select>
     <button id="homeAddBtn" class="save-btn cute">＋ 建立新計畫</button>
   </div>
-  <button type="button" class="home-appearance-btn" id="homeAppearanceBtn">🎨 主畫面外觀(背景・主題色)</button>
+  <button type="button" class="home-appearance-btn" id="homeAppearanceBtn">⚙️ 設定(外觀・語言・字體大小)</button>
   <div class="home-sub" style="margin-top:10px;">每個計畫的外觀 → 進入計畫後點下方「⚙️ 設定」各自設定</div>
   <div class="home-help" id="homeHelp">
     <div class="home-help-head" id="homeHelpToggle">＊ 第一次使用?看這裡 <span class="pf-caret" id="homeHelpCaret">▾</span></div>
@@ -1010,6 +1024,24 @@
     </div>
 
     <div class="set-block">
+      <div class="set-title" data-i18n>語言 / Language</div>
+      <div class="set-seg">
+        <button type="button" class="js-lang-btn" data-lang="zh">中文</button>
+        <button type="button" class="js-lang-btn" data-lang="en">English</button>
+      </div>
+    </div>
+
+    <div class="set-block">
+      <div class="set-title">字體大小</div>
+      <div class="set-seg">
+        <button type="button" class="js-fs-btn" data-scale="0.9">小</button>
+        <button type="button" class="js-fs-btn" data-scale="1">中</button>
+        <button type="button" class="js-fs-btn" data-scale="1.15">大</button>
+        <button type="button" class="js-fs-btn" data-scale="1.3">特大</button>
+      </div>
+    </div>
+
+    <div class="set-block">
       <div class="set-title">字體</div>
       <button type="button" class="mini-btn js-font-toggle">粗線體</button>
     </div>
@@ -1062,6 +1094,151 @@
 
 <script>
 (function(){
+  // ========== 語言(中文 / English)==========
+  // 用「中文原文 → 英文」字典,配合 DOM 掃描把介面文字換成英文;中文模式保持原樣。
+  const I18N_EN = {
+    // 首頁
+    "我的計畫":"My Plans","點一個計畫進入":"Tap a plan to open","新增計畫":"New Plan",
+    "計畫名稱(例:長期體重紀錄)":"Plan name (e.g. Long-term weight log)",
+    "紀錄飲食 + 喝水 + 體重":"Track food + water + weight","幫我規劃減重減脂":"Plan my weight & fat loss",
+    "＋ 建立新計畫":"＋ Create plan","⚙️ 設定(外觀・語言・字體大小)":"⚙️ Settings (appearance · language · text size)",
+    "每個計畫的外觀 → 進入計畫後點下方「⚙️ 設定」各自設定":"Each plan's look → open the plan, then tap “⚙️ Settings” below.",
+    "＊ 第一次使用?看這裡":"＊ First time? Start here",
+    "這個 App 幫你什麼?":"What does this app do?",
+    "記錄每天吃了什麼、喝水、體重,還能幫你規劃減重菜單與運動,拍照就能估熱量。":"Log what you eat, water and weight each day. It can plan your meals and workouts, and estimate calories from a photo.",
+    "怎麼開始?":"How to start?",
+    "① 點上面的計畫卡片進入,或用下方「＋ 建立新計畫」":"① Tap a plan card above, or use “＋ Create plan” below.",
+    "② 進去後就能記錄飲食、喝水、體重":"② Inside, log food, water and weight.",
+    "想用「拍照估熱量」和「AI 運動規劃」?要先貼一把免費金鑰(一次就好):":"Want photo calorie estimates and AI workout planning? Paste one free API key (just once):",
+    "登入 →「Create API key」→ 複製那串金鑰":"Sign in → “Create API key” → copy the key.",
+    "回到 App,進入任一計畫 → 「飲食紀錄」裡的「🔑 AI 金鑰設定」→ 貼上 → 儲存":"Back in the app, open any plan → “🔑 AI key” in Food Log → paste → save.",
+    "之後拍照估熱量、換菜單、運動規劃都能用了":"Then photo calories, meal swaps and workout planning all work.",
+    "換背景 / 顏色?":"Change background / colour?",
+    "主畫面按「🎨 主畫面外觀」;每個計畫進去後按下面「⚙️ 設定」,可以各自換。":"On the home screen tap “⚙️ Settings”; inside each plan tap “⚙️ Settings” below to set it separately.",
+    "你的資料只存在自己這支手機的瀏覽器,不會上傳,換手機或清除瀏覽器資料就會不見。":"Your data stays only in this phone's browser. It is never uploaded, and is lost if you switch phones or clear browser data.",
+    "。都是":". Both are ","申請(推薦,額度高、也能看圖);或":" (recommended — high quota, reads photos too); or ","免費、免信用卡":"free, no credit card",
+    // 底部導覽
+    "主畫面":"Home","跳到":"Jump","問AI":"Ask AI","設定":"Settings","主畫面外觀":"Home appearance",
+    // 計畫列 / 標題
+    "減重計畫 ▾":"Weight Plan ▾","64kg → 60kg 大作戰":"64kg → 60kg Challenge",
+    // 設定
+    "主題色":"Theme colour","背景":"Background","套用":"Apply","清除":"Clear","字體":"Font","粗線體":"CuHsian",
+    "📷 上傳背景照片":"📷 Upload background photo",
+    "🖐️ 調整背景照片(縮放/移動)":"🖐️ Adjust background (zoom / move)",
+    "背景圖固定在手機畫面上、上下滑動都不會跑掉。點上面按鈕後,用兩隻手指縮放、單指拖曳位置,就像調整社群大頭貼一樣。":"The background stays fixed on screen and won't move as you scroll. Tap the button above, then pinch with two fingers to zoom and drag with one finger — just like adjusting a social profile photo.",
+    "兩指縮放 · 單指拖曳位置":"Pinch to zoom · drag to move","取消":"Cancel","儲存":"Save",
+    "個人資料 · 減重分析":"Profile · Analysis","性別":"Sex","年齡":"Age","身高":"Height","男":"Male","女":"Female",
+    "目前體重":"Current weight","目標體重":"Goal weight","目標體脂":"Goal body fat","希望達成日期":"Target date",
+    "刪除計畫":"Delete plan","🗑 刪除這個計畫":"🗑 Delete this plan","匯出 / 備份":"Export / Backup",
+    "📄 匯出成 PDF(可存手機/雲端/分享)":"📄 Export as PDF (save to phone / cloud / share)",
+    "會整理成一份文件(個人資料、身體數據、運動計畫、飲食紀錄),用手機的「列印 → 儲存成 PDF」存檔或分享。":"Builds a document (profile, body data, workout plan, food log). Use your phone's “Print → Save as PDF” to save or share.",
+    // 今日 / 區塊標題
+    "今日目標":"Today's target","今日運動":"Today's workout","今日運動消耗":"Today's workout burn",
+    "今日菜單 🍽️":"Today's menu 🍽️","今日早餐":"Breakfast","今日午餐":"Lunch","今晚晚餐":"Dinner",
+    "明日午餐":"Tomorrow's lunch","今日喝水 💧":"Water today 💧","今日身體數據":"Body data today",
+    "飲食紀錄 🍱":"Food log 🍱","運動計畫 🏋️":"Workout plan 🏋️","提醒 🔔":"Reminder 🔔",
+    "冰箱有什麼 · 煮什麼 🧊":"What's in the fridge 🧊","推薦可以煮的菜 🍳":"Suggested dishes 🍳",
+    "剩餘天數 ⏳":"Days left ⏳","完成天數 ✅":"Days done ✅","最新體重 ⚖️":"Latest weight ⚖️","每日打卡":"Daily check-in",
+    // 餐 / 食物
+    "早餐":"Breakfast","午餐":"Lunch","晚餐":"Dinner","點心":"Snack","水果":"Fruit","水果點心":"Fruit / snack",
+    "吃了什麼?打字會跳建議選":"What did you eat? Type to see suggestions","數量":"Qty","熱量":"kcal","加入":"Add",
+    "份 / 顆 / 個(熱量會 ×數量)":"servings / pcs (kcal × qty)","加入這一餐 🍽️":"Add this meal 🍽️",
+    "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
+    "🔄 不想吃這些?換一份":"🔄 Not these? Swap","換這一餐 ✨":"Swap this meal ✨",
+    "想吃什麼?例:牛肉麵、清淡的、日式(可留空)":"Craving anything? e.g. light, Japanese (optional)",
+    "🗑 清空今天,重新記錄":"🗑 Clear today & restart","存進今天的紀錄 💗":"Save to today's log 💗",
+    // 拍照 / AI 金鑰
+    "📷 拍照估熱量":"📷 Photo calories","📷 加照片(選填)":"📷 Add photo (optional)",
+    "上傳食物照片,自動估熱量(可多張)":"Upload food photos to auto-estimate calories (multiple ok)",
+    "🔑 AI 金鑰設定":"🔑 AI key","貼上你的免費金鑰(Google 或 Groq 都可)":"Paste your free key (Google or Groq)",
+    "(需要先在「飲食紀錄」的 🔑 貼上免費金鑰)":"(First paste a free key under 🔑 in Food Log)",
+    // 喝水
+    "每日目標(1 杯 250ml)":"Daily goal (1 cup = 250ml)","杯":"cups",
+    // 身體數據
+    "量體重/身體數據":"Log weight / body data","體重":"Weight","體脂率":"Body fat %","肌肉重量":"Muscle",
+    "還沒有紀錄,量完體重後填上面表格就會畫出趨勢曲線囉":"No records yet — fill in the table above and a trend chart will appear.",
+    "內容預覽(會即時反映你在 App 裡的更動)":"Preview (reflects your changes live)","歲":"yrs",
+    // 運動計畫
+    "一週練幾天":"Days per week","想練的部位(可複選)":"Target areas (multi-select)",
+    "重訓器材(可複選)":"Strength equipment (multi-select)","有氧方式(可複選)":"Cardio type (multi-select)",
+    "＋ 細調:部位・器材・組數(可跳過)":"＋ Fine-tune: areas · equipment · sets (optional)",
+    "② 想瘦哪裡、想要什麼身材?(可留空)":"② Where to slim, what shape? (optional)",
+    "例:想瘦肚子和大腿 / 馬甲線 / 蜜桃臀 + 直角肩":"e.g. slimmer belly & thighs / abs / peach hips",
+    "其他偏好(選填)":"Other preferences (optional)","強度(選填)":"Intensity (optional)",
+    "例:膝蓋不好、不想跳太吵的動作":"e.g. bad knees, no loud jumping",
+    "① 看到喜歡的動作?可上傳照片(可多張,如影片的多個畫面),AI 會認出來一起排 · 沒有就跳過":"① Like a move? Upload photos (multiple, e.g. video frames) and the AI will recognise and include it — or skip.",
+    "📷 上傳照片":"📷 Upload photo","✨ 生成運動計劃":"✨ Generate workout plan","重新調整 ✨":"Re-adjust ✨",
+    "🔁 調整運動計劃":"🔁 Adjust workout plan","🗑 清除運動計畫,重新選取":"🗑 Clear workout & reselect",
+    "例:今天想休息 / 只想練上半身 / 這週只能練 3 天":"e.g. rest today / upper body only / only 3 days this week",
+    "今天休息":"Rest today","今天輕鬆做":"Easy today","這週練 3 天":"3 days this week",
+    "每次有氧":"Each cardio","組":"sets","組數":"Sets","次數":"Reps","重量":"Weight","秒":"sec","秒數":"Seconds","分":"min","次":"reps",
+    "重訓":"Strength","有氧":"Cardio","休息":"Rest","燃脂":"Cardio",
+    "週一":"Mon","週二":"Tue","週三":"Wed","週四":"Thu","週五":"Fri","週六":"Sat","週日":"Sun",
+    // 冰箱
+    "打字加入你有的食材":"Type ingredients you have","打字加入":"Add",
+    // 提醒
+    "提醒時間":"Reminder time","提醒內容:":"Message:","開啟提醒":"Enable reminder","5-8 磅":"5–8 lbs",
+    // 問 AI
+    "問我任何問題…":"Ask me anything…","問":"Ask","不懂問 AI":"Ask AI",
+    "問我任何問題吧 —— 飲食、運動、健康、生活都可以。":"Ask me anything — food, exercise, health, life.",
+    // 其他
+    "到":" to ","下":"Down","天":"days","📋 複製內容":"📋 Copy",
+    // 計畫類型
+    "飲食+喝水+體重":"Food + Water + Weight","減重規劃":"Weight-loss plan","完整計畫":"Full plan",
+    // 狀態
+    "連線失敗":"Connection failed","分析中…":"Analyzing…","分析失敗":"Analysis failed",
+    "已清除金鑰":"Key cleared","跳到日期":"Jump to date","字體大小":"Text size"
+  };
+  const EN2ZH = {}; Object.keys(I18N_EN).forEach(z=>{ if(!(I18N_EN[z] in EN2ZH)) EN2ZH[I18N_EN[z]]=z; });
+  let lang = "zh";
+  function t(zh){ return lang==="en" ? (I18N_EN[zh]!=null?I18N_EN[zh]:zh) : zh; }
+  const I18N_SKIP = 'script,style,textarea,input,[contenteditable="true"],.editable-content,.home-card-name,.pi-name,#heroTitle,.plan-current,#askLog';
+  function translateTree(root, target){
+    if(!root) return;
+    if(root.nodeType===1){
+      // 屬性(placeholder / aria-label)
+      const els = root.matches&&root.matches("[placeholder],[aria-label]") ? [root] : [];
+      root.querySelectorAll&&root.querySelectorAll("[placeholder],[aria-label]").forEach(e=>els.push(e));
+      els.forEach(e=>{ ["placeholder","aria-label"].forEach(a=>{ if(!e.hasAttribute(a)) return; const v=e.getAttribute(a).trim();
+        if(target==="en"&&I18N_EN[v]!=null) e.setAttribute(a,I18N_EN[v]); else if(target==="zh"&&EN2ZH[v]!=null) e.setAttribute(a,EN2ZH[v]); }); });
+    }
+    const walker=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(n){ if(!n.nodeValue||!n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        const p=n.parentElement; if(!p||(p.closest&&p.closest(I18N_SKIP))) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT; } });
+    const nodes=[]; let cur; while((cur=walker.nextNode())) nodes.push(cur);
+    nodes.forEach(n=>{ const raw=n.nodeValue, s=raw.trim();
+      if(target==="en"&&I18N_EN[s]!=null) n.nodeValue=raw.replace(s,I18N_EN[s]);
+      else if(target==="zh"&&EN2ZH[s]!=null) n.nodeValue=raw.replace(s,EN2ZH[s]); });
+  }
+  let _mo=null;
+  function applyLang(){
+    document.documentElement.setAttribute("lang", lang==="en"?"en":"zh-Hant");
+    translateTree(document.body, lang);
+    if(typeof applyFont==="function") applyFont();
+    document.querySelectorAll(".js-lang-btn").forEach(b=>{ const v=b.dataset.lang; b.classList.toggle("on", v===lang); });
+    document.querySelectorAll(".js-lang-quick").forEach(b=> b.textContent = lang==="en"?"中文":"EN");
+    const fsLbl = lang==="en" ? {"0.9":"S","1":"M","1.15":"L","1.3":"XL"} : {"0.9":"小","1":"中","1.15":"大","1.3":"特大"};
+    document.querySelectorAll(".js-fs-btn").forEach(b=>{ if(fsLbl[b.dataset.scale]) b.textContent=fsLbl[b.dataset.scale]; });
+  }
+  function startLangObserver(){
+    if(_mo) return;
+    _mo=new MutationObserver(muts=>{ if(lang!=="en") return;
+      muts.forEach(m=> m.addedNodes.forEach(nd=>{ if(nd.nodeType===1) translateTree(nd,"en"); else if(nd.nodeType===3){ const s=(nd.nodeValue||"").trim(); const p=nd.parentElement; if(s&&I18N_EN[s]!=null&&!(p&&p.closest&&p.closest(I18N_SKIP))) nd.nodeValue=nd.nodeValue.replace(s,I18N_EN[s]); } })); });
+    _mo.observe(document.body,{childList:true,subtree:true});
+  }
+  async function loadLang(){ try{ const r=await window.storage.get("lang",false); if(r&&r.value) lang=r.value; }catch(e){} }
+  async function setLang(v){ lang=(v==="en")?"en":"zh"; try{ await window.storage.set("lang", lang, false); }catch(e){} applyLang(); }
+  function aiLang(){ return lang==="en" ? "Reply in English." : "請用繁體中文回答。"; }
+
+  // ========== 字體大小(整個 App 統一縮放)==========
+  const FS_BASE={ "--fs-title":22, "--fs-num":24, "--fs-body":19, "--fs-label":16, "--fs-hint":14.5 };
+  let uiScale=1;
+  function applyUIScale(){ const r=document.documentElement.style; Object.keys(FS_BASE).forEach(k=> r.setProperty(k, (FS_BASE[k]*uiScale).toFixed(2)+"px"));
+    document.querySelectorAll(".js-fs-btn").forEach(b=> b.classList.toggle("on", Math.abs(parseFloat(b.dataset.scale)-uiScale)<0.001)); }
+  async function loadUIScale(){ try{ const r=await window.storage.get("uiscale",false); if(r&&r.value){ const v=parseFloat(r.value); if(v>0) uiScale=v; } }catch(e){} applyUIScale(); }
+  async function setUIScale(v){ uiScale=v; applyUIScale(); try{ await window.storage.set("uiscale", String(v), false); }catch(e){} }
+
   // 若執行環境沒有提供 window.storage(例如直接用手機/瀏覽器打開這個檔案),
   // 就用瀏覽器內建的 localStorage 當備援,讓體重、飲食、打卡等資料一樣能永久存下來。
   if(!window.storage){
@@ -2329,7 +2506,9 @@
   async function askAIText(question){
     const key=cleanKey(geminiKey);
     if(!key) throw new Error("尚未設定 AI 金鑰。請到「飲食紀錄」的 🔑 貼上一把免費金鑰(Google 或 Groq)。");
-    const prompt="你是親切的中文小幫手。請用繁體中文回答,務必「簡短扼要、只講重點」,能一兩句講完就別長篇大論,最多 3-4 個短句或 3 個重點;避免客套與贅字。若涉及健康醫療,嚴重時提醒看醫生。問題:\n"+question;
+    const prompt=(lang==="en"
+      ? "You are a friendly assistant. Reply in English, be brief and to the point — a sentence or two, at most 3-4 short lines or 3 bullets; no filler. For health/medical topics, advise seeing a doctor if serious. The user may write in mixed Chinese/English — understand both. Question:\n"
+      : "你是親切的中文小幫手。請用繁體中文回答,務必「簡短扼要、只講重點」,能一兩句講完就別長篇大論,最多 3-4 個短句或 3 個重點;避免客套與贅字。若涉及健康醫療,嚴重時提醒看醫生。問題:\n")+question;
     if(key.slice(0,4)==="gsk_") return await groqChat(prompt, key);
     return await googleChat(prompt, key);
   }
@@ -2409,7 +2588,9 @@
         ? '這裡有'+b64s.length+'張食物照片,可能是同一餐的不同角度、或是一桌的多道菜。請綜合所有照片,判斷這一「整餐」是什麼、估計加起來的總熱量(大卡),不要重複計算同一道菜。'
         : '看這張食物照片,用繁體中文判斷是什麼餐點並估計整份總熱量(大卡)。')
       + '照片可能是手機截圖或外送/菜單畫面,忽略介面與文字浮水印,只看食物本身。重要:多數人會低估份量,請把烹調用油、醬料、糖、隱藏配料都算進去,寧可估高也不要估低,以餐廳/外食的實際份量為準。'
-      + '用繁體中文,只回 JSON:{"name":"餐點名不超過12字","kcal":整數,"note":"一句話依據"}。看不出是食物就 name 回空字串。';
+      + (lang==="en"
+          ? ' Respond in English. Return only JSON: {"name":"dish name, max ~4 words","kcal":integer,"note":"one-line reason"}. If it is not food, return an empty string for name.'
+          : '用繁體中文,只回 JSON:{"name":"餐點名不超過12字","kcal":整數,"note":"一句話依據"}。看不出是食物就 name 回空字串。');
     const parts=b64s.map(b=>({inline_data:{mime_type:"image/jpeg", data:b}}));
     const obj=await geminiJSON(prompt, parts, 0);   // 溫度 0:同一張照片估計盡量一致
     if(obj && (obj.name||"").trim() && Number(obj.kcal)>0){ aiPhotoCache[cacheKey]=Object.assign({}, obj); saveAiPhotoCache(); }
@@ -2862,10 +3043,12 @@
     box.innerHTML='<div class="advice"><span class="ai-spin"></span>正在依你的需求規劃…</div>';
     try{
       const focusStr = focusSel.length ? ("想練的部位/分類:"+focusSel.join("、")+"(以這些安排分部訓練日,如練腿日、練胸日、全身日)。") : "";
-      const prompt='你是健身教練,用繁體中文設計一週7天運動計畫(減脂+保留肌肉),依想練部位排分部訓練、遵守組數/次數/重量/秒數。'
+      const prompt='你是健身教練,設計一週7天運動計畫(減脂+保留肌肉),依想練部位排分部訓練、遵守組數/次數/重量/秒數。'
         +sex+'性 '+(w||"?")+'→'+(tw||"?")+'kg,'+(dateStr||"")+'前。每週'+days+'天、每次有氧'+cardio+'分。'
         +focusStr+intensityLine()+equipConstraint()+'偏好:'+(note||"無")+'。'
-        +'每個動作都要寫「具體動作名稱」(例:深蹲、弓箭步、二頭彎舉、棒式),不要只寫「主項/輔助動作」這種空泛字眼,並附上「組數×次數」或「時間」。只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
+        +'每個動作都要寫「具體動作名稱」(例:深蹲、弓箭步、二頭彎舉、棒式),不要只寫「主項/輔助動作」這種空泛字眼,並附上「組數×次數」或「時間」。'
+        +(lang==="en"?'Write summary, focus and every item in ENGLISH. Keep "day" as one of 週一..週日 and "type" as one of 重訓/有氧/休息 exactly (internal labels). ':'用繁體中文。')
+        +'只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
       const obj=await geminiJSON(prompt, null, 0.3);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
       workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
@@ -2912,9 +3095,11 @@
     try{
       const sex=document.getElementById("pfSex").value==="male"?"男":"女";
       const w=document.getElementById("pfWeight").value, tw=document.getElementById("pfTargetW").value;
-      const prompt='你是健身教練。使用者只說目標:「'+goal+'」。用繁體中文設計一週7天、新手也做得到的計畫,針對目標部位加強+全身+有氧,減脂。'
+      const prompt='你是健身教練。使用者只說目標:「'+goal+'」。設計一週7天、新手也做得到的計畫,針對目標部位加強+全身+有氧,減脂。'
         +sex+'性'+(w?(","+w+"kg"):"")+(tw?("→"+tw+"kg"):"")+'。每週'+days+'天、有氧'+cardio+'分。'+intensityLine()+equipConstraint()
-        +'每個動作都要寫「具體動作名稱」(例:深蹲、弓箭步、二頭彎舉),不要只寫「主項/輔助動作」,並附組數×次數或時間。只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
+        +'每個動作都要寫「具體動作名稱」(例:深蹲、弓箭步、二頭彎舉),不要只寫「主項/輔助動作」,並附組數×次數或時間。'
+        +(lang==="en"?'Write summary, focus and every item in ENGLISH. Keep "day" as 週一..週日 and "type" as 重訓/有氧/休息 exactly. ':'用繁體中文。')
+        +'只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
       const obj=await geminiJSON(prompt,null,0.4);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
       workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
@@ -2942,6 +3127,7 @@
       + goalStr + focusStr + intensityLine()
       + equipConstraint()
       + '注意:如果照片裡的動作需要使用者沒有的器材,請把它換成徒手或現有器材能做的同部位替代動作,但仍以照片想練的目標為主。每個動作都要寫出「具體動作名稱」(例:深蹲、弓箭步、二頭彎舉),不要只寫「主項/輔助動作」這種空泛字眼,並附上「組數×次數」或「時間(秒)」。'
+      + (lang==="en"?'Write move, target, summary, focus and all items in ENGLISH. Keep "day" as 週一..週日 and "type" as 重訓/有氧/休息 exactly. ':'用繁體中文。')
       + '只回 JSON:{"move":"認出的動作(多個用、分隔,看不出才空字串)","target":"主要部位","summary":"一句話說明","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["動作 組數×次數"]}](共7天),"tips":[""]}。';
     const parts=b64s.map(b=>({inline_data:{mime_type:"image/jpeg", data:b}}));
     return await geminiJSON(prompt, parts, 0.3);
@@ -3299,9 +3485,9 @@
   }
   function openSettings(){
     const isHome = themeScope==="home";
-    const t = PLAN ? PLAN.type : "";
+    const pt = PLAN ? PLAN.type : "";
     // 主畫面只調外觀(主題色/背景/字體);個人資料、刪除計畫只在計畫內出現
-    const pb=document.getElementById("setProfileBlock"); if(pb) pb.style.display=(!isHome && (t==='full'||t==='origin'))?"":"none";
+    const pb=document.getElementById("setProfileBlock"); if(pb) pb.style.display=(!isHome && (pt==='full'||pt==='origin'))?"":"none";
     const ah=document.getElementById("accentHex"), ap=document.getElementById("accentPicker");
     if(ah) ah.value=themeColor; if(ap) ap.value=themeColor;
     const bh=document.getElementById("bgHex"), bp=document.getElementById("bgPicker");
@@ -3310,14 +3496,15 @@
     if(db) db.style.display=(!isHome && PLAN)?"":"none";
     const eb=document.getElementById("setExportBlock");
     if(eb) eb.style.display=(!isHome && PLAN)?"":"none";
-    const ttl=document.getElementById("setModalTitle"); if(ttl) ttl.textContent = isHome ? "主畫面外觀" : "設定";
+    const ttl=document.getElementById("setModalTitle"); if(ttl) ttl.textContent = isHome ? t("主畫面外觀") : t("設定");
     renderAccentSwatches(); renderSwatches(); refreshBgAdjustUI();
     document.getElementById("settingsModal").classList.add("show");
   }
   function openHomeSettings(){ themeScope="home"; openSettings(); }
   // 匯出整個計畫成 PDF(用瀏覽器列印→儲存成 PDF,可存手機/雲端/分享)
   function pdfRow(k,v){ return v?('<tr><td>'+esc(k)+'</td><td>'+esc(v)+'</td></tr>'):''; }
-  function pdfWeightChart(entries, goal, col){
+  function pdfWeightChart(entries, goal, col, P){
+    P = P || ((zh,en)=>zh);
     // 用 SVG 畫一張體重折線圖(含目標虛線、面積、資料點),顏色套用計畫主色
     const data=(entries||[]).filter(e=>e.weight!=null && !isNaN(Number(e.weight))).map(e=>({d:e.date, w:Number(e.weight)}));
     if(data.length<2) return '';
@@ -3338,7 +3525,7 @@
     s+='<path d="'+area+'" fill="'+col.pinkSoft+'" stroke="none"/>';
     if(!isNaN(goal)){ const gy=Y(goal);
       s+='<line x1="'+L+'" y1="'+gy.toFixed(1)+'" x2="'+(W-R)+'" y2="'+gy.toFixed(1)+'" stroke="'+col.pinkShadow+'" stroke-width="1.4" stroke-dasharray="5 4"/>';
-      s+='<text x="'+(W-R)+'" y="'+(gy-4).toFixed(1)+'" font-size="9" fill="'+col.pinkShadow+'" text-anchor="end">目標 '+goal+'</text>';
+      s+='<text x="'+(W-R)+'" y="'+(gy-4).toFixed(1)+'" font-size="9" fill="'+col.pinkShadow+'" text-anchor="end">'+P('目標 ','Goal ')+goal+'</text>';
     }
     const line=data.map((q,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(q.w).toFixed(1)).join(' ');
     s+='<path d="'+line+'" fill="none" stroke="'+col.pinkShadow+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
@@ -3357,107 +3544,108 @@
     const goalW=num(g("pfTargetW"));
     const curW = logs.length ? Number(logs[logs.length-1].weight) : num(g("pfWeight"));
     const startW = logs.length ? Number(logs[0].weight) : num(g("pfWeight"));
+    const P=(zh,en)=> lang==="en"?en:zh;
 
-    let h='<div class="pdf-head"><div class="pdf-title">'+esc(title)+'</div><div class="pdf-sub">匯出日期 '+esc(isoDate(today))+' · 計畫:'+esc(PLAN?PLAN.name:"")+'</div></div>';
+    let h='<div class="pdf-head"><div class="pdf-title">'+esc(title)+'</div><div class="pdf-sub">'+P('匯出日期 ','Exported ')+esc(isoDate(today))+' · '+P('計畫:','Plan: ')+esc(PLAN?PLAN.name:"")+'</div></div>';
 
     // 重點數據卡片
     const stat=(n,u,l)=> '<div class="pdf-stat"><div class="n">'+n+(u?'<span class="u"> '+u+'</span>':'')+'</div><div class="l">'+l+'</div></div>';
     const remain = (!isNaN(curW)&&!isNaN(goalW)) ? (curW-goalW) : NaN;
     h+='<div class="pdf-stats">';
-    h+=stat(isNaN(curW)?"—":curW,"kg","目前體重");
-    h+=stat(isNaN(goalW)?"—":goalW,"kg","目標體重");
-    h+=stat(isNaN(remain)?"—":(remain>0.05?remain.toFixed(1):(remain<-0.05?remain.toFixed(1):"達標")), isNaN(remain)||Math.abs(remain)<=0.05?"":"kg", remain>0.05?"還差":"距目標");
-    h+=stat(kcalTarget,"kcal","每日熱量");
+    h+=stat(isNaN(curW)?"—":curW,"kg",P('目前體重','Current'));
+    h+=stat(isNaN(goalW)?"—":goalW,"kg",P('目標體重','Goal'));
+    h+=stat(isNaN(remain)?"—":(remain>0.05?remain.toFixed(1):(remain<-0.05?remain.toFixed(1):P('達標','Reached'))), isNaN(remain)||Math.abs(remain)<=0.05?"":"kg", remain>0.05?P('還差','To go'):P('距目標','vs goal'));
+    h+=stat(kcalTarget,"kcal",P('每日熱量','Daily kcal'));
     h+='</div>';
 
     // 目標進度條
     if(!isNaN(startW)&&!isNaN(curW)&&!isNaN(goalW)&&startW>goalW){
       const pct=Math.max(0,Math.min(100,(startW-curW)/(startW-goalW)*100));
-      h+='<div class="pdf-prog-wrap"><div class="pdf-prog-labels"><span>起始 '+startW+' kg</span><span>目標 '+goalW+' kg</span></div>'
+      h+='<div class="pdf-prog-wrap"><div class="pdf-prog-labels"><span>'+P('起始 ','Start ')+startW+' kg</span><span>'+P('目標 ','Goal ')+goalW+' kg</span></div>'
         +'<div class="pdf-prog"><div class="pdf-prog-fill" style="width:'+pct.toFixed(0)+'%"></div></div></div>'
-        +'<div class="pdf-prog-pct">目標進度 '+Math.round(pct)+'%</div>';
+        +'<div class="pdf-prog-pct">'+P('目標進度 ','Progress ')+Math.round(pct)+'%</div>';
     }
 
     // 體重變化圖表
-    const chart=pdfWeightChart(logs, goalW, col);
-    if(chart){ h+='<div class="pdf-h2">體重變化</div><div class="pdf-chart-card">'+chart+'</div>'; }
+    const chart=pdfWeightChart(logs, goalW, col, P);
+    if(chart){ h+='<div class="pdf-h2">'+P('體重變化','Weight trend')+'</div><div class="pdf-chart-card">'+chart+'</div>'; }
 
     // 重點分析(條列)
     const b=[];
     if(!isNaN(curW)){
       if(!isNaN(startW)&&logs.length>=2){
         const lost=startW-curW;
-        if(lost>0.05) b.push('從 '+startW+' kg 一路減到 '+curW+' kg,已經瘦了 <b>'+lost.toFixed(1)+' kg</b>,很棒,繼續保持!');
-        else if(lost<-0.05) b.push('目前 '+curW+' kg,比一開始 '+startW+' kg 多了 '+(-lost).toFixed(1)+' kg,別氣餒,調整一下飲食與運動節奏。');
-        else b.push('體重穩定在 '+curW+' kg 附近,維持得不錯。');
+        if(lost>0.05) b.push(P('從 '+startW+' kg 一路減到 '+curW+' kg,已經瘦了 <b>'+lost.toFixed(1)+' kg</b>,很棒,繼續保持!','Down from '+startW+' kg to '+curW+' kg — you\'ve lost <b>'+lost.toFixed(1)+' kg</b>. Great, keep it up!'));
+        else if(lost<-0.05) b.push(P('目前 '+curW+' kg,比一開始 '+startW+' kg 多了 '+(-lost).toFixed(1)+' kg,別氣餒,調整一下飲食與運動節奏。','Now '+curW+' kg, '+(-lost).toFixed(1)+' kg above the starting '+startW+' kg. Don\'t worry — adjust your food and exercise pace.'));
+        else b.push(P('體重穩定在 '+curW+' kg 附近,維持得不錯。','Weight is steady around '+curW+' kg — nicely maintained.'));
       }
       if(!isNaN(goalW)){
-        if(remain>0.05) b.push('距離目標 '+goalW+' kg 還差 <b>'+remain.toFixed(1)+' kg</b>,加油!');
-        else b.push('已達成目標 '+goalW+' kg 🎉 恭喜!接下來維持住就好。');
+        if(remain>0.05) b.push(P('距離目標 '+goalW+' kg 還差 <b>'+remain.toFixed(1)+' kg</b>,加油!','<b>'+remain.toFixed(1)+' kg</b> to go to reach the '+goalW+' kg goal. You can do it!'));
+        else b.push(P('已達成目標 '+goalW+' kg 🎉 恭喜!接下來維持住就好。','Goal of '+goalW+' kg reached 🎉 Congrats! Now just maintain it.'));
       }
       if(logs.length>=2 && !isNaN(goalW)){
         const d0=new Date(logs[0].date+'T00:00:00'), d1=new Date(logs[logs.length-1].date+'T00:00:00');
         const days=Math.max(1,(d1-d0)/86400000), rate=(startW-curW)/(days/7);
         if(rate>0.03){
-          b.push('平均每週約減 <b>'+rate.toFixed(2)+' kg</b>'+(rate>1?'(速度偏快,注意營養均衡)':(rate<0.25?'(速度和緩、對身體友善)':'(健康的減重速度)'))+'。');
-          if(remain>0.05){ const wk=Math.ceil(remain/rate); b.push('若維持這個速度,大約再 <b>'+wk+' 週</b>就能達標。'); }
+          b.push(P('平均每週約減 <b>'+rate.toFixed(2)+' kg</b>'+(rate>1?'(速度偏快,注意營養均衡)':(rate<0.25?'(速度和緩、對身體友善)':'(健康的減重速度)'))+'。','Losing about <b>'+rate.toFixed(2)+' kg</b> per week'+(rate>1?' (a bit fast — watch your nutrition)':(rate<0.25?' (gentle and body-friendly)':' (a healthy pace)'))+'.'));
+          if(remain>0.05){ const wk=Math.ceil(remain/rate); b.push(P('若維持這個速度,大約再 <b>'+wk+' 週</b>就能達標。','At this pace you\'ll reach the goal in about <b>'+wk+' weeks</b>.')); }
         }
       }
     }
-    b.push('每日熱量目標:<b>'+kcalTarget+' kcal</b>,搭配運動計畫更容易達成。');
-    h+='<div class="pdf-h2">重點分析</div><ul class="pdf-analysis">'+b.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+    b.push(P('每日熱量目標:<b>'+kcalTarget+' kcal</b>,搭配運動計畫更容易達成。','Daily calorie target: <b>'+kcalTarget+' kcal</b> — pair it with the workout plan for best results.'));
+    h+='<div class="pdf-h2">'+P('重點分析','Key analysis')+'</div><ul class="pdf-analysis">'+b.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 
     // 個人資料
-    const sex=g("pfSex")==="male"?"男":(g("pfSex")==="female"?"女":"");
-    const kv=pdfRow("性別",sex)+pdfRow("年齡",g("pfAge")&&g("pfAge")+" 歲")+pdfRow("身高",g("pfHeight")&&g("pfHeight")+" cm")
-      +pdfRow("目標體脂",g("pfTargetBf")&&g("pfTargetBf")+" %")+pdfRow("希望達成日期",g("pfDate"));
-    if(kv) h+='<div class="pdf-h2">個人資料</div><table class="pdf-kv">'+kv+'</table>';
+    const sex=g("pfSex")==="male"?P('男','Male'):(g("pfSex")==="female"?P('女','Female'):"");
+    const kv=pdfRow(P('性別','Sex'),sex)+pdfRow(P('年齡','Age'),g("pfAge")&&g("pfAge")+P(' 歲',' yrs'))+pdfRow(P('身高','Height'),g("pfHeight")&&g("pfHeight")+" cm")
+      +pdfRow(P('目標體脂','Goal body fat'),g("pfTargetBf")&&g("pfTargetBf")+" %")+pdfRow(P('希望達成日期','Target date'),g("pfDate"));
+    if(kv) h+='<div class="pdf-h2">'+P('個人資料','Profile')+'</div><table class="pdf-kv">'+kv+'</table>';
 
     // 運動計畫
     if(typeof workoutPlan!=="undefined" && workoutPlan && workoutPlan.week && workoutPlan.week.length){
-      h+='<div class="pdf-h2">運動計畫</div>';
-      if(workoutPlan.summary) h+='<div style="font-size:12.5px;color:'+col.inkSoft+';margin-bottom:8px;">'+esc(workoutPlan.summary)+'</div>';
-      workoutPlan.week.forEach(d=>{ h+='<div class="pdf-card"><b>'+esc(d.day||"")+' · '+esc(d.type||"")+(d.focus?" · "+esc(d.focus):"")+'</b><ul>'+((d.items||[]).map(it=>'<li>'+esc(it)+'</li>').join(''))+'</ul></div>'; });
+      h+='<div class="pdf-h2">'+P('運動計畫','Workout plan')+'</div>';
+      if(workoutPlan.summary) h+='<div style="font-size:15px;color:'+col.inkSoft+';margin-bottom:8px;">'+esc(workoutPlan.summary)+'</div>';
+      workoutPlan.week.forEach(d=>{ h+='<div class="pdf-card"><b>'+esc(t(d.day||""))+' · '+esc(t(d.type||""))+(d.focus?" · "+esc(d.focus):"")+'</b><ul>'+((d.items||[]).map(it=>'<li>'+esc(it)+'</li>').join(''))+'</ul></div>'; });
     }
 
     // 菜單建議(取每日打卡的飲食安排,最多 7 天;若每天相同則合併成一份)
     if(typeof days!=="undefined" && days && days.length){
-      const WD=["日","一","二","三","四","五","六"];
-      const dl=iso=>{ try{ const dt=new Date(iso+'T00:00:00'); return String(iso).slice(5).replace("-","/")+"(週"+WD[dt.getDay()]+")"; }catch(e){ return iso; } };
+      const WD=["日","一","二","三","四","五","六"], WDE=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const dl=iso=>{ try{ const dt=new Date(iso+'T00:00:00'); return lang==="en" ? (String(iso).slice(5).replace("-","/")+" ("+WDE[dt.getDay()]+")") : (String(iso).slice(5).replace("-","/")+"(週"+WD[dt.getDay()]+")"); }catch(e){ return iso; } };
       const menuList=d=>{ const di=d.diet||{}; const parts=[];
-        if(di.breakfast) parts.push('<li><b>早餐</b> '+esc(di.breakfast)+'</li>');
-        if(di.lunch) parts.push('<li><b>午餐</b> '+esc(di.lunch)+'</li>');
-        if(di.dinner) parts.push('<li><b>晚餐</b> '+esc(di.dinner)+'</li>');
-        if(di.fruit) parts.push('<li><b>水果點心</b> '+esc(di.fruit)+'</li>');
+        if(di.breakfast) parts.push('<li><b>'+P('早餐','Breakfast')+'</b> '+esc(di.breakfast)+'</li>');
+        if(di.lunch) parts.push('<li><b>'+P('午餐','Lunch')+'</b> '+esc(di.lunch)+'</li>');
+        if(di.dinner) parts.push('<li><b>'+P('晚餐','Dinner')+'</b> '+esc(di.dinner)+'</li>');
+        if(di.fruit) parts.push('<li><b>'+P('水果點心','Fruit/snack')+'</b> '+esc(di.fruit)+'</li>');
         return parts; };
       const wk=days.slice(0,7).filter(d=>menuList(d).length);
       if(wk.length){
         const sig=d=>menuList(d).join('|');
         const allSame = wk.every(d=>sig(d)===sig(wk[0]));
-        h+='<div class="pdf-h2">菜單建議</div>';
-        if(allSame){ h+='<div class="pdf-card"><b>每日菜單</b><ul>'+menuList(wk[0]).join('')+'</ul></div>'; }
+        h+='<div class="pdf-h2">'+P('菜單建議','Suggested menu')+'</div>';
+        if(allSame){ h+='<div class="pdf-card"><b>'+P('每日菜單','Daily menu')+'</b><ul>'+menuList(wk[0]).join('')+'</ul></div>'; }
         else { wk.forEach(d=>{ h+='<div class="pdf-card"><b>'+esc(dl(d.iso))+'</b><ul>'+menuList(d).join('')+'</ul></div>'; }); }
       }
     }
 
     // 身體數據紀錄
     if(logs.length){
-      h+='<div class="pdf-h2">身體數據紀錄</div><table class="pdf-tbl"><tr><th>日期</th><th>體重</th><th>體脂%</th><th>BMI</th><th>肌肉</th></tr>';
+      h+='<div class="pdf-h2">'+P('身體數據紀錄','Body data log')+'</div><table class="pdf-tbl"><tr><th>'+P('日期','Date')+'</th><th>'+P('體重','Weight')+'</th><th>'+P('體脂%','Fat%')+'</th><th>BMI</th><th>'+P('肌肉','Muscle')+'</th></tr>';
       logs.forEach(r=>{ h+='<tr><td>'+esc(r.date)+'</td><td>'+esc(r.weight!=null?r.weight:"")+'</td><td>'+esc(r.fat!=null?r.fat:"")+'</td><td>'+esc(r.bmi!=null?r.bmi:"")+'</td><td>'+esc(r.muscle!=null?r.muscle:"")+'</td></tr>'; });
       h+='</table>';
     }
 
     // 飲食紀錄
     if(typeof foodLog!=="undefined" && foodLog && foodLog.length){
-      h+='<div class="pdf-h2">飲食紀錄</div>';
+      h+='<div class="pdf-h2">'+P('飲食紀錄','Food log')+'</div>';
       const byDate={}; foodLog.forEach(f=>{ (byDate[f.date]=byDate[f.date]||[]).push(f); });
       Object.keys(byDate).sort().forEach(dt=>{
         const items=byDate[dt]; const tot=items.reduce((s,f)=>s+(Number(f.kcal)||0),0);
-        h+='<div class="pdf-card"><b>'+esc(dt)+'(共 '+Math.round(tot)+' kcal)</b><ul>'+items.map(f=>'<li>'+esc(f.meal||"")+' · '+esc(f.name)+' '+Math.round(Number(f.kcal)||0)+' kcal</li>').join('')+'</ul></div>';
+        h+='<div class="pdf-card"><b>'+esc(dt)+P(' (共 '+Math.round(tot)+' kcal)',' ('+Math.round(tot)+' kcal total)')+'</b><ul>'+items.map(f=>'<li>'+esc(t(f.meal||""))+' · '+esc(f.name)+' '+Math.round(Number(f.kcal)||0)+' kcal</li>').join('')+'</ul></div>';
       });
     }
 
-    h+='<div class="pdf-foot">由減重計畫 App 匯出 · 計畫:'+esc(PLAN?PLAN.name:"")+' · '+esc(isoDate(today))+'</div>';
+    h+='<div class="pdf-foot">'+P('由減重計畫 App 匯出 · 計畫:','Exported from Weight Plan app · Plan: ')+esc(PLAN?PLAN.name:"")+' · '+esc(isoDate(today))+'</div>';
     return h;
   }
   function exportPlanPDF(){
@@ -3615,7 +3803,9 @@
   let fontPref = "cu";   // 全域設定(不分計畫)
   function applyFont(){
     document.documentElement.style.setProperty("--font-main", fontPref==="cu" ? '"CuHsianTi"' : '"RedBeanCream"');
-    const txt = fontPref==="cu" ? "粗線體(點我換紅豆奶霜體)" : "紅豆奶霜體(點我換粗線體)";
+    const txt = lang==="en"
+      ? (fontPref==="cu" ? "CuHsian (tap for RedBean)" : "RedBean (tap for CuHsian)")
+      : (fontPref==="cu" ? "粗線體(點我換紅豆奶霜體)" : "紅豆奶霜體(點我換粗線體)");
     document.querySelectorAll(".js-font-toggle").forEach(b=> b.textContent=txt);
   }
   async function loadFontPref(){
@@ -3625,6 +3815,12 @@
   function initFontModule(){
     document.querySelectorAll(".js-font-toggle").forEach(b=>
       b.addEventListener("click", async ()=>{ fontPref = fontPref==="cu" ? "redbean" : "cu"; applyFont(); try{ await window.storage.set("fontpref", fontPref, false); }catch(e){} }));
+  }
+  function initLangFontSize(){
+    document.querySelectorAll(".js-lang-btn").forEach(b=> b.addEventListener("click", ()=> setLang(b.dataset.lang)));
+    document.querySelectorAll(".js-fs-btn").forEach(b=> b.addEventListener("click", ()=> setUIScale(parseFloat(b.dataset.scale))));
+    const hq=document.getElementById("homeLangQuick"); if(hq) hq.addEventListener("click", ()=> setLang(lang==="en"?"zh":"en"));
+    const hs=document.getElementById("homeSettingsBtn"); if(hs) hs.addEventListener("click", openHomeSettings);
   }
 
   // ---------- 背景主題(顏色 / 自訂照片,自動儲存) ----------
@@ -3812,6 +4008,11 @@
     initThemeModule();
     initSettingsInputs();
     await loadTheme();
+    initLangFontSize();
+    await loadUIScale();
+    await loadLang();
+    applyLang();
+    startLangObserver();
     // 一進來先顯示主畫面(計畫清單),點計畫才進入
     document.getElementById("appView").style.display="none";
     document.getElementById("homeScreen").style.display="";
