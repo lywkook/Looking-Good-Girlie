@@ -1694,9 +1694,11 @@
 
   const startDate = new Date(2026,6,20);
   const endDate = new Date(2026,7,28);
-  const today = new Date(2026,6,20);
+  // 今天 = 手機的實際日期(取當地日期、歸零時分秒),打卡/今天標示都依實際日期
+  const _now = new Date();
+  const today = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate());
   // 目前檢視的日期(可用最上方日期選擇器切換);各日的菜單/飲食/喝水/體重都依這個日期
-  let viewDate = new Date(2026,6,20);
+  let viewDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   function curIso(){ return isoDate(viewDate); }
 
   const proteinRotation = [
