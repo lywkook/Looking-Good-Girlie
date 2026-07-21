@@ -608,6 +608,8 @@
   .dish .d-kcal{ font-size:var(--fs-label); color:var(--pink); font-weight:900; white-space:nowrap; }
   .menu-regen-box{ display:none; margin-top:12px; padding:14px; background:var(--pink-soft); border-radius:16px; }
   .menu-regen-box.show{ display:block; }
+  .menu-regen-collapse{ width:100%; margin-top:12px; padding:10px; border:none; border-radius:12px; background:transparent;
+    color:var(--ink-soft); font-size:var(--fs-label); font-weight:700; font-family:inherit; cursor:pointer; }
   #menuRegenBtn{ display:flex; flex-direction:column; align-items:center; gap:4px; }
   #menuRegenBtn .mrb-main, #menuRegenBtn .mrb-sub{ font-size:var(--fs-body); font-weight:800; }
   .menu-regen-hint{ font-size:var(--fs-hint); color:var(--ink-soft); line-height:1.55; margin-bottom:10px; }
@@ -856,6 +858,7 @@
     </div>
     <button type="button" class="ai-photo-btn" id="menuGenBtn" style="margin-top:12px;">換這一餐</button>
     <div class="ai-photo-status" id="menuRegenStatus"></div>
+    <button type="button" class="menu-regen-collapse" id="menuRegenCollapse">收起來 ▲</button>
   </div>
 </div>
 
@@ -1288,7 +1291,7 @@
     "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
     "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
     "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
-    "更改菜單":"Change the menu","上傳餐廳菜單,推薦適合我的":"Upload a restaurant menu for a pick that suits you",
+    "更改菜單":"Change the menu","上傳餐廳菜單,推薦適合我的":"Upload a restaurant menu for a pick that suits you","收起來 ▲":"Close ▲",
     "選一餐,AI 會依你的熱量目標重新配好。下面全部都可以留空,直接按也會推薦。":"Pick a meal and AI re-plans it to your calorie target. Everything below is optional — just tap and it still recommends.",
     "口味喜好(可複選 / 不選)":"Taste preferences (pick any, or none)",
     "高蛋白":"High protein","少油清爽":"Light / low oil","低卡":"Low calorie","低碳水":"Low carb","多蔬菜":"More veg","吃辣":"Spicy OK","不辣":"Not spicy","不吃牛":"No beef","不吃豬":"No pork","海鮮":"Seafood","素食":"Vegetarian","飯類":"Rice dishes","麵食":"Noodles","湯品":"Soup",
@@ -2304,6 +2307,8 @@
     const tgl = document.getElementById("menuRegenBtn");
     const box = document.getElementById("menuRegenBox");
     if(tgl && box) tgl.addEventListener("click", ()=> box.classList.toggle("show"));
+    const collapseBtn = document.getElementById("menuRegenCollapse");
+    if(collapseBtn && box) collapseBtn.addEventListener("click", ()=>{ box.classList.remove("show"); if(tgl) tgl.scrollIntoView({block:"center", behavior:"smooth"}); });
     document.querySelectorAll("#regenMealTabs .meal-tab").forEach(b=>{
       b.addEventListener("click", ()=>{
         regenField = b.dataset.rmeal;
