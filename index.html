@@ -196,6 +196,7 @@
   #reminderSection{ order:6; }
   #profileSection{ order:7; }
   #workoutSection{ order:8; }
+  #checkinSection{ order:9; }
   .section{ padding:22px 20px 0; }
   .section h2{
     font-size:var(--fs-title); margin:0 0 12px; font-weight:400;
@@ -577,7 +578,6 @@
     padding:11px 13px; font-size:var(--fs-body); font-family:inherit; background:#fff; color:var(--ink); line-height:1.5; resize:vertical; }
   .wo-hint{ font-size:var(--fs-hint); color:var(--ink-soft); margin:10px 0; line-height:1.5; }
   .wo-hint.err{ color:#B5766F; }
-  #checkinBlock{ margin-top:16px; border-top:1px dashed var(--line); padding-top:14px; }
   /* 不懂問 AI:全螢幕頁面 */
   .ask-modal{ position:fixed; inset:0; z-index:300; background:var(--cream); display:none; flex-direction:column; }
   .ask-modal.show{ display:flex; }
@@ -611,7 +611,7 @@
   .wo-sub{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:10px; }
   .wo-sub-toggle{ cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
   .wo-sub-toggle .pf-caret{ font-size:var(--fs-label); color:var(--pink); }
-  #checkinBlock.collapsed #checkinBody{ display:none; }
+  #checkinSection.collapsed #checkinBody{ display:none; }
   .wo-datepick{ display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:var(--fs-label); color:var(--ink-soft); }
   .wo-datepick input{ padding:8px 10px; border-radius:12px; border:2px solid var(--line);
     font-size:var(--fs-label); background:#FFFDFA; color:var(--ink); font-family:inherit; }
@@ -847,14 +847,13 @@
       <div class="ai-photo-status" id="woAdjustStatus"></div>
     </div>
     <div class="clear-row"><button type="button" class="clear-all-btn" id="clearWorkoutBtn">清除運動計畫,重新選取</button></div>
+  </div>
+</div>
 
-    <div id="checkinBlock">
-      <div class="wo-sub wo-sub-toggle" id="checkinToggle">每日打卡 <span class="pf-caret" id="checkinCaret">▾</span></div>
-      <div id="checkinBody">
-        <div class="wo-datepick"><span>跳到日期</span><input type="date" id="woDate" min="2026-07-20" max="2026-08-28" value="2026-07-20"></div>
-        <div id="dayList"></div>
-      </div>
-    </div>
+<div class="section" id="checkinSection">
+  <h2 class="cute" id="checkinToggle"><span class="dot"></span>每日打卡 <span class="pf-caret" id="checkinCaret">▾</span></h2>
+  <div id="checkinBody">
+    <div id="dayList"></div>
   </div>
 </div>
 
@@ -3768,7 +3767,7 @@
     if(persist){ try{ window.storage.set(K("wocollapsed"), collapsed?"1":"0", false); }catch(e){} }
   }
   function setCheckinCollapsed(collapsed, persist){
-    const blk=document.getElementById("checkinBlock"); if(!blk) return;
+    const blk=document.getElementById("checkinSection"); if(!blk) return;
     blk.classList.toggle("collapsed", collapsed);
     const c=document.getElementById("checkinCaret"); if(c) c.textContent=collapsed?"▸":"▾";
     if(persist){ try{ window.storage.set(K("checkincollapsed"), collapsed?"1":"0", false); }catch(e){} }
@@ -3784,7 +3783,7 @@
     const adj=document.getElementById("woAdjustBtn"); if(adj) adj.addEventListener("click", ()=> adjustWorkoutPlan());
     const adjIn=document.getElementById("woAdjustInput"); if(adjIn) adjIn.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); adjustWorkoutPlan(); } });
     document.querySelectorAll("#woAdjustQuick .wo-chip-btn").forEach(c=> c.addEventListener("click", ()=>{ const inp=document.getElementById("woAdjustInput"); if(inp) inp.value=c.dataset.q; adjustWorkoutPlan(c.dataset.q); }));
-    const ct=document.getElementById("checkinToggle"); if(ct) ct.addEventListener("click", ()=>{ const blk=document.getElementById("checkinBlock"); setCheckinCollapsed(!blk.classList.contains("collapsed"), true); });
+    const ct=document.getElementById("checkinToggle"); if(ct) ct.addEventListener("click", ()=>{ const blk=document.getElementById("checkinSection"); setCheckinCollapsed(!blk.classList.contains("collapsed"), true); });
     initWorkoutPhoto();
     ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs","woGoal"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
     // 部位 / 器材 的「其他」新增
@@ -3799,8 +3798,6 @@
     if(tog) tog.addEventListener("click", ()=>{ const sec=document.getElementById("workoutSection"); setWorkoutCollapsed(!sec.classList.contains("collapsed"), true); });
     const mini=document.getElementById("woMini");
     if(mini) mini.addEventListener("click", ()=> setWorkoutCollapsed(false, true));
-    const wd=document.getElementById("woDate");
-    if(wd) wd.addEventListener("change", ()=> jumpToDay(wd.value));
     const advTog=document.getElementById("woAdvToggle"), adv=document.getElementById("woAdvanced");
     if(advTog && adv) advTog.addEventListener("click", ()=>{
       const open = adv.style.display==="none";
@@ -3874,7 +3871,7 @@
     const show=(id,v)=>{ const el=document.getElementById(id); if(el) el.style.display = v?"":"none"; };
     show('heroSection', t==='origin');
     show('menuSection', t==='origin');
-    show('checkinBlock', t==='origin');
+    show('checkinSection', t==='origin'||t==='full');
     show('fridgeSection', t==='origin'||t==='full');
     show('profileSection', t==='origin'||t==='full');
     show('workoutSection', t==='origin'||t==='full');
@@ -4229,10 +4226,10 @@
   }
 
   // ---------- 底部主選單(回主畫面 / 新增 / 跳到某區塊) ----------
-  const SECTION_LABELS = { menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", reminderSection:"提醒", profileSection:"個人資料", workoutSection:"運動計畫" };
+  const SECTION_LABELS = { menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", reminderSection:"提醒", profileSection:"個人資料", workoutSection:"運動計畫", checkinSection:"每日打卡" };
   function buildJumpMenu(){
     const box=document.getElementById("navJumpMenu"); if(!box) return;
-    const ids=["menuSection","foodSection","waterSection","metricsSection","fridgeSection","reminderSection","profileSection","workoutSection"];
+    const ids=["menuSection","foodSection","waterSection","metricsSection","fridgeSection","reminderSection","profileSection","workoutSection","checkinSection"];
     box.innerHTML = ids.filter(id=>{ const el=document.getElementById(id); return el && el.style.display!=="none"; })
       .map(id=>`<div class="nav-jump-item" data-sec="${id}">${SECTION_LABELS[id]}</div>`).join("");
     box.querySelectorAll(".nav-jump-item").forEach(it=> it.addEventListener("click", ()=> jumpToSection(it.dataset.sec)));
