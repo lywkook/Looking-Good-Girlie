@@ -21,6 +21,7 @@
     --card:#FCFAF6;
     --pink:#C9BEDC;
     --pink-soft:#F3EFFA;
+    --pink-shadow:#ADA2C7;
     --peach:#DAC6B2;
     --mint:#BEC9BC;
     --mint-soft:#E9EDE7;
@@ -149,9 +150,9 @@
   .save-btn{
     width:100%; background:var(--pink); color:#fff; border:none; border-radius:14px;
     padding:12px; font-size:var(--fs-body); font-weight:700; letter-spacing:0.02em;
-    box-shadow:0 4px 0 #ADA2C7;
+    box-shadow:0 4px 0 var(--pink-shadow);
   }
-  .save-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #ADA2C7; }
+  .save-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--pink-shadow); }
 
   svg.chart{ width:100%; height:130px; display:block; margin-top:14px; }
   .chart-empty{ font-size:var(--fs-body); color:var(--ink-soft); padding:14px 0 2px; text-align:center; }
@@ -403,8 +404,8 @@
   .ai-photo-title{ font-size:var(--fs-title); font-weight:900; color:var(--ink); margin-bottom:10px; }
   .ai-badge{ background:var(--pink); color:#fff; font-size:var(--fs-hint); font-weight:900; padding:2px 8px; border-radius:10px; vertical-align:middle; margin-left:4px; }
   .ai-photo-btn{ width:100%; background:var(--pink); color:#fff; border:none; border-radius:14px;
-    padding:13px; font-size:var(--fs-body); font-weight:900; font-family:inherit; cursor:pointer; box-shadow:0 4px 0 #ADA2C7; }
-  .ai-photo-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #ADA2C7; }
+    padding:13px; font-size:var(--fs-body); font-weight:900; font-family:inherit; cursor:pointer; box-shadow:0 4px 0 var(--pink-shadow); }
+  .ai-photo-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--pink-shadow); }
   .ai-photo-btn:disabled{ opacity:.6; cursor:default; }
   .ai-photo-status{ font-size:var(--fs-label); color:var(--ink); margin-top:10px; text-align:center; min-height:1px; }
   .ai-photo-status .ok{ color:var(--ink); font-weight:900; }
@@ -511,6 +512,7 @@
 </div>
 <div class="plan-panel" id="planPanel">
   <div class="settings-row"><span>字體</span><button type="button" class="mini-btn js-font-toggle">粗線體</button></div>
+  <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:8px;"><span>這個計畫的主題色</span><div class="bg-swatches" id="accentSwatches"></div></div>
   <div class="plan-list" id="planList"></div>
   <div class="plan-new">
     <div style="font-size:18.4px;color:var(--ink-soft);font-weight:700;">新增計畫</div>
@@ -2316,7 +2318,7 @@
       d.addEventListener("click", async (e)=>{ e.stopPropagation();
         if(!confirm("刪除這個計畫?裡面的紀錄也會一起清掉")) return;
         const id=d.dataset.del;
-        ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed","waterlog","watergoal","workout","wocollapsed","fridge","frcollapsed","reminder","rmcollapsed","herotitle"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
+        ["metricslog","foodlog","kcaltarget","profile","pfcollapsed","mxcollapsed","waterlog","watergoal","workout","wocollapsed","fridge","frcollapsed","reminder","rmcollapsed","herotitle","themecolor"].forEach(k=>{ try{ window.storage.set("p:"+id+":"+k,"",false);}catch(e){} });
         plans=plans.filter(p=>p.id!==id); await savePlans();
         if(PLAN.id===id){ await switchPlan("default"); } else { renderPlanList(); }
       });
@@ -2326,7 +2328,7 @@
     const pl=plans.find(p=>p.id===id); if(!pl) return;
     PLAN=pl; try{ await window.storage.set("currentplan", id, false); }catch(e){}
     updatePlanBar(); renderPlanList(); applyPlanView();
-    await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile(); await loadWorkout(); await loadFridge(); await loadReminder();
+    await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile(); await loadWorkout(); await loadFridge(); await loadReminder(); await loadThemeColor();
   }
   async function addPlan(){
     const nameEl=document.getElementById("newPlanName");
@@ -2344,6 +2346,33 @@
     document.getElementById("planCurrent").addEventListener("click", ()=> document.getElementById("planPanel").classList.toggle("show"));
     document.getElementById("addPlanBtn").addEventListener("click", addPlan);
   }
+
+  // ---------- 每個計畫的主題色(莫蘭迪色盤) ----------
+  const ACCENT_PRESETS = ["#C9BEDC","#D2B4B7","#BEC9BC","#A6C3D6","#DAC6B2","#C9A9A9","#B5C0A0","#C7B9D6"];
+  let themeColor = "#C9BEDC";
+  function shade(hex, amt){ // amt>0 往白、<0 往黑
+    const n=parseInt(hex.slice(1),16); let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+    const t = amt<0?0:255, a=Math.abs(amt);
+    r=Math.round(r+(t-r)*a); g=Math.round(g+(t-g)*a); b=Math.round(b+(t-b)*a);
+    return "#"+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+  }
+  function applyAccent(main){
+    const s=document.documentElement.style;
+    s.setProperty("--pink", main);
+    s.setProperty("--pink-soft", shade(main, 0.78));
+    s.setProperty("--pink-shadow", shade(main, -0.22));
+  }
+  function renderAccentSwatches(){
+    const box=document.getElementById("accentSwatches"); if(!box) return;
+    box.innerHTML = ACCENT_PRESETS.map(c=> '<span class="bg-sw'+(c.toLowerCase()===themeColor.toLowerCase()?' on':'')+'" data-c="'+c+'" style="background:'+c+'"></span>').join("");
+    box.querySelectorAll(".bg-sw").forEach(sw=> sw.addEventListener("click", async ()=>{ themeColor=sw.dataset.c; applyAccent(themeColor); await saveThemeColor(); renderAccentSwatches(); }));
+  }
+  async function loadThemeColor(){
+    themeColor="#C9BEDC";
+    try{ const r=await window.storage.get(K("themecolor"),false); if(r&&r.value) themeColor=r.value; }catch(e){}
+    applyAccent(themeColor); renderAccentSwatches();
+  }
+  async function saveThemeColor(){ try{ await window.storage.set(K("themecolor"), themeColor, false); }catch(e){} }
 
   // ---------- 主畫面(顯示所有計畫,點選進入) ----------
   function renderHome(){
@@ -2571,6 +2600,7 @@
     await loadFontPref();
     initHeroTitle();
     await loadHeroTitle();
+    await loadThemeColor();
     applyPlanView();
     await loadOverrides();
     renderTodayMenu();
