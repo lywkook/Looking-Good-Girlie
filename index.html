@@ -56,6 +56,13 @@
     font-style: normal;
     font-display: swap;
   }
+  @font-face {
+    font-family: 'SummerWhispers';
+    src: url("assets/summerwhispers-full.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
   *{box-sizing:border-box;}
   input, textarea, select, button{ font-family: var(--font-main), "Noto Sans TC", -apple-system, sans-serif; }
   .bg-adjust{ margin-top:10px; }
@@ -1228,6 +1235,7 @@
       <div class="set-seg">
         <button type="button" class="js-font-btn" data-font="cu" style="font-family:'CuHsianTi';">粗線體</button>
         <button type="button" class="js-font-btn" data-font="redbean" style="font-family:'RedBeanCream';">紅豆奶霜體</button>
+        <button type="button" class="js-font-btn" data-font="summer" style="font-family:'SummerWhispers';">初夏絮語體</button>
       </div>
     </div>
 
@@ -1309,7 +1317,7 @@
     // 計畫列 / 標題
     "減重計畫 ▾":"Weight Plan ▾","64kg → 60kg 大作戰":"64kg → 60kg Challenge",
     // 設定
-    "主題色":"Theme colour","背景":"Background","套用":"Apply","清除":"Clear","字體":"Font","粗線體":"CuHsian","紅豆奶霜體":"RedBean",
+    "主題色":"Theme colour","背景":"Background","套用":"Apply","清除":"Clear","字體":"Font","粗線體":"CuHsian","紅豆奶霜體":"RedBean","初夏絮語體":"SummerWhispers",
     "上傳背景照片":"Upload background photo",
     "調整背景照片(縮放/移動)":"Adjust background (zoom / move)",
     "兩指縮放、單指拖曳調整位置,背景固定不隨畫面捲動。":"Pinch to zoom, drag to reposition. The background stays fixed while you scroll.",
@@ -5237,20 +5245,22 @@
     requestAnimationFrame(()=>{ clampBgTransform(stage,img); render(); });
   }
 
-  // ---------- 字體切換(粗線體 / 紅豆奶霜體,可比較) ----------
+  // ---------- 字體切換(粗線體 / 紅豆奶霜體 / 初夏絮語體,可比較) ----------
+  const FONT_FAMILY = { cu:'"CuHsianTi"', redbean:'"RedBeanCream"', summer:'"SummerWhispers"' };
   let fontPref = "cu";   // 全域設定(不分計畫)
   function applyFont(){
-    document.documentElement.style.setProperty("--font-main", fontPref==="cu" ? '"CuHsianTi"' : '"RedBeanCream"');
-    document.documentElement.setAttribute("data-font", fontPref==="cu" ? "cu" : "redbean");
+    const fam = FONT_FAMILY[fontPref] || FONT_FAMILY.cu;
+    document.documentElement.style.setProperty("--font-main", fam);
+    document.documentElement.setAttribute("data-font", fontPref);
     document.querySelectorAll(".js-font-btn").forEach(b=> b.classList.toggle("on", b.dataset.font===fontPref));
   }
   async function loadFontPref(){
-    try{ const r=await window.storage.get("fontpref",false); if(r&&r.value) fontPref=r.value; }catch(e){}
+    try{ const r=await window.storage.get("fontpref",false); if(r&&r.value && FONT_FAMILY[r.value]) fontPref=r.value; }catch(e){}
     applyFont();
   }
   function initFontModule(){
     document.querySelectorAll(".js-font-btn").forEach(b=>
-      b.addEventListener("click", async ()=>{ fontPref = b.dataset.font==="redbean" ? "redbean" : "cu"; applyFont(); try{ await window.storage.set("fontpref", fontPref, false); }catch(e){} }));
+      b.addEventListener("click", async ()=>{ fontPref = FONT_FAMILY[b.dataset.font] ? b.dataset.font : "cu"; applyFont(); try{ await window.storage.set("fontpref", fontPref, false); }catch(e){} }));
   }
   function initLangFontSize(){
     document.querySelectorAll(".js-lang-btn").forEach(b=> b.addEventListener("click", ()=> setLang(b.dataset.lang)));
