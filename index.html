@@ -2630,7 +2630,7 @@
         const kind=aiTypeToKind(ai.type||"");
         day.workout={ type:kind, emoji:kind==="lift"?"💪":(kind==="cardio"?"🏃‍♀️":"🌙"),
           title:((ai.type||"運動")+(ai.focus?(" · "+ai.focus):"")),
-          note:"這天的安排來自你上方的「運動計畫」,想調整就到那邊改。",
+          note:"",
           exercises:(ai.items&&ai.items.length)?ai.items.map(it=>({name:String(it),detail:""})):[{name:"依運動計畫進行",detail:""}] };
       } else {
         day.workout = day.baseWorkout;
@@ -2650,7 +2650,7 @@
     if(workoutPlan && Array.isArray(workoutPlan.week)){
       const ai=workoutPlan.week.find(x=>AI_WEEKDAY[String(x.day||"").replace(/\s/g,"")]===wd);
       if(ai){ const kind=aiTypeToKind(ai.type||""); workout={type:kind, emoji:kind==="lift"?"💪":(kind==="cardio"?"🏃‍♀️":"🌙"),
-        title:((ai.type||"運動")+(ai.focus?(" · "+ai.focus):"")), note:"這天的安排來自你上方的「運動計畫」,想調整就到那邊改。",
+        title:((ai.type||"運動")+(ai.focus?(" · "+ai.focus):"")), note:"",
         exercises:(ai.items&&ai.items.length)?ai.items.map(it=>({name:String(it),detail:""})):[{name:"依運動計畫進行",detail:""}] }; }
     }
     if(!workout) workout=workoutForWeekday(wd, Math.max(0,idx));
@@ -2693,7 +2693,7 @@
         <div class="day-body">
           <div class="blk">
             <div class="blk-title">運動:${day.workout.title}</div>
-            <div style="color:var(--ink-soft); margin-bottom:8px;">${day.workout.note}</div>
+            ${day.workout.note?`<div style="color:var(--ink-soft); margin-bottom:8px;">${day.workout.note}</div>`:''}
             <div class="day-ex-list" data-exlist="${day.iso}">${exRows}</div>
             ${exEditRow}
           </div>
