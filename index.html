@@ -1924,11 +1924,21 @@
       tm:"Treadmill intervals", tmD:"Brisk walk 2 min, jog or fast walk 1 min; repeat 7-8 rounds, 20-25 min total." } };
 
   // 分享/空白模式:網址帶 blank,或走 /app/ 這條分享路徑 → 一律以「空白」呈現,不套任何專屬範本。
-  // 這是「顯示層」的判斷,不會去改動已存的資料,所以本人(從根目錄開啟)的計畫完全不受影響。
-  const SHARED_BLANK = (function(){ try{
+  // 這是「顯示層」的判斷,不會去改動已存的資料。
+  // 重點:加到主畫面(PWA)後,啟動網址常常會掉了 ?blank,所以「只要偵測到一次」就把這個狀態存起來,
+  // 之後就算網址不帶 blank 也維持空白版,不會又冒出範本。
+  function urlIsBlank(){ try{
     return (location.search+location.hash).toLowerCase().indexOf("blank")>=0
         || location.pathname.toLowerCase().indexOf("/app/")>=0;
-  }catch(e){ return false; } })();
+  }catch(e){ return false; } }
+  let SHARED_BLANK = urlIsBlank();
+  async function resolveSharedBlank(){
+    try{
+      const r = await window.storage.get("sharedmode", false);
+      if(r && r.value==="1") SHARED_BLANK = true;
+      else if(SHARED_BLANK){ try{ await window.storage.set("sharedmode","1", false); }catch(e){} }
+    }catch(e){}
+  }
   function isOriginPlan(){ return !SHARED_BLANK && !!(typeof PLAN!=="undefined" && PLAN && PLAN.type==="origin"); }
   function workoutForWeekday(wd, liftCounter){
     // 非 origin(如空白分享版):不套用內建範本,顯示空白+簡單指示,讓使用者自行生成/編輯
@@ -4455,11 +4465,17 @@
   // ---------- 多計畫管理 ----------
   const PLAN_LABEL = { track:"飲食+喝水+體重", full:"減重規劃", origin:"完整計畫", weight:"飲食+喝水+體重", calorie:"飲食+喝水+體重" };
   async function loadPlans(){
-    try{ const r=await window.storage.get("plans",false); if(r&&r.value) plans=JSON.parse(r.value)||[]; }catch(e){ plans=[]; }
+    await resolveSharedBlank();   // 先確定是不是分享/空白版(含記住上次的判斷)
+    let hadPlansKey=false;
+    try{ const r=await window.storage.get("plans",false); if(r&&r.value){ hadPlansKey=true; plans=JSON.parse(r.value)||[]; } }catch(e){ plans=[]; }
     if(!plans.length){
-      // 分享/空白版:完全不建立任何預設計畫,主畫面留白,讓使用者自己新增第一個計畫。
-      // 本人版(非分享):照舊給一個完整計畫範本。
-      plans = SHARED_BLANK ? [] : [{id:"default",name:"減重計畫",type:"origin"}];
+      if(hadPlansKey){
+        // 使用者已把計畫全部刪光 → 維持空白,讓他自己再新增,不自動幫他重建(不論哪個版本)
+        plans=[];
+      } else {
+        // 真正第一次使用:分享/空白版留白;本人版給一個完整計畫範本
+        plans = SHARED_BLANK ? [] : [{id:"default",name:"減重計畫",type:"origin"}];
+      }
     }
     const _d=plans.find(p=>p.id==="default"); if(_d && _d.name==="回台減重計畫"){ _d.name="減重計畫"; savePlans(); }
     let _mig=false; plans.forEach(p=>{ if(p.type==="weight"||p.type==="calorie"){ p.type="track"; _mig=true; } }); if(_mig) savePlans();
@@ -4524,9 +4540,7 @@
     const pl=plans.find(p=>p.id===id); if(!pl) return;
     const isLast = plans.length<=1;
     const msg = isLast
-      ? (SHARED_BLANK
-          ? "刪除「"+pl.name+"」?會清空裡面所有紀錄,主畫面會變成全空白,由你自己再新增計畫。"
-          : "「"+pl.name+"」是目前唯一的計畫。刪除會清空裡面所有紀錄、重設成一個全新的空白計畫,確定?")
+      ? "刪除「"+pl.name+"」?會清空裡面所有紀錄,主畫面會變成全空白,由你自己再新增計畫。"
       : "刪除計畫「"+pl.name+"」?裡面的紀錄會一起清掉,無法復原";
     if(!confirm(msg)) return;
     await clearPlanData(id);
@@ -4534,21 +4548,11 @@
     const sm=document.getElementById("settingsModal"); if(sm) sm.classList.remove("show");
     const pp=document.getElementById("planPanel"); if(pp) pp.classList.remove("show");
     if(!plans.length){
-      if(SHARED_BLANK){
-        // 分享/空白版:刪光就真的留白,不自動重建,讓使用者自己新增第一個計畫
-        PLAN=null;
-        await savePlans();
-        try{ await window.storage.set("currentplan","",false); }catch(e){}
-        renderHome(); goHome();
-        return;
-      }
-      // 本人版:至少保留一個計畫,重建一個全新的空白預設(資料一併清空)
-      await clearPlanData("default");
-      plans=[{id:"default",name:"我的計畫",type:"full"}];
-      await savePlans();
-      try{ await window.storage.set("currentplan","default",false); }catch(e){}
-      await switchPlan("default");
-      goHome();
+      // 刪光就真的留白,不自動重建,讓使用者自己新增第一個計畫
+      PLAN=null;
+      await savePlans();   // 存下空陣列,之後重開也維持空白
+      try{ await window.storage.set("currentplan","",false); }catch(e){}
+      renderHome(); goHome();
       return;
     }
     await savePlans();

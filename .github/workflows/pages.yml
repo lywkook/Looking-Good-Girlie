@@ -32,6 +32,9 @@ jobs:
           mkdir -p app
           cp index.html sw.js manifest.webmanifest app/
           cp -r assets app/assets
+          # /app is the shared/blank build: make its PWA launch URL carry ?blank so
+          # home-screen launches stay blank even when the query would otherwise be dropped.
+          sed -i 's#"start_url": "./index.html"#"start_url": "./index.html?blank"#' app/manifest.webmanifest
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
