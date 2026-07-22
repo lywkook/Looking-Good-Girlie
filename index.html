@@ -174,19 +174,6 @@
   :root[data-font="cu"] *{ font-weight:400 !important; }
   :root[data-font="redbean"] body{ -webkit-text-stroke:0.3px currentColor; }
 
-  .stamp-row{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:24px 20px 6px;
-  }
-  .stamp-row .brand{
-    font-size:var(--fs-label); letter-spacing:0.12em; color:var(--ink); font-weight:900;
-    background:var(--pink-soft); padding:5px 14px; border-radius:20px;
-  }
-  .stamp-row .badge{
-    font-size:var(--fs-label); background:var(--pink); color:#fff; padding:3px 10px;
-    border-radius:20px; font-weight:700;
-  }
-
   header.hero{ padding:8px 20px 20px; position:relative; }
   .washi{
     position:absolute; top:-6px; left:24px; width:70px; height:20px;
@@ -840,11 +827,6 @@
   </div>
 </div>
 <h2 class="cute" id="planHeader" style="display:none;"></h2>
-
-<div class="stamp-row">
-  <div class="brand cute">TRAINING DIARY</div>
-  <div class="badge" id="todayLabel">--</div>
-</div>
 
 <header class="hero" id="heroSection">
   <h1 class="cute"><span id="heroTitle">64kg → 60kg 大作戰</span> <span class="edit-pencil" id="heroTitleEdit">✏️</span></h1>
@@ -2136,7 +2118,7 @@
     syncDateBar();
   }
 
-  document.getElementById("todayLabel").textContent = fmtDate(today) + " 今天";
+  const _tl=document.getElementById("todayLabel"); if(_tl) _tl.textContent = fmtDate(today) + " 今天";
   const msPerDay = 1000*60*60*24;
   document.getElementById("daysLeft").textContent = Math.max(0, Math.round((endDate - today)/msPerDay));
 
