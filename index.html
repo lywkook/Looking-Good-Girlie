@@ -1928,7 +1928,10 @@
   // 重點:加到主畫面(PWA)後,啟動網址常常會掉了 ?blank,所以「只要偵測到一次」就把這個狀態存起來,
   // 之後就算網址不帶 blank 也維持空白版,不會又冒出範本。
   function urlIsBlank(){ try{
-    return (location.search+location.hash).toLowerCase().indexOf("blank")>=0
+    // window.__FORCE_BLANK 由 /app/ 這個「分享版」建置在部署時寫死注入 → 整個 /app/ 一律空白,
+    // 不受網址、快取、加到主畫面(PWA 啟動網址掉了 ?blank)影響。
+    return (typeof window!=="undefined" && window.__FORCE_BLANK===true)
+        || (location.search+location.hash).toLowerCase().indexOf("blank")>=0
         || location.pathname.toLowerCase().indexOf("/app/")>=0;
   }catch(e){ return false; } }
   let SHARED_BLANK = urlIsBlank();
