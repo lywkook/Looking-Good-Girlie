@@ -6,7 +6,7 @@
    - 其他同源檔案(字體/圖示/manifest):cache-first(這些又大又不常變,存下來就好)。
    - 外部資源(Google Fonts 等):不攔截,交給瀏覽器,離線時 App 有內建後備字型。
 */
-const CACHE = 'lgg-cache-v1';
+const CACHE = 'lgg-cache-v2';
 const CORE = [
   './',
   './index.html',
@@ -40,9 +40,10 @@ self.addEventListener('fetch', (e) => {
   const isHTML = req.mode === 'navigate' || accept.indexOf('text/html') >= 0;
 
   if (isHTML) {
-    // network-first,但只認 200;否則(404/斷線)回快取的 App
+    // network-first,但只認 200;否則(404/斷線)回快取的 App。
+    // 用 cache:'no-store' 直接跟伺服器要最新 index.html,避免瀏覽器 HTTP 快取回舊版(這會讓使用者卡在舊版)。
     e.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
         .then((res) => {
           if (res && res.status === 200) {
             const copy = res.clone();

@@ -5224,10 +5224,27 @@
 })();
 </script>
 <script>
-  // 註冊離線快取:開過一次後,之後沒網路或伺服器掛掉也能開
+  // 註冊離線快取:開過一次後,之後沒網路或伺服器掛掉也能開。
+  // 同時「自動更新」:每次開啟/回到前景都檢查有沒有新版,發現新版就自動換上並重新整理一次,
+  // 讓使用者永遠拿到最新版,不用手動清快取。
   if ("serviceWorker" in navigator) {
+    // 只有「本來就已經有 SW 在控制」時,之後的 controllerchange 才代表『更新』→ 重新整理一次。
+    // (第一次安裝時的 claim 不算更新,不重整,避免多跳一次。)
+    var __hadController = !!navigator.serviceWorker.controller;
+    var __reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (!__hadController || __reloading) return;
+      __reloading = true;
+      window.location.reload();
+    });
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("sw.js").catch(function () {});
+      navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(function (reg) {
+        reg.update();   // 進來就先問伺服器有沒有新版
+        // 回到前景(從背景切回、解鎖手機)時再檢查一次
+        document.addEventListener("visibilitychange", function () {
+          if (document.visibilityState === "visible") reg.update();
+        });
+      }).catch(function () {});
     });
   }
 </script>
