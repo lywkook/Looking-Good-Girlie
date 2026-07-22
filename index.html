@@ -2608,7 +2608,11 @@
   const doneState = {};
   const exerciseDone = {};
   let dayExOverride = {};   // 使用者在每日打卡直接改的當天運動 { "<iso>": ["動作1","動作2"] }
+  let dayExSig = "";        // 記錄這些每日修改是「對應哪一版運動計畫」做的
   async function saveDayExOverride(){ try{ await window.storage.set(K("dayexoverride"), JSON.stringify(dayExOverride), false); }catch(e){} }
+  function planSig(){ try{ return JSON.stringify((workoutPlan&&workoutPlan.week||[]).map(d=>[d.day,d.type,d.focus,(d.items||[]).join("|")])); }catch(e){ return ""; } }
+  async function saveDayExSig(){ try{ await window.storage.set(K("dayexsig"), dayExSig, false); }catch(e){} }
+  function markDayExInSync(){ dayExSig=planSig(); saveDayExSig(); }
 
   function tagFor(type){
     if(type==="lift") return '<span class="day-tag tag-lift">重訓</span>';
@@ -2620,6 +2624,12 @@
   const AI_WEEKDAY = {"週日":0,"週一":1,"週二":2,"週三":3,"週四":4,"週五":5,"週六":6,"周日":0,"周一":1,"周二":2,"周三":3,"周四":4,"周五":5,"周六":6};
   function aiTypeToKind(t){ t=String(t||""); return /重訓|肌力|力量|阻力/.test(t)?"lift":(/有氧|燃脂|跑|心肺|快走/.test(t)?"cardio":"rest"); }
   function applyAiPlanToDays(){
+    // 運動計畫換版了 → 之前針對舊計畫的「每日打卡手動修改」已過期,清掉讓打卡跟著新計畫同步
+    const sig=planSig();
+    if(dayExSig!==sig){
+      if(Object.keys(dayExOverride).length){ dayExOverride={}; saveDayExOverride(); }
+      dayExSig=sig; saveDayExSig();
+    }
     const byWd={};
     if(workoutPlan && Array.isArray(workoutPlan.week)){
       workoutPlan.week.forEach(d=>{ const wd=AI_WEEKDAY[String(d.day||"").replace(/\s/g,"")]; if(wd!=null && byWd[wd]==null) byWd[wd]=d; });
@@ -2746,7 +2756,7 @@
       if(editBtn) editBtn.addEventListener("click", (e)=>{ e.stopPropagation(); openDayExEditor(card, day.iso, exList); });
       const resetBtn = card.querySelector(".day-edit-reset");
       if(resetBtn) resetBtn.addEventListener("click", async (e)=>{ e.stopPropagation();
-        delete dayExOverride[day.iso]; await saveDayExOverride(); renderDays(); reopenDay(day.iso); });
+        delete dayExOverride[day.iso]; markDayExInSync(); await saveDayExOverride(); renderDays(); reopenDay(day.iso); });
       listEl.appendChild(card);
     });
     updateDoneCount();
@@ -2764,7 +2774,7 @@
     listWrap.addEventListener("click",(e)=>e.stopPropagation());
     listWrap.querySelector('.day-ex-save').addEventListener("click", async (e)=>{ e.stopPropagation();
       const items=ta.value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-      dayExOverride[iso]=items; await saveDayExOverride(); renderDays(); reopenDay(iso);
+      dayExOverride[iso]=items; markDayExInSync(); await saveDayExOverride(); renderDays(); reopenDay(iso);
     });
     listWrap.querySelector('.day-ex-cancel').addEventListener("click", (e)=>{ e.stopPropagation(); renderDays(); reopenDay(iso); });
   }
@@ -4324,6 +4334,7 @@
   async function loadWorkout(){
     workoutPlan=null; woPlanCollapsed=false; focusSel.length=0; strengthSel.length=0; cardioSel.length=0;
     dayExOverride={}; try{ const r=await window.storage.get(K("dayexoverride"),false); if(r&&r.value) dayExOverride=JSON.parse(r.value)||{}; }catch(e){ dayExOverride={}; }
+    dayExSig=""; try{ const s=await window.storage.get(K("dayexsig"),false); if(s&&s.value!=null) dayExSig=s.value; }catch(e){ dayExSig=""; }
     try{ const c=await window.storage.get(K("woplancollapsed"),false); if(c&&c.value==="1") woPlanCollapsed=true; }catch(e){}
     const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=(v==null?"":v); };
     set("woDays",""); set("woCardio",""); set("woNote",""); set("woSets",""); set("woReps",""); set("woWeight",""); set("woSecs",""); set("woGoal","");
