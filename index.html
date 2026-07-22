@@ -122,6 +122,15 @@
     background:#fff; color:var(--ink); font-family:inherit; font-size:var(--fs-label); font-weight:700; cursor:pointer; }
   .set-seg button.on{ background:var(--pink); color:#fff; border-color:var(--pink); }
   .js-fs-btn[data-scale="0.9"]{ font-size:14px; } .js-fs-btn[data-scale="1.15"]{ font-size:18px; } .js-fs-btn[data-scale="1.3"]{ font-size:20px; }
+  .fs-slider-row{ display:flex; align-items:center; gap:10px; }
+  .fs-slider-min{ font-size:13px; color:var(--ink-soft); font-weight:700; }
+  .fs-slider-max{ font-size:22px; color:var(--ink-soft); font-weight:700; }
+  .fs-slider{ -webkit-appearance:none; appearance:none; flex:1; height:6px; border-radius:6px;
+    background:var(--pink-soft); outline:none; }
+  .fs-slider::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:26px; height:26px; border-radius:50%;
+    background:var(--pink); border:3px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.2); cursor:pointer; }
+  .fs-slider::-moz-range-thumb{ width:26px; height:26px; border-radius:50%; background:var(--pink); border:3px solid #fff; cursor:pointer; }
+  .fs-slider-preview{ margin-top:10px; text-align:center; color:var(--ink); font-weight:700; }
   .home-lang-quick{ position:absolute; top:0; right:0; display:flex; gap:6px; }
   .home-lang-quick button{ border:2px solid var(--pink-soft); background:#fff; color:var(--ink); border-radius:20px;
     padding:5px 12px; font-family:inherit; font-size:var(--fs-hint); font-weight:900; cursor:pointer; }
@@ -1231,12 +1240,12 @@
 
     <div class="set-block">
       <div class="set-title">字體大小</div>
-      <div class="set-seg">
-        <button type="button" class="js-fs-btn" data-scale="0.9">小</button>
-        <button type="button" class="js-fs-btn" data-scale="1">中</button>
-        <button type="button" class="js-fs-btn" data-scale="1.15">大</button>
-        <button type="button" class="js-fs-btn" data-scale="1.3">特大</button>
+      <div class="fs-slider-row">
+        <span class="fs-slider-min">小</span>
+        <input type="range" id="fsSlider" class="fs-slider" min="0.8" max="1.6" step="0.02" value="1">
+        <span class="fs-slider-max">大</span>
       </div>
+      <div class="fs-slider-preview" id="fsPreview">拖動調整字體大小</div>
     </div>
 
     <div class="set-block">
@@ -1818,8 +1827,7 @@
     if(typeof applyFont==="function") applyFont();
     document.querySelectorAll(".js-lang-btn").forEach(b=>{ const v=b.dataset.lang; b.classList.toggle("on", v===lang); });
     document.querySelectorAll(".js-lang-quick").forEach(b=> b.textContent = lang==="en"?"中文":"EN");
-    const fsLbl = lang==="en" ? {"0.9":"S","1":"M","1.15":"L","1.3":"XL"} : {"0.9":"小","1":"中","1.15":"大","1.3":"特大"};
-    document.querySelectorAll(".js-fs-btn").forEach(b=>{ if(fsLbl[b.dataset.scale]) b.textContent=fsLbl[b.dataset.scale]; });
+    if(typeof applyUIScale==="function") applyUIScale();   // 字體大小預覽文字隨語言更新
     if(typeof syncDateBar==="function") syncDateBar();
   }
   function startLangObserver(){
@@ -1836,7 +1844,8 @@
   const FS_BASE={ "--fs-title":22, "--fs-num":24, "--fs-body":19, "--fs-label":16, "--fs-hint":14.5 };
   let uiScale=1;
   function applyUIScale(){ const r=document.documentElement.style; Object.keys(FS_BASE).forEach(k=> r.setProperty(k, (FS_BASE[k]*uiScale).toFixed(2)+"px"));
-    document.querySelectorAll(".js-fs-btn").forEach(b=> b.classList.toggle("on", Math.abs(parseFloat(b.dataset.scale)-uiScale)<0.001)); }
+    const sl=document.getElementById("fsSlider"); if(sl && Math.abs(parseFloat(sl.value)-uiScale)>0.001) sl.value=uiScale;
+    const pv=document.getElementById("fsPreview"); if(pv) pv.textContent=(typeof lang!=="undefined"&&lang==="en"?"Text size":"字體大小")+" · "+Math.round(uiScale*100)+"%"; }
   async function loadUIScale(){ try{ const r=await window.storage.get("uiscale",false); if(r&&r.value){ const v=parseFloat(r.value); if(v>0) uiScale=v; } }catch(e){} applyUIScale(); }
   async function setUIScale(v){ uiScale=v; applyUIScale(); try{ await window.storage.set("uiscale", String(v), false); }catch(e){} }
 
@@ -5164,7 +5173,11 @@
   }
   function initLangFontSize(){
     document.querySelectorAll(".js-lang-btn").forEach(b=> b.addEventListener("click", ()=> setLang(b.dataset.lang)));
-    document.querySelectorAll(".js-fs-btn").forEach(b=> b.addEventListener("click", ()=> setUIScale(parseFloat(b.dataset.scale))));
+    const fsSlider=document.getElementById("fsSlider");
+    if(fsSlider){
+      fsSlider.addEventListener("input", ()=>{ uiScale=parseFloat(fsSlider.value)||1; applyUIScale(); });   // 拖動即時預覽
+      fsSlider.addEventListener("change", ()=>{ try{ window.storage.set("uiscale", String(uiScale), false); }catch(e){} });   // 放開才存
+    }
     const hq=document.getElementById("homeLangQuick"); if(hq) hq.addEventListener("click", ()=> setLang(lang==="en"?"zh":"en"));
     const hs=document.getElementById("homeSettingsBtn"); if(hs) hs.addEventListener("click", openHomeSettings);
   }
