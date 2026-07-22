@@ -583,7 +583,7 @@
   .ai-photo-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--pink-shadow); }
   .ai-photo-btn:disabled{ opacity:.6; cursor:default; }
   .ai-photo-status{ font-size:var(--fs-label); color:var(--ink); margin-top:10px; text-align:center; min-height:1px; }
-  .ai-photo-status .ok{ color:var(--ink); font-weight:900; }
+  .ai-photo-status .ok{ color:var(--muted); font-weight:500; opacity:.8; }
   .ai-photo-status .err{ color:#B5766F; }
   .ai-add-more{ display:inline-block; margin-top:8px; background:#fff; border:1.5px solid var(--pink);
     color:var(--ink); border-radius:12px; padding:6px 14px; cursor:pointer; font-weight:700; font-size:var(--fs-label); }
@@ -2267,7 +2267,7 @@
       + '</div>';
     document.getElementById("rrUse").addEventListener("click", ()=>{
       applyMeal(regenCtx.field, text);
-      status.innerHTML = '<span class="ok">'+RP('已套用到上面的今日菜單 ✅','Applied to your menu above ✅')+'</span>';
+      status.innerHTML = '<span class="ok">'+RP('完成','Done')+'</span>';
     });
     document.getElementById("rrAgain").addEventListener("click", ()=> runPick(text));
   }
@@ -2350,7 +2350,7 @@
       ["breakfast","lunch","dinner","fruit"].forEach(f=>{ if(m.menu[f]!=null){ const v=String(m.menu[f]).trim()||"—"; applyMeal(f,v); } });
       if(m.dailyKcal && Number(m.dailyKcal)>0){ const t=document.getElementById("inKcalTarget"); const dk=Math.round(Number(m.dailyKcal));
         if(t){ t.value=dk; } kcalTarget=dk; if(typeof saveTarget==="function") saveTarget(); if(typeof renderFoodLog==="function") renderFoodLog(); }
-      status.innerHTML='<span class="ok">'+RP('已依身體數據更新菜單與運動 ✅','Menu & workout updated from your data ✅')+'</span>';
+      status.innerHTML='<span class="ok">'+RP('完成','Done')+'</span>';
       // 同時把運動也依建議調整(需已有運動計畫);若建議的訓練天數和使用者原本設定不同,先問要不要接受
       if(m.workout && typeof workoutPlan!=="undefined" && workoutPlan && Array.isArray(workoutPlan.week) && typeof adjustWorkoutPlan==="function"){
         const woDaysEl=document.getElementById("woDays");
@@ -2393,7 +2393,7 @@
       const items=todays.filter(f=>f.meal===mz);
       if(items.length){ applyMeal(map[mz], items.map(f=>foodNameOnly(f.name)).join("、")); n++; }
     });
-    status.innerHTML = n ? '<span class="ok">'+RP('已依飲食紀錄更新今日菜單 ✅','Menu updated from your log ✅')+'</span>'
+    status.innerHTML = n ? '<span class="ok">'+RP('完成','Done')+'</span>'
                          : '<span class="err">'+RP('沒有可同步的餐','Nothing to sync')+'</span>';
   }
   // 方向二:今日菜單 → 飲食紀錄(把菜單的每一餐加進飲食紀錄;熱量抓得到就帶入,抓不到給 0 讓使用者自己填)
@@ -2413,7 +2413,7 @@
       n++;
     });
     saveFoodLog(); renderFoodLog();
-    status.innerHTML = '<span class="ok">'+RP('已把今日菜單加進飲食紀錄 ✅','Menu added to your food log ✅')+'</span>';
+    status.innerHTML = '<span class="ok">'+RP('完成','Done')+'</span>';
   }
   function initMenuModule(){
     const tgl = document.getElementById("menuRegenBtn");
@@ -4473,7 +4473,7 @@
             const move=(obj.move||"").trim(), target=(obj.target||"").trim();
             if(move){ obj.summary="偵測到的動作:"+move+(target?"(主要練"+target+")":"")+"。"+(obj.summary||""); }
             workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
-            if(status) status.innerHTML = move ? '<span class="ok">認出「'+esc(move)+'」,已結合細項排入計畫 ✅</span>' : '<span class="ok">已結合照片排入計畫 ✅</span>';
+            if(status) status.innerHTML = '<span class="ok">'+RP('完成','Done')+'</span>';
             if(btn){ btn.disabled=false; btn.textContent=oldT; }
             return;
           }catch(e){
@@ -4514,7 +4514,7 @@
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
       workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
       if(inp) inp.value="";
-      status.innerHTML='<span class="ok">已重新整合並更新計畫 ✅ 每日打卡也同步了</span>';
+      status.innerHTML='<span class="ok">'+RP('完成','Done')+'</span>';
     }catch(e){
       status.innerHTML='<span class="err">調整失敗:'+esc(e.message||e)+'</span>';
     }
