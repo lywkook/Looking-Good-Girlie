@@ -4445,14 +4445,14 @@
     const t = PLAN.type;
     const show=(id,v)=>{ const el=document.getElementById(id); if(el) el.style.display = v?"":"none"; };
     show('heroSection', t==='origin');
-    show('menuSection', t==='origin');
+    show('menuSection', t==='origin'||t==='full');
     show('checkinSection', t==='origin'||t==='full');
     show('fridgeSection', t==='origin'||t==='full');
     show('workoutSection', t==='origin'||t==='full');
     show('foodSection', t==='origin'||t==='full'||t==='track');
     show('waterSection', t==='origin'||t==='full'||t==='track');
     show('metricsSection', true);
-    show('reminderSection', t==='origin');
+    show('reminderSection', t==='origin'||t==='full');
     const ph=document.getElementById("planHeader");
     if(ph){ if(t==='origin'){ ph.style.display="none"; } else { ph.style.display=""; ph.textContent=PLAN.name; } }
   }
