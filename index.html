@@ -857,7 +857,7 @@
   <button type="button" class="ai-photo-btn" id="coachBtn" style="margin-top:12px;line-height:1.4;">根據今日身體數據,重新調整菜單&運動</button>
   <div class="ai-photo-status" id="coachStatus"></div>
   <div class="menu-ai-adjust">
-    <div class="menu-ai-label">跟 AI 聊聊・問問題・調整菜單</div>
+    <div class="menu-ai-label">提出需求 / 問 AI</div>
     <div class="menu-chat-log" id="menuChatLog"></div>
     <div class="menu-ai-row">
       <input id="menuAiInput" placeholder="問問題或說需求,例:這樣夠嗎?/ 我不吃早餐 / 換低碳" autocomplete="off">
@@ -1345,7 +1345,7 @@
     "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
     "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
     "① 更改菜單":"① Change the menu","② 上傳餐廳菜單,推薦適合我的":"② Upload a restaurant menu for a pick that suits you","收起來 ▲":"Close ▲",
-    "根據今日身體數據,重新調整菜單&運動":"Adjust menu & workout from today's body data","跟 AI 聊聊・問問題・調整菜單":"Chat with AI · ask · adjust the menu","問問題或說需求,例:這樣夠嗎?/ 我不吃早餐 / 換低碳":"Ask or request, e.g. Is this enough? / skip breakfast / go low-carb","傳送":"Send",
+    "根據今日身體數據,重新調整菜單&運動":"Adjust menu & workout from today's body data","提出需求 / 問 AI":"Make a request / ask AI","問問題或說需求,例:這樣夠嗎?/ 我不吃早餐 / 換低碳":"Ask or request, e.g. Is this enough? / skip breakfast / go low-carb","傳送":"Send",
     "今日菜單 ↔ 飲食紀錄 同步(選一個方向)":"Sync today's menu ↔ food log (pick a direction)","菜單 → 飲食紀錄":"Menu → food log","飲食紀錄 → 菜單":"Food log → menu",
     "選一餐,AI 會依你的熱量目標重新配好。下面全部都可以留空,直接按也會推薦。":"Pick a meal and AI re-plans it to your calorie target. Everything below is optional — just tap and it still recommends.",
     "口味喜好(可複選 / 不選)":"Taste preferences (pick any, or none)",
@@ -2399,11 +2399,7 @@
       ["breakfast","lunch","dinner","fruit"].forEach(f=>{ if(m.menu[f]!=null){ const v=String(m.menu[f]).trim()||"—"; applyMeal(f,v); } });
       if(m.dailyKcal && Number(m.dailyKcal)>0){ const t=document.getElementById("inKcalTarget"); const dk=Math.round(Number(m.dailyKcal));
         if(t){ t.value=dk; } kcalTarget=dk; if(typeof saveTarget==="function") saveTarget(); if(typeof renderFoodLog==="function") renderFoodLog(); }
-      status.innerHTML='<div class="coach-result">'
-        +'<div><b>'+RP('進度分析','Progress')+':</b> '+esc(m.analysis||"")+'</div>'
-        +(m.workout?'<div style="margin-top:6px"><b>'+RP('運動調整','Workout')+':</b> '+esc(m.workout)+'</div>':'')
-        +'<div class="ok" style="margin-top:8px">'+RP('已依你的進度更新今日菜單'+(m.dailyKcal?'與熱量目標':'')+' ✅','Menu updated to your progress ✅')+'</div>'
-        +'</div>';
+      status.innerHTML='<span class="ok">'+RP('已依身體數據更新菜單與運動 ✅','Menu & workout updated from your data ✅')+'</span>';
       // 同時把運動也依建議調整(需已有運動計畫)
       if(m.workout && typeof workoutPlan!=="undefined" && workoutPlan && Array.isArray(workoutPlan.week) && typeof adjustWorkoutPlan==="function"){
         adjustWorkoutPlan("依我的目標與進度:"+m.workout);
