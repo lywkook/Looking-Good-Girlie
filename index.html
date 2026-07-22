@@ -1923,7 +1923,13 @@
       cardioTitle:"Treadmill intervals + full-body cardio", cardioNote:"“Cardio” just means continuous moves that raise your heart rate — a bit breathless but sustainable. No dumbbells; keep moving and keep rests short.",
       tm:"Treadmill intervals", tmD:"Brisk walk 2 min, jog or fast walk 1 min; repeat 7-8 rounds, 20-25 min total." } };
 
-  function isOriginPlan(){ return !!(typeof PLAN!=="undefined" && PLAN && PLAN.type==="origin"); }
+  // 分享/空白模式:網址帶 blank,或走 /app/ 這條分享路徑 → 一律以「空白」呈現,不套任何專屬範本。
+  // 這是「顯示層」的判斷,不會去改動已存的資料,所以本人(從根目錄開啟)的計畫完全不受影響。
+  const SHARED_BLANK = (function(){ try{
+    return (location.search+location.hash).toLowerCase().indexOf("blank")>=0
+        || location.pathname.toLowerCase().indexOf("/app/")>=0;
+  }catch(e){ return false; } })();
+  function isOriginPlan(){ return !SHARED_BLANK && !!(typeof PLAN!=="undefined" && PLAN && PLAN.type==="origin"); }
   function workoutForWeekday(wd, liftCounter){
     // 非 origin(如空白分享版):不套用內建範本,顯示空白+簡單指示,讓使用者自行生成/編輯
     if(!isOriginPlan()) return { type:"rest", emoji:"", title:(lang==="en"?"Not set yet":"尚未安排"),
@@ -4466,7 +4472,7 @@
   function applyPlanView(){
     const t = PLAN.type;
     const show=(id,v)=>{ const el=document.getElementById(id); if(el) el.style.display = v?"":"none"; };
-    show('heroSection', t==='origin');
+    show('heroSection', isOriginPlan());
     show('menuSection', t==='origin'||t==='full');
     show('checkinSection', t==='origin'||t==='full');
     show('fridgeSection', t==='origin'||t==='full');
@@ -4476,7 +4482,7 @@
     show('metricsSection', true);
     show('reminderSection', t==='origin'||t==='full');
     const ph=document.getElementById("planHeader");
-    if(ph){ if(t==='origin'){ ph.style.display="none"; } else { ph.style.display=""; ph.textContent=PLAN.name; } }
+    if(ph){ if(isOriginPlan()){ ph.style.display="none"; } else { ph.style.display=""; ph.textContent=PLAN.name; } }
   }
   function renderPlanList(){
     const box=document.getElementById("planList"); if(!box) return;
