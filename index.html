@@ -1228,6 +1228,10 @@
       <div class="set-title">刪除計畫</div>
       <button type="button" id="setDeleteBtn" class="danger-btn">🗑 刪除這個計畫</button>
     </div>
+    <div class="set-block" id="setResetBlock">
+      <div class="set-title">清空所有資料</div>
+      <button type="button" id="setResetBtn" class="danger-btn">⚠️ 清空所有計畫與紀錄,重新開始</button>
+    </div>
   </div>
 </div>
 
@@ -1266,6 +1270,7 @@
     "換背景 / 顏色?":"Change background / colour?",
     "主畫面與各計畫外觀可在「⚙️ 設定」分別調整。":"Set the home and each plan's look separately in “⚙️ Settings”.",
     "資料只存在本機瀏覽器,不會上傳;換手機或清除瀏覽器資料會遺失。":"Data stays in this browser only, never uploaded; lost if you switch phones or clear browser data.",
+    "清空所有資料":"Erase all data","⚠️ 清空所有計畫與紀錄,重新開始":"⚠️ Erase all plans & records, start over",
     "。都是":". Both are ","免費、免信用卡":"free, no credit card",
     "申請(推薦:拍照估熱量、運動照片、讀菜單照片都最穩);想要更高額度也可用":" (recommended — most reliable for photo calories, workout photos and reading menu photos); or, for higher quota, use",
     // 底部導覽
@@ -1940,7 +1945,8 @@
   }catch(e){ return false; } }
   const SHARED_BLANK = urlIsBlank();
   async function resolveSharedBlank(){ /* 只看網址,無需額外處理 */ }
-  function isOriginPlan(){ return !SHARED_BLANK && !!(typeof PLAN!=="undefined" && PLAN && PLAN.type==="origin"); }
+  // 64→60 那套範本已徹底停用:所有版本都不再顯示範本內容(菜單/運動/目標),永遠回 false。
+  function isOriginPlan(){ return false; }
   function workoutForWeekday(wd, liftCounter){
     // 非 origin(如空白分享版):不套用內建範本,顯示空白+簡單指示,讓使用者自行生成/編輯
     if(!isOriginPlan()) return { type:"rest", emoji:"", title:(lang==="en"?"Not set yet":"尚未安排"),
@@ -4499,11 +4505,10 @@
   async function loadPlans(){
     await resolveSharedBlank();   // 先確定是不是分享/空白版(含記住上次的判斷)
     try{ const r=await window.storage.get("plans",false); if(r&&r.value){ plans=JSON.parse(r.value)||[]; } }catch(e){ plans=[]; }
-    // 重要:絕不自動刪除任何已存的計畫或資料(之前那段會誤刪使用者的真實計畫,已移除)。
-    if(!plans.length){
-      // 沒有任何計畫時:分享/空白版(?blank 或 /app/)留白;一般版給一個完整計畫(含範本菜單、64→60 目標)
-      plans = SHARED_BLANK ? [] : [{id:"default",name:"減重計畫",type:"origin"}];
-    }
+    // 移除 64→60 範本(type=origin)這張計畫,讓它從所有版本消失。
+    // 「只把這張範本從清單拿掉,不刪除任何已存的紀錄資料」——使用者自己建的計畫(非 origin)完整保留。
+    if(plans.some(p=>p.type==="origin")){ plans=plans.filter(p=>p.type!=="origin"); try{ await savePlans(); }catch(e){} }
+    // 一律不再自動建立任何範本計畫;沒有計畫時就留白,讓使用者自己新增第一個計畫。
     const _d=plans.find(p=>p.id==="default"); if(_d && _d.name==="回台減重計畫"){ _d.name="減重計畫"; savePlans(); }
     let _mig=false; plans.forEach(p=>{ if(p.type==="weight"||p.type==="calorie"){ p.type="track"; _mig=true; } }); if(_mig) savePlans();
     let cur="default";
@@ -5096,6 +5101,19 @@
     if(delBtn) delBtn.addEventListener("click", ()=>{ if(PLAN) deletePlan(PLAN.id); });
     const expBtn=document.getElementById("exportPdfBtn");
     if(expBtn) expBtn.addEventListener("click", exportPlanPDF);
+    const resetBtn=document.getElementById("setResetBtn");
+    if(resetBtn) resetBtn.addEventListener("click", async ()=>{
+      const q1=lang==="en"?"Erase ALL data?\nEvery plan, food/weight/water record and setting will be permanently deleted.":"確定要「清空所有資料」嗎?\n所有計畫、飲食、體重、喝水紀錄與設定都會被永久刪除,無法復原。";
+      if(!confirm(q1)) return;
+      const q2=lang==="en"?"This cannot be undone. Really erase everything and start over?":"再次確認:此動作無法復原,真的要全部清空、重新開始嗎?";
+      if(!confirm(q2)) return;
+      try{
+        const r=await window.storage.list("", false);
+        const keys=(r&&r.keys)||[];
+        for(const k of keys){ try{ await window.storage.set(k, "", false); }catch(e){} }
+      }catch(e){}
+      try{ location.reload(); }catch(e){ try{ location.href=location.pathname; }catch(_){} }
+    });
   }
 
   // ---------- 標題可編輯(自動儲存) ----------
