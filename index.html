@@ -626,6 +626,8 @@
   .menu-ai-label{ font-size:var(--fs-body); color:var(--ink); font-weight:900; margin-bottom:8px; }
   .menu-ai-row{ display:flex; gap:8px; }
   .coach-result{ margin-top:10px; padding:12px 14px; background:var(--pink-soft); border-radius:14px; font-size:var(--fs-label); color:var(--ink); line-height:1.6; }
+  .menu-chat-log{ display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto; margin-bottom:10px; }
+  .menu-chat-log:empty{ display:none; }
   .menu-sync{ margin-top:12px; }
   .menu-sync-row{ display:flex; gap:8px; }
   .menu-sync-row .mini-btn{ flex:1; }
@@ -855,10 +857,11 @@
   <button type="button" class="ai-photo-btn" id="coachBtn" style="margin-top:12px;line-height:1.4;">依我的紀錄與數據,重新調整菜單和運動</button>
   <div class="ai-photo-status" id="coachStatus"></div>
   <div class="menu-ai-adjust">
-    <div class="menu-ai-label">調整菜單推薦需求</div>
+    <div class="menu-ai-label">跟 AI 聊聊・問問題・調整菜單</div>
+    <div class="menu-chat-log" id="menuChatLog"></div>
     <div class="menu-ai-row">
-      <input id="menuAiInput" placeholder="例:我不吃早餐 / 都要吃素 / 午晚餐低碳" autocomplete="off">
-      <button type="button" class="mini-btn" id="menuAiBtn">套用</button>
+      <input id="menuAiInput" placeholder="問問題或說需求,例:這樣夠嗎?/ 我不吃早餐 / 換低碳" autocomplete="off">
+      <button type="button" class="mini-btn" id="menuAiBtn">傳送</button>
     </div>
     <div class="ai-photo-status" id="menuAiStatus"></div>
   </div>
@@ -1342,7 +1345,7 @@
     "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
     "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
     "① 更改菜單":"① Change the menu","② 上傳餐廳菜單,推薦適合我的":"② Upload a restaurant menu for a pick that suits you","收起來 ▲":"Close ▲",
-    "依我的紀錄與數據,重新調整菜單和運動":"Adjust my menu & workout from my records & data","調整菜單推薦需求":"Adjust menu recommendation","例:我不吃早餐 / 都要吃素 / 午晚餐低碳":"e.g. skip breakfast / all vegetarian / low-carb lunch & dinner","套用":"Apply",
+    "依我的紀錄與數據,重新調整菜單和運動":"Adjust my menu & workout from my records & data","跟 AI 聊聊・問問題・調整菜單":"Chat with AI · ask · adjust the menu","問問題或說需求,例:這樣夠嗎?/ 我不吃早餐 / 換低碳":"Ask or request, e.g. Is this enough? / skip breakfast / go low-carb","傳送":"Send",
     "今日菜單 ↔ 飲食紀錄 同步(選一個方向)":"Sync today's menu ↔ food log (pick a direction)","菜單 → 飲食紀錄":"Menu → food log","飲食紀錄 → 菜單":"Food log → menu",
     "選一餐,AI 會依你的熱量目標重新配好。下面全部都可以留空,直接按也會推薦。":"Pick a meal and AI re-plans it to your calorie target. Everything below is optional — just tap and it still recommends.",
     "口味喜好(可複選 / 不選)":"Taste preferences (pick any, or none)",
@@ -2308,8 +2311,17 @@
     regenCtx = { field, wish, hasPhoto, photos: menuPhotos.slice(), target, last:null };
     await runPick(null);
   }
-  // 用一句話需求「整份」調整今日菜單(例:我不吃早餐 → 早餐回「—」;都要吃素 → 全部改素)
-  async function menuAiAdjust(){
+  // 跟 AI 對話:使用者可以問問題或提需求,AI 回答,並在需要時調整今日菜單(優先用冰箱食材)
+  let menuChatHistory=[];
+  function menuChatAppend(role, text){
+    const logEl=document.getElementById("menuChatLog"); if(!logEl) return null;
+    const div=document.createElement("div");
+    div.className="ask-bubble "+(role==="user"?"ask-q":"ask-a");
+    div.textContent=text;
+    logEl.appendChild(div); logEl.scrollTop=logEl.scrollHeight;
+    return div;
+  }
+  async function menuChatSend(){
     const input = document.getElementById("menuAiInput");
     const status = document.getElementById("menuAiStatus");
     const req = ((input&&input.value)||"").trim();
@@ -2318,28 +2330,35 @@
     const te = days.find(d=>d.iso===iso) || days[0];
     if(!te) return;
     if(!anyKey()){ status.innerHTML='<span class="err">'+RP('這個功能需要一把免費 AI 金鑰,到 ⚙️ 設定最上面貼上即可。','This needs a free AI key — paste one at the top of ⚙️ Settings.')+'</span>'; return; }
-    const btn=document.getElementById("menuAiBtn"); const old=btn?btn.textContent:""; if(btn){ btn.disabled=true; btn.textContent=RP("調整中…","Working…"); }
-    status.innerHTML='<span class="ai-spin"></span>'+RP('依你的需求調整整份菜單…','Adjusting the whole menu…');
+    menuChatAppend("user", req); menuChatHistory.push({role:"user", text:req});
+    if(input) input.value="";
+    status.innerHTML="";
+    const thinking=menuChatAppend("ai", "…");
+    const btn=document.getElementById("menuAiBtn"); if(btn) btn.disabled=true;
     const target = parseInt(document.getElementById("inKcalTarget").value,10) || kcalTarget || 1500;
     const cur = '早餐:'+(te.diet.breakfast||'—')+'、午餐:'+(te.diet.lunch||'—')+'、晚餐:'+(te.diet.dinner||'—')+'、點心/水果:'+(te.diet.fruit||'—');
-    const prompt='你是減重營養教練。這是使用者今天的菜單:'+cur+'。\n'
-      +'使用者的需求:「'+req+'」。\n'
-      +'請依需求「整份」調整這份菜單,每日約 '+target+' 大卡、減重取向、原型食物好準備。\n'
-      +'★如果使用者表示某一餐「不吃 / 不要 / 略過」,該餐就回「—」。沒被提到的餐,盡量維持原本或只做小幅合理調整。\n'
-      +'只回 JSON:{"breakfast":"...","lunch":"...","dinner":"...","fruit":"..."}。每項不超過25字;某餐不吃就回"—"。'+TW_RULE;
+    const fridge = (fridgeHave&&fridgeHave.length)?fridgeHave.join("、"):"(未填)";
+    const hist = menuChatHistory.slice(-8).map(mm=>(mm.role==="user"?"使用者:":"教練:")+mm.text).join("\n");
+    const prompt='你是親切的減重營養教練,正在跟使用者對話。\n'
+      +'今天的菜單:'+cur+'。每日約 '+target+' 大卡、減重取向。\n'
+      +'冰箱現有食材:'+fridge+'。★推薦或調整菜色時「優先用冰箱有的食材」,盡量不要推薦冰箱沒有的東西;真的需要少量常見食材才補。\n'
+      +'對話紀錄:\n'+hist+'\n'
+      +'請自然、簡短地回覆使用者最新一句(可回答問題、給建議)。如果他想調整/更換菜單,就一起給新菜單;若他只是問問題、不需要改菜單,menu 就回 null。\n'
+      +'只回 JSON:{"reply":"你的回覆,不超過60字","menu":{"breakfast":"","lunch":"","dinner":"","fruit":""} 或 null}。菜單每項不超過25字,某餐不吃回"—"。'+TW_RULE;
     try{
-      const m = await geminiJSON(prompt, null, 0.5);
-      let n=0;
-      ["breakfast","lunch","dinner","fruit"].forEach(f=>{
-        if(m && m[f]!=null){ const v=String(m[f]).trim()||"—"; applyMeal(f, v); n++; }
-      });
-      if(!n) throw new Error("回傳格式看不懂");
-      status.innerHTML='<span class="ok">'+RP('已依需求調整整份菜單 ✅','Menu updated ✅')+'</span>';
-      if(input) input.value="";
+      const m = await geminiJSON(prompt, null, 0.6);
+      const reply=(m&&m.reply)?String(m.reply):RP("好的!","OK!");
+      if(thinking) thinking.textContent=reply;
+      menuChatHistory.push({role:"ai", text:reply});
+      if(m && m.menu && typeof m.menu==="object"){
+        let applied=false;
+        ["breakfast","lunch","dinner","fruit"].forEach(f=>{ if(m.menu[f]!=null){ applyMeal(f, String(m.menu[f]).trim()||"—"); applied=true; } });
+        if(applied) status.innerHTML='<span class="ok">'+RP('已依對話調整今日菜單 ✅','Menu updated from chat ✅')+'</span>';
+      }
     }catch(e){
-      status.innerHTML='<span class="err">'+RP('這次沒調整成功,換句話再試一次。','That didn\'t work — reword and try again.')+'</span>';
+      if(thinking) thinking.textContent=RP('這次沒回覆成功,再試一次。','That didn\'t work — try again.');
     }
-    if(btn){ btn.disabled=false; btn.textContent=old; }
+    if(btn) btn.disabled=false;
   }
   // AI 教練:結合「飲食紀錄 + 運動 + 每天量測數據 + 目標與期限」→ 判斷進度,重新調整今天的菜單和運動
   async function coachAdjust(){
@@ -2369,7 +2388,8 @@
       +"【最近幾天實際攝取熱量】"+foodSummary+"。\n"
       +"【最近吃的東西】"+recentFoods+"。\n"
       +"【目前運動安排】"+woSummary+"。\n"
-      +"請判斷:照目前的吃法和運動,能不能在期限內達標?然後(1)重新設計『今天的菜單』(早/午/晚/點心),原型食物、好準備、貼近他平常吃的但更有助達標;(2)給『運動調整方向』(加強哪裡、頻率或強度怎麼調);(3)建議每日熱量。\n"
+      +"【冰箱現有食材】"+((fridgeHave&&fridgeHave.length)?fridgeHave.join("、"):"(未填)")+"。設計菜單時「優先用冰箱有的食材」,盡量不要推薦冰箱沒有的。\n"
+      +"請判斷:照目前的吃法和運動,能不能在期限內達標?然後(1)重新設計『今天的菜單』(早/午/晚/點心),原型食物、好準備、優先用冰箱食材、貼近他平常吃的但更有助達標;(2)給『運動調整方向』(加強哪裡、頻率或強度怎麼調);(3)建議每日熱量。\n"
       +"只回 JSON:{\"analysis\":\"進度判斷+關鍵建議,不超過60字\",\"dailyKcal\":整數,\"menu\":{\"breakfast\":\"\",\"lunch\":\"\",\"dinner\":\"\",\"fruit\":\"\"},\"workout\":\"運動調整建議,不超過50字\"}。菜單每項不超過25字。"+TW_RULE;
     const btn=document.getElementById("coachBtn"); const old=btn?btn.textContent:""; if(btn){ btn.disabled=true; btn.textContent=RP("分析中…","Analyzing…"); }
     status.innerHTML='<span class="ai-spin"></span>'+RP('依你的紀錄與數據分析、重新調整菜單和運動…','Analyzing your records and adjusting…');
@@ -2441,8 +2461,8 @@
     const box = document.getElementById("menuRegenBox");
     if(tgl && box) tgl.addEventListener("click", ()=> box.classList.toggle("show"));
     const aiBtn=document.getElementById("menuAiBtn"), aiInput=document.getElementById("menuAiInput");
-    if(aiBtn) aiBtn.addEventListener("click", menuAiAdjust);
-    if(aiInput) aiInput.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); menuAiAdjust(); } });
+    if(aiBtn) aiBtn.addEventListener("click", menuChatSend);
+    if(aiInput) aiInput.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); menuChatSend(); } });
     const coach=document.getElementById("coachBtn"); if(coach) coach.addEventListener("click", coachAdjust);
     const f2m=document.getElementById("syncFoodToMenu"); if(f2m) f2m.addEventListener("click", syncFoodLogToMenu);
     const m2f=document.getElementById("syncMenuToFood"); if(m2f) m2f.addEventListener("click", syncMenuToFoodLog);
