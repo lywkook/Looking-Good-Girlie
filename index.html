@@ -916,6 +916,19 @@
   <div id="checkinBody">
     <div id="dayList"></div>
     <button type="button" class="ai-photo-btn" id="checkinAdjustWorkout" style="margin-top:12px;">調整本日運動計劃</button>
+    <div class="wo-adjust" id="woAdjustBox" style="display:none;">
+      <div class="wo-adjust-title">調整運動計劃</div>
+      <div class="wo-adjust-row">
+        <input id="woAdjustInput" placeholder="例:今天休息 / 只練上半身 / 這週練 3 天" autocomplete="off">
+        <button type="button" class="mini-btn" id="woAdjustBtn">重新調整</button>
+      </div>
+      <div class="wo-adjust-quick" id="woAdjustQuick">
+        <span class="wo-chip-btn" data-q="今天想休息,把今天的訓練分配到本週其他天">今天休息</span>
+        <span class="wo-chip-btn" data-q="今天只想做輕鬆的伸展或散步">今天輕鬆做</span>
+        <span class="wo-chip-btn" data-q="這週只能練 3 天,幫我重新排">這週練 3 天</span>
+      </div>
+      <div class="ai-photo-status" id="woAdjustStatus"></div>
+    </div>
   </div>
 </div>
 
@@ -972,19 +985,6 @@
     </div>
     <button class="save-btn cute" id="woGenBtn" style="margin-top:14px;">生成運動計劃</button>
     <div id="woResult"></div>
-    <div class="wo-adjust" id="woAdjustBox" style="display:none;">
-      <div class="wo-adjust-title">調整運動計劃</div>
-      <div class="wo-adjust-row">
-        <input id="woAdjustInput" placeholder="例:今天休息 / 只練上半身 / 這週練 3 天" autocomplete="off">
-        <button type="button" class="mini-btn" id="woAdjustBtn">重新調整</button>
-      </div>
-      <div class="wo-adjust-quick" id="woAdjustQuick">
-        <span class="wo-chip-btn" data-q="今天想休息,把今天的訓練分配到本週其他天">今天休息</span>
-        <span class="wo-chip-btn" data-q="今天只想做輕鬆的伸展或散步">今天輕鬆做</span>
-        <span class="wo-chip-btn" data-q="這週只能練 3 天,幫我重新排">這週練 3 天</span>
-      </div>
-      <div class="ai-photo-status" id="woAdjustStatus"></div>
-    </div>
     <div class="clear-row"><button type="button" class="clear-all-btn" id="clearWorkoutBtn">清空運動計劃,重新選取</button></div>
   </div>
 </div>
@@ -4528,16 +4528,18 @@
     document.querySelectorAll("#woAdjustQuick .wo-chip-btn").forEach(c=> c.addEventListener("click", ()=>{ const inp=document.getElementById("woAdjustInput"); if(inp) inp.value=c.dataset.q; adjustWorkoutPlan(c.dataset.q); }));
     const ct=document.getElementById("checkinToggle"); if(ct) ct.addEventListener("click", ()=>{ const blk=document.getElementById("checkinSection"); setCheckinCollapsed(!blk.classList.contains("collapsed"), true); });
     const cm=document.getElementById("checkinMini"); if(cm) cm.addEventListener("click", ()=> setCheckinCollapsed(false, true));
-    // 每日打卡裡的「調整本日運動計劃」:展開運動計畫、捲到調整區、聚焦輸入(運動計畫內原本的調整區照舊保留)
+    // 每日打卡裡的「調整本日運動計劃」:調整區就在按鈕正下方。有計畫就聚焦輸入;還沒計畫就帶去運動計畫區生成。
     const caw=document.getElementById("checkinAdjustWorkout");
     if(caw) caw.addEventListener("click", ()=>{
-      const sec=document.getElementById("workoutSection"); if(!sec) return;
-      if(typeof setWorkoutCollapsed==="function") setWorkoutCollapsed(false, true);
       const ab=document.getElementById("woAdjustBox");
-      const hasPlan = ab && ab.style.display!=="none";
-      const target = hasPlan ? ab : sec;
-      try{ target.scrollIntoView({behavior:"smooth", block:"center"}); }catch(_){ }
-      if(hasPlan){ const inp=document.getElementById("woAdjustInput"); if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 400); }
+      if(ab && ab.style.display!=="none"){
+        try{ ab.scrollIntoView({behavior:"smooth", block:"center"}); }catch(_){ }
+        const inp=document.getElementById("woAdjustInput"); if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 400);
+      } else {
+        const sec=document.getElementById("workoutSection");
+        if(typeof setWorkoutCollapsed==="function") setWorkoutCollapsed(false, true);
+        if(sec){ try{ sec.scrollIntoView({behavior:"smooth", block:"center"}); }catch(_){ } }
+      }
     });
     initWorkoutPhoto();
     ["woDays","woCardio","woNote","woSets","woReps","woWeight","woSecs","woGoal"].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener("input", ()=>{ saveWorkout(); updateWoMini(); }); });
