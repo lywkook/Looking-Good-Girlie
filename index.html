@@ -4468,6 +4468,13 @@
     await resolveSharedBlank();   // 先確定是不是分享/空白版(含記住上次的判斷)
     let hadPlansKey=false;
     try{ const r=await window.storage.get("plans",false); if(r&&r.value){ hadPlansKey=true; plans=JSON.parse(r.value)||[]; } }catch(e){ plans=[]; }
+    // 分享/空白版:自動移除「系統預設」那張計畫(id=default,例如舊版自動建立的「我的計畫/減重計畫」),
+    // 讓主畫面保持乾淨留白。使用者自己新增的計畫 id 不是 default,會完整保留。
+    if(SHARED_BLANK && plans.some(p=>p.id==="default")){
+      plans=plans.filter(p=>p.id!=="default");
+      try{ await clearPlanData("default"); }catch(e){}
+      try{ await savePlans(); }catch(e){}
+    }
     if(!plans.length){
       if(hadPlansKey){
         // 使用者已把計畫全部刪光 → 維持空白,讓他自己再新增,不自動幫他重建(不論哪個版本)
