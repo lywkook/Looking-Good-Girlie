@@ -558,10 +558,16 @@
   .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:10px;
     padding:6px 4px 12px; border-bottom:1px dashed var(--line); margin-bottom:8px; font-size:var(--fs-label); color:var(--ink-soft); }
   .plan-bar{ display:flex; justify-content:center; padding:12px 20px 2px; }
-  .plan-current{ background:var(--pink-soft); color:var(--ink); border:none; border-radius:20px;
-    padding:8px 20px; font-size:var(--fs-body); font-weight:700; cursor:pointer; font-family:inherit; }
-  .plan-panel{ display:none; margin:8px 20px 0; background:var(--card); border-radius:18px;
-    box-shadow:var(--shadow); padding:14px; }
+  .plan-current{ background:var(--pink); color:#fff; border:none; border-radius:20px;
+    padding:9px 20px; font-size:var(--fs-body); font-weight:800; cursor:pointer; font-family:inherit;
+    box-shadow:0 3px 0 var(--pink-shadow); display:inline-flex; align-items:center; gap:8px; }
+  .plan-current:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--pink-shadow); }
+  /* 切換計畫:半透明遮罩 + 浮在上方的下拉,不會把畫面往下推 */
+  .plan-overlay{ position:fixed; inset:0; background:rgba(60,50,45,0.38); z-index:300; display:none; }
+  .plan-overlay.show{ display:block; }
+  .plan-panel{ position:fixed; left:50%; transform:translateX(-50%); top:70px; width:calc(100% - 32px); max-width:520px;
+    display:none; background:var(--card); border-radius:18px; box-shadow:0 14px 44px rgba(0,0,0,.28);
+    padding:14px; max-height:72vh; overflow:auto; z-index:301; }
   .plan-panel.show{ display:block; }
   .plan-panel-title{ font-size:var(--fs-label); font-weight:900; color:var(--ink-soft); margin:0 4px 8px; letter-spacing:0.04em; }
   .plan-item{ display:flex; align-items:center; gap:8px; padding:12px 12px; border-radius:12px; cursor:pointer; }
@@ -811,6 +817,7 @@
   <button type="button" class="date-nav" id="dateNext" aria-label="後一天">›</button>
   <button type="button" class="date-today-btn" id="dateTodayBtn">今天</button>
 </div>
+<div class="plan-overlay" id="planOverlay"></div>
 <div class="plan-panel" id="planPanel">
   <div class="plan-panel-title">切換計畫</div>
   <div class="plan-list" id="planList"></div>
@@ -4744,7 +4751,7 @@
       </div>`; }).join("");
     box.querySelectorAll(".plan-item").forEach(it=>{
       it.addEventListener("click",(e)=>{ if(e.target.classList.contains("pi-del")||e.target.classList.contains("pi-edit")) return;
-        switchPlan(it.dataset.id); document.getElementById("planPanel").classList.remove("show"); });
+        switchPlan(it.dataset.id); closePlanPanel(); });
     });
     box.querySelectorAll(".pi-edit").forEach(ed=>{
       ed.addEventListener("click", async (e)=>{ e.stopPropagation();
@@ -4779,7 +4786,7 @@
     await clearPlanData(id);
     plans=plans.filter(p=>p.id!==id);
     const sm=document.getElementById("settingsModal"); if(sm) sm.classList.remove("show");
-    const pp=document.getElementById("planPanel"); if(pp) pp.classList.remove("show");
+    closePlanPanel();
     if(!plans.length){
       // 刪光就真的留白,不自動重建,讓使用者自己新增第一個計畫
       PLAN=null;
@@ -4804,9 +4811,24 @@
     if(typeof renderDays==="function") renderDays();
     await applyScopeTheme(id);   // 套用「這個計畫」自己的主題色 + 背景
   }
+  function openPlanPanel(){
+    const pc=document.getElementById("planCurrent"), pp=document.getElementById("planPanel"), ov=document.getElementById("planOverlay");
+    if(!pp) return;
+    if(pc){ const r=pc.getBoundingClientRect(); pp.style.top=Math.round(r.bottom+8)+"px"; }
+    pp.classList.add("show"); if(ov) ov.classList.add("show");
+  }
+  function closePlanPanel(){
+    const pp=document.getElementById("planPanel"); if(pp) pp.classList.remove("show");
+    const ov=document.getElementById("planOverlay"); if(ov) ov.classList.remove("show");
+  }
+  function togglePlanPanel(){
+    const pp=document.getElementById("planPanel");
+    if(pp && pp.classList.contains("show")) closePlanPanel(); else openPlanPanel();
+  }
   function initPlanModule(){
     updatePlanBar(); renderPlanList();
-    document.getElementById("planCurrent").addEventListener("click", ()=> document.getElementById("planPanel").classList.toggle("show"));
+    document.getElementById("planCurrent").addEventListener("click", (e)=>{ e.stopPropagation(); togglePlanPanel(); });
+    const ov=document.getElementById("planOverlay"); if(ov) ov.addEventListener("click", closePlanPanel);
     const ph=document.getElementById("planHeader"); if(ph) ph.addEventListener("click", renamePlan);   // 點計畫名稱即可改名
   }
 
@@ -5072,7 +5094,7 @@
     renderHome();
     document.getElementById("appView").style.display="none";
     document.getElementById("homeScreen").style.display="";
-    const pp=document.getElementById("planPanel"); if(pp) pp.classList.remove("show");
+    closePlanPanel();
     const stb=document.getElementById("scrollTopBtn"); if(stb) stb.classList.remove("show");
     applyScopeTheme("home");   // 回到主畫面 → 套用主畫面自己的外觀
     window.scrollTo(0,0);
