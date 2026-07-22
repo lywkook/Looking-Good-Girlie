@@ -422,13 +422,15 @@
     font-size:var(--fs-num); font-weight:900; color:var(--ink);
   }
   .editable-wrap{ position:relative; }
+  /* 改名/編輯:統一用簡約線條鉛筆 icon(跟導覽列 icon 同一種線稿風格) */
   .edit-pencil{
-    font-size:var(--fs-label); color:var(--pink); font-weight:800; cursor:pointer; margin-left:8px; user-select:none;
-    flex:none; padding:1px 2px;
+    font-size:var(--fs-label); color:var(--pink); cursor:pointer; margin-left:8px; user-select:none;
+    flex:none; padding:1px 2px; line-height:1;
   }
-  /* 標題旁的改名:簡約線條鉛筆(跟導覽列 icon 同一種線稿風格) */
-  .title-edit{ display:inline-flex; align-items:center; cursor:pointer; color:var(--pink); margin-left:8px; vertical-align:baseline; }
-  .title-edit svg{ width:0.6em; height:0.6em; display:block; }
+  .edit-pencil svg{ width:1.25em; height:1.25em; vertical-align:-0.28em; }
+  .edit-pencil:active{ opacity:0.55; }
+  .title-edit{ cursor:pointer; color:var(--pink); margin-left:8px; line-height:1; }
+  .title-edit svg{ width:0.62em; height:0.62em; vertical-align:0.02em; }
   .title-edit:active{ opacity:0.55; }
   [contenteditable="true"]{
     outline:2px dashed var(--pink); border-radius:8px; padding:3px 5px; background:#FFFDF8;
@@ -455,6 +457,7 @@
   .kcal-head{ display:flex; justify-content:space-between; align-items:baseline; margin-top:6px; gap:8px; }
   .kcal-head .big{ font-size:var(--fs-num); font-weight:900; color:var(--ink); }
   .kcal-head .sub{ font-size:var(--fs-label); color:var(--ink-soft); }
+  #kcalSummary{ margin-bottom:20px; padding-bottom:16px; border-bottom:1px dashed var(--line); }
   .kcal-bar{ height:14px; border-radius:10px; background:var(--pink-soft); overflow:hidden; margin:8px 0 2px; }
   .kcal-bar > span{ display:block; height:100%; border-radius:10px; background:var(--pink); }
   .kcal-bar.over > span{ background:#CDA9A2; }
@@ -840,7 +843,7 @@
 <h2 class="cute" id="planHeader" style="display:none;"></h2>
 
 <header class="hero" id="heroSection">
-  <h1 class="cute"><span id="heroTitle">64kg → 60kg 大作戰</span> <span class="title-edit" id="heroTitleEdit" role="button" aria-label="改名" title="改名"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M13 5l4 4"/></svg></span></h1>
+  <h1 class="cute"><span id="heroTitle">64kg → 60kg 大作戰</span> <span class="title-edit" id="heroTitleEdit" role="button" aria-label="改名" title="改名"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span></h1>
   <div class="countdown-strip">
     <div class="metric">
       <div class="num" id="daysLeft">--</div>
@@ -2144,7 +2147,7 @@
       <div class="blk">
         <span class="blk-label">${label}</span>
         <span class="editable-content" data-field="${f}" data-iso="${todayEntry.iso}">${todayEntry.diet[f]}</span>
-        <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}">改</span>
+        <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}" role="button" aria-label="改" title="改"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
       </div>`).join("");
     box.querySelectorAll(".edit-pencil").forEach(p=>{
       p.addEventListener("click", ()=>{
@@ -2672,7 +2675,7 @@
         return `
         <div class="ex-row${checked?' done':''}" data-exkey="${exKey}">
           <div class="ex-check">✓</div>
-          <div class="ex-text"><b>${esc(ex.name)}</b>${ex.detail?` <span class="edit-pencil" data-exedit="${day.iso}:${exi}">改</span>
+          <div class="ex-text"><b>${esc(ex.name)}</b>${ex.detail?` <span class="edit-pencil" data-exedit="${day.iso}:${exi}" role="button" aria-label="改" title="改"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
             <div class="ex-detail" data-exedit-content="${day.iso}:${exi}">${esc(ex.detail)}</div>`:''}</div>
         </div>`;
       }).join("");
@@ -4700,7 +4703,7 @@
     show('metricsSection', true);
     show('reminderSection', t==='origin'||t==='full');
     const ph=document.getElementById("planHeader");
-    if(ph){ if(isOriginPlan()){ ph.style.display="none"; } else { ph.style.display=""; ph.innerHTML=esc(PLAN.name)+' <span class="title-edit" role="button" aria-label="改名" title="改名"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M13 5l4 4"/></svg></span>'; } }
+    if(ph){ if(isOriginPlan()){ ph.style.display="none"; } else { ph.style.display=""; ph.innerHTML=esc(PLAN.name)+' <span class="title-edit" role="button" aria-label="改名" title="改名"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>'; } }
     if(typeof refreshThemeTabs==="function") refreshThemeTabs();
   }
   // ===== 主題分頁:飲食 / 運動 / 數據 =====
