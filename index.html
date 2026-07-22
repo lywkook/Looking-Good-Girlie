@@ -558,7 +558,7 @@
   .plan-new{ margin-top:10px; border-top:1px dashed var(--line); padding-top:12px; display:flex; flex-direction:column; gap:8px; }
   .plan-new input, .plan-new select{ padding:10px 12px; border-radius:12px; border:2px solid var(--line);
     font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
-  #planHeader{ padding:14px 20px 0; margin:0; font-size:var(--fs-title); cursor:pointer; }
+  #planHeader{ padding:14px 20px 2px; margin:0; font-size:30px; line-height:1.25; font-weight:900; cursor:pointer; }
   .mini-btn{ background:var(--mint-soft); color:var(--ink); border:none; border-radius:12px;
     padding:8px 14px; font-size:var(--fs-label); font-family:inherit; cursor:pointer; }
   .food-photo-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
@@ -982,7 +982,7 @@
       <button type="button" class="qbtn" id="addQtyMinus">−</button>
       <input type="text" inputmode="decimal" class="qty-val" id="addQty" value="1" autocomplete="off">
       <button type="button" class="qbtn" id="addQtyPlus">＋</button>
-      <span class="qty-hint">份 / 顆 / 個(可輸入 &lt;1 的數字,如 0.5、1/4)</span>
+      <span class="qty-hint">(可輸入 &lt;1 的數字)</span>
     </div>
     <div class="food-photo-row">
       <input type="file" accept="image/*" id="foodPhotoInput" style="display:none">
@@ -1298,7 +1298,7 @@
     // 餐 / 食物
     "早餐":"Breakfast","午餐":"Lunch","晚餐":"Dinner","點心":"Snack","點心/水果":"Snack / fruit","水果":"Fruit","水果點心":"Fruit / snack",
     "吃了什麼?打字會跳建議選":"What did you eat? Type to see suggestions","數量":"Qty","熱量":"kcal","加入":"Add",
-    "份 / 顆 / 個(可輸入 <1 的數字,如 0.5、1/4)":"servings / pcs (you can enter less than 1, e.g. 0.5, 1/4)","加入這一餐":"Add this meal",
+    "(可輸入 <1 的數字)":"(you can enter less than 1)","加入這一餐":"Add this meal",
     "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
     "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
     "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
