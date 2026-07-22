@@ -575,8 +575,12 @@
   .plan-panel{ display:none; margin:8px 20px 0; background:var(--card); border-radius:18px;
     box-shadow:var(--shadow); padding:14px; }
   .plan-panel.show{ display:block; }
-  .plan-item{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; cursor:pointer; }
+  .plan-panel-title{ font-size:var(--fs-label); font-weight:900; color:var(--ink-soft); margin:0 4px 8px; letter-spacing:0.04em; }
+  .plan-item{ display:flex; align-items:center; gap:8px; padding:12px 12px; border-radius:12px; cursor:pointer; }
+  .plan-item + .plan-item{ margin-top:2px; }
+  .plan-item:not(.active):active{ background:var(--mint-soft); }
   .plan-item.active{ background:var(--pink-soft); }
+  .plan-item .pi-check{ width:16px; flex:none; color:var(--pink); font-weight:900; text-align:center; }
   .plan-item .pi-name{ flex:1; font-weight:700; font-size:var(--fs-body); color:var(--ink); }
   .plan-item .pi-type{ font-size:var(--fs-label); color:var(--ink-soft); }
   .plan-item .pi-edit{ font-size:var(--fs-label); color:var(--pink); padding:2px 8px; }
@@ -823,6 +827,7 @@
   <button type="button" class="date-today-btn" id="dateTodayBtn">今天</button>
 </div>
 <div class="plan-panel" id="planPanel">
+  <div class="plan-panel-title">切換計畫</div>
   <div class="plan-list" id="planList"></div>
   <div class="plan-new">
     <div style="font-size:18.4px;color:var(--ink-soft);font-weight:700;">新增計畫</div>
@@ -1299,6 +1304,7 @@
   const I18N_EN = {
     // 首頁
     "我的計畫":"My Plans","點一個計畫進入":"Tap a plan to open","新增計畫":"New Plan",
+    "切換計畫":"Switch plan","使用中":"Current",
     "計畫名稱(例:長期體重紀錄)":"Plan name (e.g. Long-term weight log)",
     "紀錄飲食 + 喝水 + 體重":"Track food + water + weight","幫我規劃減重減脂":"Plan my weight & fat loss",
     "＋ 建立新計畫":"＋ Create plan","⚙️ 設定(外觀・語言・字體大小)":"⚙️ Settings (appearance · language · text size)",
@@ -4747,12 +4753,13 @@
   }
   function renderPlanList(){
     const box=document.getElementById("planList"); if(!box) return;
-    box.innerHTML = plans.map(p=>`<div class="plan-item ${p.id===PLAN.id?'active':''}" data-id="${p.id}">
+    box.innerHTML = plans.map(p=>{ const cur=p.id===PLAN.id; return `<div class="plan-item ${cur?'active':''}" data-id="${p.id}">
+        <span class="pi-check">${cur?'✓':''}</span>
         <span class="pi-name">${p.name}</span>
-        <span class="pi-type">${PLAN_LABEL[p.type]||''}</span>
+        <span class="pi-type">${cur?'使用中':(PLAN_LABEL[p.type]||'')}</span>
         <span class="pi-edit" data-edit="${p.id}">改名</span>
         <span class="pi-del" data-del="${p.id}">刪除</span>
-      </div>`).join("");
+      </div>`; }).join("");
     box.querySelectorAll(".plan-item").forEach(it=>{
       it.addEventListener("click",(e)=>{ if(e.target.classList.contains("pi-del")||e.target.classList.contains("pi-edit")) return;
         switchPlan(it.dataset.id); document.getElementById("planPanel").classList.remove("show"); });
