@@ -917,15 +917,9 @@
     <div id="dayList"></div>
     <button type="button" class="ai-photo-btn" id="checkinAdjustWorkout" style="margin-top:12px;">調整本日運動計劃</button>
     <div class="wo-adjust" id="woAdjustBox" style="display:none;">
-      <div class="wo-adjust-title">調整運動計劃</div>
       <div class="wo-adjust-row">
         <input id="woAdjustInput" placeholder="例:今天休息 / 只練上半身 / 這週練 3 天" autocomplete="off">
         <button type="button" class="mini-btn" id="woAdjustBtn">重新調整</button>
-      </div>
-      <div class="wo-adjust-quick" id="woAdjustQuick">
-        <span class="wo-chip-btn" data-q="今天想休息,把今天的訓練分配到本週其他天">今天休息</span>
-        <span class="wo-chip-btn" data-q="今天只想做輕鬆的伸展或散步">今天輕鬆做</span>
-        <span class="wo-chip-btn" data-q="這週只能練 3 天,幫我重新排">這週練 3 天</span>
       </div>
       <div class="ai-photo-status" id="woAdjustStatus"></div>
     </div>
@@ -4247,7 +4241,7 @@
   }
   function renderWorkout(plan){
     const box=document.getElementById("woResult"); if(!box) return;
-    const ab=document.getElementById("woAdjustBox"); if(ab) ab.style.display = plan ? "" : "none";
+    const ab=document.getElementById("woAdjustBox"); if(ab && !plan) ab.style.display = "none";   // 沒計畫就收起;有計畫時由按鈕自己控制展開/收合
     if(!plan){ box.innerHTML=""; return; }
     const collapsed=woPlanCollapsed;
     let h='<div class="wo-plan-head" id="woPlanToggle"><span class="wo-plan-title">你的運動計畫</span><span class="wo-plan-caret">'+(collapsed?'展開 ▸':'收起 ▾')+'</span></div>';
@@ -4525,20 +4519,17 @@
     const cw=document.getElementById("clearWorkoutBtn"); if(cw) cw.addEventListener("click", clearWorkout);
     const adj=document.getElementById("woAdjustBtn"); if(adj) adj.addEventListener("click", ()=> adjustWorkoutPlan());
     const adjIn=document.getElementById("woAdjustInput"); if(adjIn) adjIn.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); adjustWorkoutPlan(); } });
-    document.querySelectorAll("#woAdjustQuick .wo-chip-btn").forEach(c=> c.addEventListener("click", ()=>{ const inp=document.getElementById("woAdjustInput"); if(inp) inp.value=c.dataset.q; adjustWorkoutPlan(c.dataset.q); }));
     const ct=document.getElementById("checkinToggle"); if(ct) ct.addEventListener("click", ()=>{ const blk=document.getElementById("checkinSection"); setCheckinCollapsed(!blk.classList.contains("collapsed"), true); });
     const cm=document.getElementById("checkinMini"); if(cm) cm.addEventListener("click", ()=> setCheckinCollapsed(false, true));
-    // 每日打卡裡的「調整本日運動計劃」:調整區就在按鈕正下方。有計畫就聚焦輸入;還沒計畫就帶去運動計畫區生成。
+    // 每日打卡的「調整本日運動計劃」按鈕:一直露出來;按一下才展開下方輸入框,再按一下收起來(可收合)。
     const caw=document.getElementById("checkinAdjustWorkout");
     if(caw) caw.addEventListener("click", ()=>{
-      const ab=document.getElementById("woAdjustBox");
-      if(ab && ab.style.display!=="none"){
+      const ab=document.getElementById("woAdjustBox"); if(!ab) return;
+      const open = ab.style.display!=="none";
+      ab.style.display = open ? "none" : "";
+      if(!open){
         try{ ab.scrollIntoView({behavior:"smooth", block:"center"}); }catch(_){ }
-        const inp=document.getElementById("woAdjustInput"); if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 400);
-      } else {
-        const sec=document.getElementById("workoutSection");
-        if(typeof setWorkoutCollapsed==="function") setWorkoutCollapsed(false, true);
-        if(sec){ try{ sec.scrollIntoView({behavior:"smooth", block:"center"}); }catch(_){ } }
+        const inp=document.getElementById("woAdjustInput"); if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 300);
       }
     });
     initWorkoutPhoto();
