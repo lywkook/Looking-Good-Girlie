@@ -171,9 +171,10 @@
   .nav-btn span{ font-size:var(--fs-label); color:#fff; font-weight:700; }
   .nav-btn:active{ background:rgba(255,255,255,0.18); }
   .cute{ font-family:var(--font-main), "ZCOOL KuaiLe", "Noto Sans TC", sans-serif; }
-  /* 字重微調:粗線體本來很粗 → 取消合成粗體、看起來細一點;紅豆奶霜體較細 → 加一點描邊、看起來粗一點 */
-  :root[data-font="cu"] *{ font-weight:400 !important; }
+  /* 字重微調:粗線體本來很粗 → 取消合成粗體 + 平滑抗鋸齒,看起來更細;紅豆奶霜體、初夏絮語體較細 → 加描邊看起來粗一點 */
+  :root[data-font="cu"] *{ font-weight:400 !important; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
   :root[data-font="redbean"] body{ -webkit-text-stroke:0.3px currentColor; }
+  :root[data-font="summer"] body{ -webkit-text-stroke:0.45px currentColor; }
 
   header.hero{ padding:8px 20px 20px; position:relative; }
   .washi{
@@ -396,7 +397,9 @@
   .food-card .fc-macro{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; }
   .food-card .fc-note{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:3px; }
   .food-card .fc-right{ display:flex; flex-direction:column; align-items:flex-end; justify-content:space-between; align-self:stretch; gap:8px; }
-  .food-card .fc-del{ font-size:var(--fs-label); color:var(--ink-soft); cursor:pointer; padding:2px 6px; }
+  .food-card .fc-del{ color:var(--ink-soft); cursor:pointer; padding:2px 4px; display:inline-flex; align-items:center; }
+  .food-card .fc-del svg{ width:19px; height:19px; display:block; }
+  .food-card .fc-del:active{ opacity:0.5; }
   .fc-qtytoggle{ font-size:var(--fs-label); color:var(--pink); cursor:pointer; white-space:nowrap; }
   .fc-qtytoggle:active{ opacity:0.6; }
   .food-card.dragging{ opacity:0.4; }
@@ -423,6 +426,10 @@
     font-size:var(--fs-label); color:var(--pink); font-weight:800; cursor:pointer; margin-left:8px; user-select:none;
     flex:none; padding:1px 2px;
   }
+  /* 標題旁的改名:簡約線條鉛筆(跟導覽列 icon 同一種線稿風格) */
+  .title-edit{ display:inline-flex; align-items:center; cursor:pointer; color:var(--pink); margin-left:8px; vertical-align:baseline; }
+  .title-edit svg{ width:0.6em; height:0.6em; display:block; }
+  .title-edit:active{ opacity:0.55; }
   [contenteditable="true"]{
     outline:2px dashed var(--pink); border-radius:8px; padding:3px 5px; background:#FFFDF8;
   }
@@ -833,7 +840,7 @@
 <h2 class="cute" id="planHeader" style="display:none;"></h2>
 
 <header class="hero" id="heroSection">
-  <h1 class="cute"><span id="heroTitle">64kg → 60kg 大作戰</span> <span class="edit-pencil" id="heroTitleEdit">改名</span></h1>
+  <h1 class="cute"><span id="heroTitle">64kg → 60kg 大作戰</span> <span class="title-edit" id="heroTitleEdit" role="button" aria-label="改名" title="改名"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M13 5l4 4"/></svg></span></h1>
   <div class="countdown-strip">
     <div class="metric">
       <div class="num" id="daysLeft">--</div>
@@ -3335,7 +3342,7 @@
             </div>
           </div>
           <div class="fc-right">
-            <span class="fc-del" data-fid="${f.id}">刪除</span>
+            <span class="fc-del" data-fid="${f.id}" role="button" aria-label="刪除" title="刪除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/></svg></span>
             <span class="fc-qtytoggle" data-fid="${f.id}">更改數量</span>
           </div>
         </div>`;
@@ -4693,7 +4700,7 @@
     show('metricsSection', true);
     show('reminderSection', t==='origin'||t==='full');
     const ph=document.getElementById("planHeader");
-    if(ph){ if(isOriginPlan()){ ph.style.display="none"; } else { ph.style.display=""; ph.innerHTML=esc(PLAN.name)+' <span class="edit-pencil">改名</span>'; } }
+    if(ph){ if(isOriginPlan()){ ph.style.display="none"; } else { ph.style.display=""; ph.innerHTML=esc(PLAN.name)+' <span class="title-edit" role="button" aria-label="改名" title="改名"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M13 5l4 4"/></svg></span>'; } }
     if(typeof refreshThemeTabs==="function") refreshThemeTabs();
   }
   // ===== 主題分頁:飲食 / 運動 / 數據 =====
