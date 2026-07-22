@@ -558,7 +558,7 @@
   .plan-new{ margin-top:10px; border-top:1px dashed var(--line); padding-top:12px; display:flex; flex-direction:column; gap:8px; }
   .plan-new input, .plan-new select{ padding:10px 12px; border-radius:12px; border:2px solid var(--line);
     font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
-  #planHeader{ padding:14px 20px 0; margin:0; font-size:var(--fs-title); }
+  #planHeader{ padding:14px 20px 0; margin:0; font-size:var(--fs-title); cursor:pointer; }
   .mini-btn{ background:var(--mint-soft); color:var(--ink); border:none; border-radius:12px;
     padding:8px 14px; font-size:var(--fs-label); font-family:inherit; cursor:pointer; }
   .food-photo-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
@@ -1980,8 +1980,7 @@
   ] };
 
   function dietForDay(idx){
-    // 非 origin(如空白分享版):不套用內建範本菜單,顯示「—」讓使用者自行填寫
-    if(!isOriginPlan()) return { breakfast:"—", lunch:"—", dinner:"—", fruit:"—" };
+    // 每個計畫的今日菜單都自動帶入一份減重取向的建議菜色(可自行編輯、或用「更改菜單」重換)。
     const en = lang==="en";
     const lunchIdx = idx % 6;
     const dinnerIdx = (idx + 3) % 6;
@@ -4531,7 +4530,12 @@
     show('metricsSection', true);
     show('reminderSection', t==='origin'||t==='full');
     const ph=document.getElementById("planHeader");
-    if(ph){ if(isOriginPlan()){ ph.style.display="none"; } else { ph.style.display=""; ph.textContent=PLAN.name; } }
+    if(ph){ if(isOriginPlan()){ ph.style.display="none"; } else { ph.style.display=""; ph.innerHTML=esc(PLAN.name)+' <span class="edit-pencil" style="font-size:0.7em">✏️</span>'; } }
+  }
+  async function renamePlan(){
+    if(!PLAN) return;
+    const nn=prompt(lang==="en"?"Plan name:":"計畫名稱:", PLAN.name);
+    if(nn && nn.trim()){ PLAN.name=nn.trim(); await savePlans(); updatePlanBar(); applyPlanView(); renderPlanList(); renderHome(); }
   }
   function renderPlanList(){
     const box=document.getElementById("planList"); if(!box) return;
@@ -4618,6 +4622,7 @@
     updatePlanBar(); renderPlanList();
     document.getElementById("planCurrent").addEventListener("click", ()=> document.getElementById("planPanel").classList.toggle("show"));
     document.getElementById("addPlanBtn").addEventListener("click", addPlan);
+    const ph=document.getElementById("planHeader"); if(ph) ph.addEventListener("click", renamePlan);   // 點計畫名稱即可改名
   }
 
   // ---------- 每個計畫的主題色(莫蘭迪色盤) ----------
