@@ -2085,7 +2085,7 @@
         const field = el.dataset.field, iso = el.dataset.iso;
         const val = el.textContent.trim();
         todayEntry.diet[field] = val;
-        try{ await window.storage.set("dietover:"+iso+":"+field, val, false); }catch(e){}
+        try{ await window.storage.set(K("dietover:"+iso+":"+field), val, false); }catch(e){}
         renderDays(); // 同步更新下方每日清單裡的文字
         if(typeof renderReminder==="function") renderReminder();
       });
@@ -2108,7 +2108,7 @@
     const iso = curIso();
     const te = days.find(d=>d.iso===iso) || days[0];
     te.diet[field] = String(text).trim();
-    try{ window.storage.set("dietover:"+iso+":"+field, te.diet[field], false); }catch(e){}
+    try{ window.storage.set(K("dietover:"+iso+":"+field), te.diet[field], false); }catch(e){}
     renderTodayMenu(); renderDays();
   }
   function localNewMeal(field){
@@ -2497,7 +2497,7 @@
         e.stopPropagation();
         doneState[day.iso] = !doneState[day.iso];
         card.classList.toggle("done");
-        try{ await window.storage.set("dayplan:"+day.iso, doneState[day.iso] ? "1":"0", false); }catch(err){}
+        try{ await window.storage.set(K("dayplan:"+day.iso), doneState[day.iso] ? "1":"0", false); }catch(err){}
         updateDoneCount();
       });
       card.querySelectorAll(".ex-row").forEach(row=>{
@@ -2507,7 +2507,7 @@
           const key = row.dataset.exkey;
           exerciseDone[key] = !exerciseDone[key];
           row.classList.toggle("done");
-          try{ await window.storage.set(key, exerciseDone[key] ? "1":"0", false); }catch(err){}
+          try{ await window.storage.set(K(key), exerciseDone[key] ? "1":"0", false); }catch(err){}
         });
       });
       card.querySelectorAll(".edit-pencil[data-exedit]").forEach(p=>{
@@ -2528,7 +2528,7 @@
           const val = el.textContent.trim();
           const d = days.find(x=>x.iso===iso);
           if(d) d.workout.exercises[exi].detail = val;
-          try{ await window.storage.set("exover:"+iso+":"+exi, val, false); }catch(err){}
+          try{ await window.storage.set(K("exover:"+iso+":"+exi), val, false); }catch(err){}
         });
         el.addEventListener("click", (e)=>e.stopPropagation());
       });
@@ -2565,14 +2565,16 @@
   }
 
   async function loadOverrides(){
+    // 每個計畫只讀自己的資料(用 K() 加上計畫前綴),不會帶到別的計畫
+    const dPrefix = K("dietover:");
     try{
-      const keys = await window.storage.list("dietover:", false);
+      const keys = await window.storage.list(dPrefix, false);
       if(keys && keys.keys){
         for(const k of keys.keys){
           try{
             const r = await window.storage.get(k, false);
             if(!r) continue;
-            const rest = k.replace("dietover:","");
+            const rest = k.replace(dPrefix,"");
             const lastColon = rest.lastIndexOf(":");
             const iso = rest.slice(0,lastColon), field = rest.slice(lastColon+1);
             const d = days.find(x=>x.iso===iso);
@@ -2581,14 +2583,15 @@
         }
       }
     }catch(e){}
+    const ePrefix = K("exover:");
     try{
-      const exKeys = await window.storage.list("exover:", false);
+      const exKeys = await window.storage.list(ePrefix, false);
       if(exKeys && exKeys.keys){
         for(const k of exKeys.keys){
           try{
             const r = await window.storage.get(k, false);
             if(!r) continue;
-            const rest = k.replace("exover:","");
+            const rest = k.replace(ePrefix,"");
             const lastColon = rest.lastIndexOf(":");
             const iso = rest.slice(0,lastColon), exi = parseInt(rest.slice(lastColon+1),10);
             const d = days.find(x=>x.iso===iso);
@@ -2600,19 +2603,24 @@
   }
 
   async function loadDoneState(){
+    // 切換計畫時先清空記憶體狀態,避免上一個計畫的打卡/完成狀態殘留
+    Object.keys(doneState).forEach(k=>delete doneState[k]);
+    Object.keys(exerciseDone).forEach(k=>delete exerciseDone[k]);
+    const dpPrefix = K("dayplan:");
     try{
-      const keys = await window.storage.list("dayplan:", false);
+      const keys = await window.storage.list(dpPrefix, false);
       if(keys && keys.keys){
         for(const k of keys.keys){
-          try{ const r = await window.storage.get(k, false); if(r) doneState[k.replace("dayplan:","")] = r.value==="1"; }catch(e){}
+          try{ const r = await window.storage.get(k, false); if(r) doneState[k.replace(dpPrefix,"")] = r.value==="1"; }catch(e){}
         }
       }
     }catch(e){}
+    const exPrefix = K("ex:");
     try{
-      const exKeys = await window.storage.list("ex:", false);
+      const exKeys = await window.storage.list(exPrefix, false);
       if(exKeys && exKeys.keys){
         for(const k of exKeys.keys){
-          try{ const r = await window.storage.get(k, false); if(r) exerciseDone[k] = r.value==="1"; }catch(e){}
+          try{ const r = await window.storage.get(k, false); if(r) exerciseDone["ex:"+k.replace(exPrefix,"")] = r.value==="1"; }catch(e){}
         }
       }
     }catch(e){}
@@ -4480,9 +4488,16 @@
     });
   }
   const PLAN_DATA_KEYS=["metricslog","foodlog","kcaltarget","exburn","profile","pfcollapsed","mxcollapsed","waterlog","watergoal","workout","wocollapsed","fridge","frcollapsed","reminder","rmcollapsed","herotitle","themecolor"];
-  function clearPlanData(id){
+  async function clearPlanData(id){
     const prefix = id==="default" ? "" : ("p:"+id+":");
     PLAN_DATA_KEYS.forEach(k=>{ try{ window.storage.set(prefix+k,"",false);}catch(e){} });
+    // 以日期為鍵的動態資料(飲食/運動編輯、每日打卡、運動完成)也一起清乾淨
+    for(const fam of ["dietover:","exover:","dayplan:","ex:"]){
+      try{
+        const r = await window.storage.list(prefix+fam, false);
+        if(r && r.keys){ for(const k of r.keys){ try{ await window.storage.set(k,"",false); }catch(e){} } }
+      }catch(e){}
+    }
   }
   async function deletePlan(id){
     const pl=plans.find(p=>p.id===id); if(!pl) return;
@@ -4491,13 +4506,13 @@
       ? "「"+pl.name+"」是目前唯一的計畫。刪除會清空裡面所有紀錄、重設成一個全新的空白計畫,確定?"
       : "刪除計畫「"+pl.name+"」?裡面的紀錄會一起清掉,無法復原";
     if(!confirm(msg)) return;
-    clearPlanData(id);
+    await clearPlanData(id);
     plans=plans.filter(p=>p.id!==id);
     const sm=document.getElementById("settingsModal"); if(sm) sm.classList.remove("show");
     const pp=document.getElementById("planPanel"); if(pp) pp.classList.remove("show");
     if(!plans.length){
       // 至少保留一個計畫:重建一個全新的空白預設(資料一併清空)
-      clearPlanData("default");
+      await clearPlanData("default");
       plans=[{id:"default",name:"我的計畫",type:"full"}];
       await savePlans();
       try{ await window.storage.set("currentplan","default",false); }catch(e){}
@@ -4516,6 +4531,7 @@
     buildDays();   // 依這個計畫類型重建每日內容(origin=範本;其他=空白)
     await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile(); await loadWorkout(); await loadFridge(); await loadReminder();
     if(typeof loadOverrides==="function") await loadOverrides();   // 套回使用者的編輯
+    if(typeof loadDoneState==="function") await loadDoneState();   // 這個計畫自己的打卡/完成狀態(並清掉上一個計畫的殘留)
     if(typeof renderTodayMenu==="function") renderTodayMenu();
     if(typeof renderDays==="function") renderDays();
     await applyScopeTheme(id);   // 套用「這個計畫」自己的主題色 + 背景
