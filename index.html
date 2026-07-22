@@ -1931,11 +1931,16 @@
   // 這是「顯示層」的判斷,不會去改動已存的資料。
   // 重點:加到主畫面(PWA)後,啟動網址常常會掉了 ?blank,所以「只要偵測到一次」就把這個狀態存起來,
   // 之後就算網址不帶 blank 也維持空白版,不會又冒出範本。
-  // 一律「空白版」:64→60 那套個人範本已徹底移除。不論本人版或分享連結、任何網址打開,
-  // 都是空白讓使用者自己新增計畫,永遠不會出現預設範本。
-  const SHARED_BLANK = true;
-  async function resolveSharedBlank(){ /* 一律空白,無需判斷 */ }
-  function isOriginPlan(){ return false; }
+  // 分享/空白版:只有網址帶 blank、或走 /app/ 這條分享路徑時才是空白版(給朋友,主畫面留白)。
+  // 其餘(你自己的一般連結)都是完整版,會有你的「減重計畫」。這只影響「顯示與是否建立範本」,
+  // 絕不會去刪除任何已存的計畫或資料。
+  function urlIsBlank(){ try{
+    return (location.search+location.hash).toLowerCase().indexOf("blank")>=0
+        || location.pathname.toLowerCase().indexOf("/app/")>=0;
+  }catch(e){ return false; } }
+  const SHARED_BLANK = urlIsBlank();
+  async function resolveSharedBlank(){ /* 只看網址,無需額外處理 */ }
+  function isOriginPlan(){ return !SHARED_BLANK && !!(typeof PLAN!=="undefined" && PLAN && PLAN.type==="origin"); }
   function workoutForWeekday(wd, liftCounter){
     // 非 origin(如空白分享版):不套用內建範本,顯示空白+簡單指示,讓使用者自行生成/編輯
     if(!isOriginPlan()) return { type:"rest", emoji:"", title:(lang==="en"?"Not set yet":"尚未安排"),
@@ -4493,23 +4498,11 @@
   const PLAN_LABEL = { track:"飲食+喝水+體重", full:"減重規劃", origin:"完整計畫", weight:"飲食+喝水+體重", calorie:"飲食+喝水+體重" };
   async function loadPlans(){
     await resolveSharedBlank();   // 先確定是不是分享/空白版(含記住上次的判斷)
-    let hadPlansKey=false;
-    try{ const r=await window.storage.get("plans",false); if(r&&r.value){ hadPlansKey=true; plans=JSON.parse(r.value)||[]; } }catch(e){ plans=[]; }
-    // 分享/空白版:自動移除「系統預設」那張計畫(id=default,例如舊版自動建立的「我的計畫/減重計畫」),
-    // 讓主畫面保持乾淨留白。使用者自己新增的計畫 id 不是 default,會完整保留。
-    if(SHARED_BLANK && plans.some(p=>p.id==="default")){
-      plans=plans.filter(p=>p.id!=="default");
-      try{ await clearPlanData("default"); }catch(e){}
-      try{ await savePlans(); }catch(e){}
-    }
+    try{ const r=await window.storage.get("plans",false); if(r&&r.value){ plans=JSON.parse(r.value)||[]; } }catch(e){ plans=[]; }
+    // 重要:絕不自動刪除任何已存的計畫或資料(之前那段會誤刪使用者的真實計畫,已移除)。
     if(!plans.length){
-      if(hadPlansKey){
-        // 使用者已把計畫全部刪光 → 維持空白,讓他自己再新增,不自動幫他重建(不論哪個版本)
-        plans=[];
-      } else {
-        // 真正第一次使用:分享/空白版留白;本人版給一個完整計畫範本
-        plans = SHARED_BLANK ? [] : [{id:"default",name:"減重計畫",type:"origin"}];
-      }
+      // 沒有任何計畫時:分享/空白版(?blank 或 /app/)留白;一般版給一個完整計畫(含範本菜單、64→60 目標)
+      plans = SHARED_BLANK ? [] : [{id:"default",name:"減重計畫",type:"origin"}];
     }
     const _d=plans.find(p=>p.id==="default"); if(_d && _d.name==="回台減重計畫"){ _d.name="減重計畫"; savePlans(); }
     let _mig=false; plans.forEach(p=>{ if(p.type==="weight"||p.type==="calorie"){ p.type="track"; _mig=true; } }); if(_mig) savePlans();
