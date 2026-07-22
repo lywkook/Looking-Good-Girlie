@@ -166,8 +166,9 @@
   .nav-jump-menu{ position:fixed; right:16px; bottom:98px; background:var(--card); border-radius:16px;
     box-shadow:var(--shadow); border:2px solid var(--pink); padding:10px; display:none; z-index:201; max-height:62vh; overflow:auto; }
   .nav-jump-menu.show{ display:block; }
-  .nav-jump-item{ padding:14px 24px; border-radius:12px; font-size:var(--fs-title); color:var(--ink); cursor:pointer; white-space:nowrap; }
+  .nav-jump-item{ padding:12px 24px 12px 30px; border-radius:12px; font-size:var(--fs-title); color:var(--ink); cursor:pointer; white-space:nowrap; }
   .nav-jump-item:active{ background:var(--pink-soft); }
+  .nav-jump-group{ padding:8px 12px 4px; font-size:var(--fs-label); font-weight:900; color:var(--ink-soft); white-space:nowrap; }
   .cute{ font-family:var(--font-main), "ZCOOL KuaiLe", "Noto Sans TC", sans-serif; }
   /* 字重微調:粗線體本來很粗 → 取消合成粗體、看起來細一點;紅豆奶霜體較細 → 加一點描邊、看起來粗一點 */
   :root[data-font="cu"] *{ font-weight:400 !important; }
@@ -206,14 +207,30 @@
   .metric .lbl{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; }
 
   #appView{ display:flex; flex-direction:column; }
+  /* 主題分頁順序:飲食(菜單→紀錄→冰箱→喝水)→ 運動(運動計畫→打卡)→ 數據 */
   #menuSection{ order:1; }
   #foodSection{ order:2; }
-  #waterSection{ order:3; }
-  #metricsSection{ order:4; }
-  #fridgeSection{ order:5; }
+  #fridgeSection{ order:3; }
+  #waterSection{ order:4; }
+  #workoutSection{ order:5; }
   #checkinSection{ order:6; }
-  #workoutSection{ order:7; }
-  #reminderSection{ order:8; }
+  #metricsSection{ order:7; }
+  /* ===== 主題分頁 (飲食 / 運動 / 數據) ===== */
+  .theme-tabs{ order:0; display:flex; gap:6px; position:sticky; top:0; z-index:50;
+    background:rgba(245,241,235,0.92); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    padding:8px 8px 10px; margin:0 -8px 2px; border-radius:0 0 14px 14px; }
+  .theme-tab{ flex:1; border:none; border-radius:14px; padding:11px 6px; cursor:pointer;
+    font-family:inherit; font-size:var(--fs-body); font-weight:800; color:var(--ink-soft);
+    background:var(--pink-soft); display:flex; align-items:center; justify-content:center; gap:5px; line-height:1.2; }
+  .theme-tab.active{ background:var(--pink); color:#fff; box-shadow:var(--shadow); }
+  .theme-tab[hidden]{ display:none; }
+  /* 只隱藏不屬於當前分頁的區塊(從不強制顯示,交給 applyPlanView 決定) */
+  #appView[data-tab="diet"] .tab-exercise,
+  #appView[data-tab="diet"] .tab-data,
+  #appView[data-tab="exercise"] .tab-diet,
+  #appView[data-tab="exercise"] .tab-data,
+  #appView[data-tab="data"] .tab-diet,
+  #appView[data-tab="data"] .tab-exercise{ display:none !important; }
   .scroll-top-btn{ position:fixed; right:18px; bottom:98px; width:46px; height:46px; border-radius:50%; border:none;
     background:var(--pink); color:#fff; font-size:24px; font-weight:900; line-height:1; box-shadow:0 4px 14px rgba(94,85,76,0.28);
     cursor:pointer; z-index:150; display:none; align-items:center; justify-content:center; }
@@ -842,7 +859,13 @@
   </div>
 </header>
 
-<div class="section" id="menuSection">
+<div class="theme-tabs" id="themeTabs">
+  <button type="button" class="theme-tab active" data-tab="diet">🍽️ 飲食</button>
+  <button type="button" class="theme-tab" data-tab="exercise">🏃 運動</button>
+  <button type="button" class="theme-tab" data-tab="data">📈 數據</button>
+</div>
+
+<div class="section tab-diet" id="menuSection">
   <h2 class="cute" id="menuToggle"><span class="dot"></span>今日菜單 <span class="pf-caret" id="menuCaret">▾</span></h2>
   <div class="pf-mini" id="menuMini"></div>
   <div class="weight-box" id="todayMenuBox" style="border-style:solid;">
@@ -895,7 +918,7 @@
   </div>
 </div>
 
-<div class="section" id="fridgeSection">
+<div class="section tab-diet" id="fridgeSection">
   <h2 class="cute" id="frToggle"><span class="dot"></span>冰箱有什麼 · 煮什麼 <span class="pf-caret" id="frCaret">▾</span></h2>
   <div class="pf-mini" id="frMini"></div>
   <div class="weight-box">
@@ -913,7 +936,7 @@
   </div>
 </div>
 
-<div class="section" id="checkinSection">
+<div class="section tab-exercise" id="checkinSection">
   <h2 class="cute" id="checkinToggle"><span class="dot"></span>每日打卡 <span class="pf-caret" id="checkinCaret">▾</span></h2>
   <div class="pf-mini" id="checkinMini"></div>
   <div id="checkinBody">
@@ -932,7 +955,7 @@
 
 <!-- 個人資料改為 modal,移到 appView 外(見下方) -->
 
-<div class="section" id="workoutSection">
+<div class="section tab-exercise" id="workoutSection">
   <h2 class="cute" id="woToggle"><span class="dot"></span>運動計畫 <span class="pf-caret" id="woCaret">▾</span></h2>
   <div class="pf-mini" id="woMini"></div>
   <div class="weight-box">
@@ -987,7 +1010,7 @@
   </div>
 </div>
 
-<div class="section" id="foodSection">
+<div class="section tab-diet" id="foodSection">
   <h2 class="cute" id="foodToggle"><span class="dot"></span>飲食紀錄 <span class="pf-caret" id="foodCaret">▾</span></h2>
   <div class="pf-mini" id="foodMini"></div>
   <div class="weight-box">
@@ -1038,7 +1061,7 @@
   </div>
 </div>
 
-<div class="section" id="waterSection">
+<div class="section tab-diet" id="waterSection">
   <h2 class="cute" id="waterToggle"><span class="dot"></span>今日喝水 <span class="pf-caret" id="waterCaret">▾</span></h2>
   <div class="pf-mini" id="waterMini"></div>
   <div class="weight-box">
@@ -1053,7 +1076,7 @@
   </div>
 </div>
 
-<div class="section" id="metricsSection">
+<div class="section tab-data" id="metricsSection">
   <h2 class="cute" id="mxToggle"><span class="dot"></span>今日身體數據 <span class="pf-caret" id="mxCaret">▾</span></h2>
   <div class="pf-mini" id="mxMini"></div>
   <div class="weight-box">
@@ -1095,33 +1118,6 @@
     <div id="snapshotArea"></div>
     <div class="history" id="historyArea"></div>
     <div class="clear-row"><button type="button" class="clear-all-btn" id="clearMetricsBtn">清空今日所有紀錄</button></div>
-  </div>
-</div>
-
-<div class="section" id="reminderSection">
-  <h2 class="cute" id="rmToggle"><span class="dot"></span>提醒 <span class="pf-caret" id="rmCaret">▾</span></h2>
-  <div class="pf-mini" id="rmMini"></div>
-  <div class="weight-box">
-    <label class="rm-check"><input type="checkbox" id="rmOn"> 開啟提醒</label>
-    <div class="rm-row">提醒時間 <input type="time" id="rmTime"></div>
-    <div class="rm-row" style="align-items:flex-start;">提醒內容:
-      <div class="rm-items">
-        <label class="rm-item"><input type="checkbox" id="rmBreakfast"> 今日早餐</label>
-        <label class="rm-item"><input type="checkbox" id="rmLunch"> 今日午餐</label>
-        <label class="rm-item"><input type="checkbox" id="rmDinner" checked> 今晚晚餐</label>
-        <label class="rm-item"><input type="checkbox" id="rmSnack"> 點心</label>
-        <label class="rm-item"><input type="checkbox" id="rmTmrLunch" checked> 明日午餐</label>
-        <label class="rm-item"><input type="checkbox" id="rmWorkout" checked> 今日運動</label>
-        <label class="rm-item"><input type="checkbox" id="rmBody" checked> 量體重/身體數據</label>
-      </div>
-    </div>
-    <div class="rm-preview-label">內容預覽(即時反映 App 內更動)</div>
-    <div class="rm-preview" id="rmPreview"></div>
-    <div class="rm-actions">
-      <button type="button" class="mini-btn" id="rmCal">加入手機行事曆(每天提醒)</button>
-      <button type="button" class="mini-btn" id="rmCopy">複製內容</button>
-    </div>
-    <div class="rm-note" id="rmNote"></div>
   </div>
 </div>
 
@@ -1251,6 +1247,29 @@
       </div>
     </div>
 
+    <div class="set-block" id="reminderSection">
+      <div class="set-title">提醒</div>
+      <label class="rm-check"><input type="checkbox" id="rmOn"> 開啟提醒</label>
+      <div class="rm-row">提醒時間 <input type="time" id="rmTime"></div>
+      <div class="rm-row" style="align-items:flex-start;">提醒內容:
+        <div class="rm-items">
+          <label class="rm-item"><input type="checkbox" id="rmBreakfast"> 今日早餐</label>
+          <label class="rm-item"><input type="checkbox" id="rmLunch"> 今日午餐</label>
+          <label class="rm-item"><input type="checkbox" id="rmDinner" checked> 今晚晚餐</label>
+          <label class="rm-item"><input type="checkbox" id="rmSnack"> 點心</label>
+          <label class="rm-item"><input type="checkbox" id="rmTmrLunch" checked> 明日午餐</label>
+          <label class="rm-item"><input type="checkbox" id="rmWorkout" checked> 今日運動</label>
+          <label class="rm-item"><input type="checkbox" id="rmBody" checked> 量體重/身體數據</label>
+        </div>
+      </div>
+      <div class="rm-preview-label">內容預覽(即時反映 App 內更動)</div>
+      <div class="rm-preview" id="rmPreview"></div>
+      <div class="rm-actions">
+        <button type="button" class="mini-btn" id="rmCal">加入手機行事曆(每天提醒)</button>
+        <button type="button" class="mini-btn" id="rmCopy">複製內容</button>
+      </div>
+      <div class="rm-note" id="rmNote"></div>
+    </div>
     <div class="set-block" id="setDangerBlock" style="display:none;">
       <div class="set-title">刪除計畫</div>
       <button type="button" id="setDeleteBtn" class="danger-btn">🗑 刪除這個計畫</button>
@@ -4682,6 +4701,44 @@
     show('reminderSection', t==='origin'||t==='full');
     const ph=document.getElementById("planHeader");
     if(ph){ if(isOriginPlan()){ ph.style.display="none"; } else { ph.style.display=""; ph.innerHTML=esc(PLAN.name)+' <span class="edit-pencil" style="font-size:0.7em">✏️</span>'; } }
+    if(typeof refreshThemeTabs==="function") refreshThemeTabs();
+  }
+  // ===== 主題分頁:飲食 / 運動 / 數據 =====
+  const THEME_TABS = {
+    diet: ["menuSection","foodSection","fridgeSection","waterSection"],
+    exercise: ["workoutSection","checkinSection"],
+    data: ["metricsSection"]
+  };
+  const TAB_OF_SECTION = (()=>{ const m={}; Object.keys(THEME_TABS).forEach(t=>THEME_TABS[t].forEach(id=>m[id]=t)); return m; })();
+  let activeTab = "diet";
+  function tabHasVisible(tab){
+    return (THEME_TABS[tab]||[]).some(id=>{ const el=document.getElementById(id); return el && el.style.display!=="none"; });
+  }
+  function applyThemeTab(tab, scroll){
+    if(!THEME_TABS[tab]) tab="diet";
+    activeTab=tab;
+    const av=document.getElementById("appView"); if(av) av.setAttribute("data-tab",tab);
+    document.querySelectorAll(".theme-tab").forEach(b=> b.classList.toggle("active", b.dataset.tab===tab));
+    try{ window.storage.set("activetab", tab, false); }catch(e){}
+    if(scroll){ try{ window.scrollTo({top:0, behavior:"smooth"}); }catch(e){ window.scrollTo(0,0); } }
+  }
+  function refreshThemeTabs(){
+    const order=["diet","exercise","data"];
+    let firstAvail=null;
+    order.forEach(tab=>{
+      const btn=document.querySelector('.theme-tab[data-tab="'+tab+'"]');
+      const has=tabHasVisible(tab);
+      if(btn) btn.hidden=!has;
+      if(has && firstAvail==null) firstAvail=tab;
+    });
+    if(!tabHasVisible(activeTab)) activeTab = firstAvail || "diet";
+    applyThemeTab(activeTab, false);
+  }
+  async function loadActiveTab(){
+    try{ const r=await window.storage.get("activetab",false); if(r&&r.value&&THEME_TABS[r.value]) activeTab=r.value; }catch(e){}
+  }
+  function initThemeTabs(){
+    document.querySelectorAll(".theme-tab").forEach(b=> b.addEventListener("click", ()=> applyThemeTab(b.dataset.tab, true)));
   }
   async function renamePlan(){
     if(!PLAN) return;
@@ -5069,20 +5126,29 @@
   }
 
   // ---------- 底部主選單(回主畫面 / 新增 / 跳到某區塊) ----------
-  const SECTION_LABELS = { menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", reminderSection:"提醒", workoutSection:"運動計畫", checkinSection:"每日打卡" };
+  const SECTION_LABELS = { menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", workoutSection:"運動計畫", checkinSection:"每日打卡" };
+  const TAB_LABELS = { diet:"🍽️ 飲食", exercise:"🏃 運動", data:"📈 數據" };
   function buildJumpMenu(){
     const box=document.getElementById("navJumpMenu"); if(!box) return;
-    const ids=["menuSection","foodSection","waterSection","metricsSection","fridgeSection","checkinSection","workoutSection","reminderSection"];
-    box.innerHTML = ids.filter(id=>{ const el=document.getElementById(id); return el && el.style.display!=="none"; })
-      .map(id=>`<div class="nav-jump-item" data-sec="${id}">${SECTION_LABELS[id]}</div>`).join("");
+    // 依主題分頁分組列出區塊
+    let html="";
+    ["diet","exercise","data"].forEach(tab=>{
+      const ids=(THEME_TABS[tab]||[]).filter(id=>{ const el=document.getElementById(id); return el && el.style.display!=="none"; });
+      if(!ids.length) return;
+      html += `<div class="nav-jump-group">${TAB_LABELS[tab]}</div>`;
+      html += ids.map(id=>`<div class="nav-jump-item" data-sec="${id}">${SECTION_LABELS[id]}</div>`).join("");
+    });
+    box.innerHTML = html;
     box.querySelectorAll(".nav-jump-item").forEach(it=> it.addEventListener("click", ()=> jumpToSection(it.dataset.sec)));
   }
   function jumpToSection(id){
     const el=document.getElementById(id); if(!el) return;
+    // 先切到該區塊所屬的分頁,再捲動過去
+    const tab=TAB_OF_SECTION[id]; if(tab && tab!==activeTab) applyThemeTab(tab, false);
     el.classList.remove("collapsed");
     const caret=el.querySelector(".pf-caret"); if(caret) caret.textContent="▾";
     document.getElementById("navJumpMenu").classList.remove("show");
-    try{ el.scrollIntoView({behavior:"smooth", block:"start"}); }catch(_){}
+    setTimeout(()=>{ try{ el.scrollIntoView({behavior:"smooth", block:"start"}); }catch(_){} }, 40);
   }
   function initScrollTop(){
     const btn=document.getElementById("scrollTopBtn"); if(!btn) return;
@@ -5433,6 +5499,8 @@
     initHeroTitle();
     await loadHeroTitle();
     await loadThemeColor();
+    initThemeTabs();
+    await loadActiveTab();
     applyPlanView();
     await loadOverrides();
     renderTodayMenu();
