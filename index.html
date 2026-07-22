@@ -1931,19 +1931,18 @@
   // 這是「顯示層」的判斷,不會去改動已存的資料。
   // 重點:加到主畫面(PWA)後,啟動網址常常會掉了 ?blank,所以「只要偵測到一次」就把這個狀態存起來,
   // 之後就算網址不帶 blank 也維持空白版,不會又冒出範本。
-  function urlIsBlank(){ try{
-    // window.__FORCE_BLANK 由 /app/ 這個「分享版」建置在部署時寫死注入 → 整個 /app/ 一律空白,
-    // 不受網址、快取、加到主畫面(PWA 啟動網址掉了 ?blank)影響。
-    return (typeof window!=="undefined" && window.__FORCE_BLANK===true)
-        || (location.search+location.hash).toLowerCase().indexOf("blank")>=0
-        || location.pathname.toLowerCase().indexOf("/app/")>=0;
+  // 預設一律是「空白版」——不管用什麼網址、加到主畫面、快取,打開都是空白讓使用者自己建計畫。
+  // 只有「本人專屬版」要在網址帶 ?owner(或 ?mine)才會顯示 64→60 那套個人範本;開過一次就記住。
+  function urlIsOwner(){ try{
+    const s=(location.search+location.hash).toLowerCase();
+    return s.indexOf("owner")>=0 || s.indexOf("mine")>=0;
   }catch(e){ return false; } }
-  let SHARED_BLANK = urlIsBlank();
+  let SHARED_BLANK = !urlIsOwner();
   async function resolveSharedBlank(){
     try{
-      const r = await window.storage.get("sharedmode", false);
-      if(r && r.value==="1") SHARED_BLANK = true;
-      else if(SHARED_BLANK){ try{ await window.storage.set("sharedmode","1", false); }catch(e){} }
+      if(urlIsOwner()){ SHARED_BLANK=false; try{ await window.storage.set("ownermode","1", false); }catch(e){} return; }
+      const r = await window.storage.get("ownermode", false);
+      if(r && r.value==="1") SHARED_BLANK=false;   // 這台記住是本人版 → 保留範本
     }catch(e){}
   }
   function isOriginPlan(){ return !SHARED_BLANK && !!(typeof PLAN!=="undefined" && PLAN && PLAN.type==="origin"); }
