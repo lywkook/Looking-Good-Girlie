@@ -1254,7 +1254,10 @@
 
     <div class="set-block">
       <div class="set-title">字體</div>
-      <button type="button" class="mini-btn js-font-toggle">粗線體</button>
+      <div class="set-seg">
+        <button type="button" class="js-font-btn" data-font="cu" style="font-family:'CuHsianTi';">粗線體</button>
+        <button type="button" class="js-font-btn" data-font="redbean" style="font-family:'RedBeanCream';">紅豆奶霜體</button>
+      </div>
     </div>
 
     <div class="set-block" id="setDangerBlock" style="display:none;">
@@ -1311,7 +1314,7 @@
     // 計畫列 / 標題
     "減重計畫 ▾":"Weight Plan ▾","64kg → 60kg 大作戰":"64kg → 60kg Challenge",
     // 設定
-    "主題色":"Theme colour","背景":"Background","套用":"Apply","清除":"Clear","字體":"Font","粗線體":"CuHsian",
+    "主題色":"Theme colour","背景":"Background","套用":"Apply","清除":"Clear","字體":"Font","粗線體":"CuHsian","紅豆奶霜體":"RedBean",
     "上傳背景照片":"Upload background photo",
     "調整背景照片(縮放/移動)":"Adjust background (zoom / move)",
     "兩指縮放、單指拖曳調整位置,背景固定不隨畫面捲動。":"Pinch to zoom, drag to reposition. The background stays fixed while you scroll.",
@@ -5152,18 +5155,15 @@
   function applyFont(){
     document.documentElement.style.setProperty("--font-main", fontPref==="cu" ? '"CuHsianTi"' : '"RedBeanCream"');
     document.documentElement.setAttribute("data-font", fontPref==="cu" ? "cu" : "redbean");
-    const txt = lang==="en"
-      ? (fontPref==="cu" ? "CuHsian (tap for RedBean)" : "RedBean (tap for CuHsian)")
-      : (fontPref==="cu" ? "粗線體(點我換紅豆奶霜體)" : "紅豆奶霜體(點我換粗線體)");
-    document.querySelectorAll(".js-font-toggle").forEach(b=> b.textContent=txt);
+    document.querySelectorAll(".js-font-btn").forEach(b=> b.classList.toggle("on", b.dataset.font===fontPref));
   }
   async function loadFontPref(){
     try{ const r=await window.storage.get("fontpref",false); if(r&&r.value) fontPref=r.value; }catch(e){}
     applyFont();
   }
   function initFontModule(){
-    document.querySelectorAll(".js-font-toggle").forEach(b=>
-      b.addEventListener("click", async ()=>{ fontPref = fontPref==="cu" ? "redbean" : "cu"; applyFont(); try{ await window.storage.set("fontpref", fontPref, false); }catch(e){} }));
+    document.querySelectorAll(".js-font-btn").forEach(b=>
+      b.addEventListener("click", async ()=>{ fontPref = b.dataset.font==="redbean" ? "redbean" : "cu"; applyFont(); try{ await window.storage.set("fontpref", fontPref, false); }catch(e){} }));
   }
   function initLangFontSize(){
     document.querySelectorAll(".js-lang-btn").forEach(b=> b.addEventListener("click", ()=> setLang(b.dataset.lang)));
