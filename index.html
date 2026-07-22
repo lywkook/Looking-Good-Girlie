@@ -2382,6 +2382,7 @@
     const recentFoods=(typeof foodLog!=="undefined"?foodLog:[]).filter(f=>last2.includes(f.date)).map(f=>f.name).slice(-15).join("、") || "無";
     const woSummary=(typeof workoutPlan!=="undefined"&&workoutPlan&&Array.isArray(workoutPlan.week))
       ? workoutPlan.week.map(d=>d.day+":"+(d.focus||d.type||"")).join("、") : "尚未規劃";
+    const userWoDays=g("woDays")||"";
     const prompt="你是專業的減重營養與健身教練。根據使用者的『目標』和『實際紀錄與量測數據』,先判斷進度,再同時調整『今天的菜單』和『運動方向』,幫他在期限內達成目標。\n"
       +"【目標】性別"+sex+"、年齡"+age+"、身高"+h+"cm、目前體重"+(curW||"未填")+"kg、目標體重"+(tw||"未填")+"kg"+(tbf?("、目標體脂"+tbf+"%"):"")+"、希望達成日期"+(date||"未填")+"。目前每日熱量目標約"+target+"大卡。\n"
       +"【最近體重/體脂/肌肉趨勢】"+recentMetrics+"。\n"
@@ -2389,8 +2390,9 @@
       +"【最近吃的東西】"+recentFoods+"。\n"
       +"【目前運動安排】"+woSummary+"。\n"
       +"【冰箱現有食材】"+((fridgeHave&&fridgeHave.length)?fridgeHave.join("、"):"(未填)")+"。設計菜單時「優先用冰箱有的食材」,盡量不要推薦冰箱沒有的。\n"
-      +"請判斷:照目前的吃法和運動,能不能在期限內達標?然後(1)重新設計『今天的菜單』(早/午/晚/點心),原型食物、好準備、優先用冰箱食材、貼近他平常吃的但更有助達標;(2)給『運動調整方向』(加強哪裡、頻率或強度怎麼調);(3)建議每日熱量。\n"
-      +"只回 JSON:{\"analysis\":\"進度判斷+關鍵建議,不超過60字\",\"dailyKcal\":整數,\"menu\":{\"breakfast\":\"\",\"lunch\":\"\",\"dinner\":\"\",\"fruit\":\"\"},\"workout\":\"運動調整建議,不超過50字\"}。菜單每項不超過25字。"+TW_RULE;
+      +"【使用者原本希望一週練幾天】"+(userWoDays?(userWoDays+"天"):"未設定")+"。\n"
+      +"請判斷:照目前的吃法和運動,能不能在期限內達標?然後(1)重新設計『今天的菜單』(早/午/晚/點心),原型食物、好準備、優先用冰箱食材、貼近他平常吃的但更有助達標;(2)給『運動調整方向』(加強哪裡、頻率或強度怎麼調),並依身體數據判斷『建議一週練幾天(recDays)』;(3)建議每日熱量。\n"
+      +"只回 JSON:{\"analysis\":\"進度判斷+關鍵建議,不超過60字\",\"dailyKcal\":整數,\"menu\":{\"breakfast\":\"\",\"lunch\":\"\",\"dinner\":\"\",\"fruit\":\"\"},\"workout\":\"運動調整建議,不超過50字\",\"recDays\":建議一週練幾天的整數}。菜單每項不超過25字。"+TW_RULE;
     const btn=document.getElementById("coachBtn"); const old=btn?btn.textContent:""; if(btn){ btn.disabled=true; btn.textContent=RP("分析中…","Analyzing…"); }
     status.innerHTML='<span class="ai-spin"></span>'+RP('依你的紀錄與數據分析、重新調整菜單和運動…','Analyzing your records and adjusting…');
     try{
@@ -2400,9 +2402,21 @@
       if(m.dailyKcal && Number(m.dailyKcal)>0){ const t=document.getElementById("inKcalTarget"); const dk=Math.round(Number(m.dailyKcal));
         if(t){ t.value=dk; } kcalTarget=dk; if(typeof saveTarget==="function") saveTarget(); if(typeof renderFoodLog==="function") renderFoodLog(); }
       status.innerHTML='<span class="ok">'+RP('已依身體數據更新菜單與運動 ✅','Menu & workout updated from your data ✅')+'</span>';
-      // 同時把運動也依建議調整(需已有運動計畫)
+      // 同時把運動也依建議調整(需已有運動計畫);若建議的訓練天數和使用者原本設定不同,先問要不要接受
       if(m.workout && typeof workoutPlan!=="undefined" && workoutPlan && Array.isArray(workoutPlan.week) && typeof adjustWorkoutPlan==="function"){
-        adjustWorkoutPlan("依我的目標與進度:"+m.workout);
+        const woDaysEl=document.getElementById("woDays");
+        const userDays=woDaysEl?parseInt(woDaysEl.value,10):NaN;
+        const recDays=parseInt(m.recDays,10);
+        let instruction="依我的目標與進度:"+m.workout;
+        if(userDays>0 && recDays>0 && recDays!==userDays){
+          const accept=confirm(RP(
+            '你原本設定一週練 '+userDays+' 天。依你的身體數據,建議改成一週練 '+recDays+' 天。\n要接受新的建議嗎?(取消 = 維持你原本的 '+userDays+' 天)',
+            'You set '+userDays+' workout days/week, but your body data suggests '+recDays+'. Accept the new suggestion? (Cancel keeps '+userDays+')'
+          ));
+          if(accept){ if(woDaysEl){ woDaysEl.value=recDays; } if(typeof saveWorkout==="function") saveWorkout(); }
+          else { instruction+="。★請務必維持一週練 "+userDays+" 天,不要更改訓練天數,只在這個天數內調整強度與部位"; }
+        }
+        adjustWorkoutPlan(instruction);
       }
     }catch(e){
       status.innerHTML='<span class="err">'+RP('這次分析沒成功,再試一次。','That didn\'t work — try again.')+'</span>';
