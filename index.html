@@ -3141,8 +3141,8 @@
 
     document.getElementById("kcalSummary").innerHTML = `
       <div class="kcal-head">
-        <div><span class="big">${Math.round(total)}</span> <span class="sub">/ ${kcalTarget} kcal</span></div>
-        <div class="sub">${over ? '超過 '+Math.round(net-kcalTarget) : '還可吃 '+Math.round(kcalTarget-net)} kcal</div>
+        <div><span class="big">${fmtKcal(total)}</span> <span class="sub">/ ${kcalTarget} kcal</span></div>
+        <div class="sub">${over ? '超過 '+fmtKcal(net-kcalTarget) : '還可吃 '+fmtKcal(kcalTarget-net)} kcal</div>
       </div>
       <div class="kcal-bar ${over?'over':''}"><span style="width:${pct}%"></span></div>`;
 
@@ -3164,7 +3164,7 @@
           ${f.thumb?`<img src="${f.thumb}">`:''}
           <div class="fc-main">
             <div class="fc-name" data-fid="${f.id}">${esc(f.name)}</div>
-            <div class="fc-kcal"><span class="fc-kcal-num" data-fid="${f.id}">${Math.round(unit*qty)}</span> kcal${qty!==1?`(×${fmtQty(qty)})`:''}</div>
+            <div class="fc-kcal"><span class="fc-kcal-num" data-fid="${f.id}">${fmtKcal(unit*qty)}</span> kcal${qty!==1?`(×${fmtQty(qty)})`:''}</div>
             <div class="fc-qtyrow" data-fid="${f.id}" style="display:none;">
               <button type="button" class="fc-q" data-fid="${f.id}" data-d="-1">−</button>
               <input type="text" inputmode="decimal" class="fc-qty-input" data-fid="${f.id}" value="${fmtQty(qty)}" autocomplete="off">
@@ -3194,7 +3194,7 @@
         const f = foodLog.find(x=>x.id===btn.dataset.fid); if(!f) return;
         const unit = foodUnit(f); let qty = foodQty(f) + parseInt(btn.dataset.d,10);
         if(qty<0.25) qty=0.25;
-        f.qty = qty; f.unit = unit; f.kcal = Math.round(unit*qty);
+        f.qty = qty; f.unit = unit; f.kcal = kcal1(unit*qty);
         await saveFoodLog(); renderFoodLog();
       });
     });
@@ -3205,7 +3205,7 @@
         const f = foodLog.find(x=>x.id===inp.dataset.fid); if(!f) return;
         let qty = parseQty(inp.value); if(qty<0.05) qty=0.05;
         const unit = foodUnit(f);
-        f.qty = qty; f.unit = unit; f.kcal = Math.round(unit*qty);
+        f.qty = qty; f.unit = unit; f.kcal = kcal1(unit*qty);
         await saveFoodLog(); renderFoodLog();
       });
     });
@@ -3233,10 +3233,10 @@
       el.addEventListener("blur", async ()=>{
         el.contentEditable="false";
         const f=foodLog.find(x=>x.id===el.dataset.fid); if(!f){ return; }
-        const total=parseInt((el.textContent||"").replace(/[^0-9]/g,""),10);
+        const total=parseFloat((el.textContent||"").replace(/[^0-9.]/g,""));
         if(isNaN(total)||total<0){ renderFoodLog(); return; }
         const qty=foodQty(f);
-        f.qty=qty; f.unit = qty>0 ? (total/qty) : total; f.kcal = Math.round(f.unit*qty);
+        f.qty=qty; f.unit = qty>0 ? (total/qty) : total; f.kcal = kcal1(f.unit*qty);
         await saveFoodLog(); renderFoodLog();
       });
     });
@@ -3256,6 +3256,9 @@
     return (isNaN(v)||v<=0) ? 1 : v;
   }
   function fmtQty(q){ q=Math.round(Number(q)*100)/100; return String(q); }
+  // 熱量:四捨五入到小數第一位;整數就不寫 .0(如 200),有小數才顯示(如 100.5)
+  function kcal1(v){ return Math.round(Number(v)*10)/10; }
+  function fmtKcal(v){ return String(kcal1(v)); }
   async function moveFoodMeal(fid, meal){
     const f = foodLog.find(x=>x.id===fid); if(!f || f.meal===meal) return;
     f.meal = meal; await saveFoodLog(); renderFoodLog();
@@ -3844,7 +3847,7 @@
         if(customFoods.length>80) customFoods = customFoods.slice(0,80);
         rebuildFoodMap(); saveCustomFoods();
       }
-      const entry = { id: Date.now().toString(), date: curIso(), meal: selectedMeal, name: name, unit: unit, qty: qty, kcal: Math.round(unit*qty) };
+      const entry = { id: Date.now().toString(), date: curIso(), meal: selectedMeal, name: name, unit: unit, qty: qty, kcal: kcal1(unit*qty) };
       if(pendingThumb) entry.thumb = pendingThumb;
       foodLog.push(entry);
       await saveFoodLog();
