@@ -413,7 +413,8 @@
   }
   .editable-wrap{ position:relative; }
   .edit-pencil{
-    font-size:var(--fs-label); color:var(--ink-soft); cursor:pointer; margin-left:6px; user-select:none;
+    font-size:var(--fs-label); color:var(--pink); font-weight:800; cursor:pointer; margin-left:8px; user-select:none;
+    flex:none; padding:1px 2px;
   }
   [contenteditable="true"]{
     outline:2px dashed var(--pink); border-radius:8px; padding:3px 5px; background:#FFFDF8;
@@ -558,10 +559,10 @@
   .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:10px;
     padding:6px 4px 12px; border-bottom:1px dashed var(--line); margin-bottom:8px; font-size:var(--fs-label); color:var(--ink-soft); }
   .plan-bar{ display:flex; justify-content:center; padding:12px 20px 2px; }
-  .plan-current{ background:var(--pink); color:#fff; border:none; border-radius:20px;
-    padding:9px 20px; font-size:var(--fs-body); font-weight:800; cursor:pointer; font-family:inherit;
-    box-shadow:0 3px 0 var(--pink-shadow); display:inline-flex; align-items:center; gap:8px; }
-  .plan-current:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--pink-shadow); }
+  .plan-current{ background:var(--pink-soft); color:var(--ink); border:none; border-radius:20px;
+    padding:8px 18px; font-size:var(--fs-body); font-weight:700; cursor:pointer; font-family:inherit;
+    display:inline-flex; align-items:center; gap:6px; }
+  .plan-current:active{ background:var(--pink); color:#fff; }
   /* 切換計畫:半透明遮罩 + 浮在上方的下拉,不會把畫面往下推 */
   .plan-overlay{ position:fixed; inset:0; background:rgba(60,50,45,0.38); z-index:300; display:none; }
   .plan-overlay.show{ display:block; }
@@ -825,7 +826,7 @@
 <h2 class="cute" id="planHeader" style="display:none;"></h2>
 
 <header class="hero" id="heroSection">
-  <h1 class="cute"><span id="heroTitle">64kg → 60kg 大作戰</span> <span class="edit-pencil" id="heroTitleEdit">✏️</span></h1>
+  <h1 class="cute"><span id="heroTitle">64kg → 60kg 大作戰</span> <span class="edit-pencil" id="heroTitleEdit">改名</span></h1>
   <div class="countdown-strip">
     <div class="metric">
       <div class="num" id="daysLeft">--</div>
@@ -2128,7 +2129,7 @@
       <div class="blk">
         <span class="blk-label">${label}</span>
         <span class="editable-content" data-field="${f}" data-iso="${todayEntry.iso}">${todayEntry.diet[f]}</span>
-        <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}">✏️</span>
+        <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}">改</span>
       </div>`).join("");
     box.querySelectorAll(".edit-pencil").forEach(p=>{
       p.addEventListener("click", ()=>{
@@ -2656,11 +2657,11 @@
         return `
         <div class="ex-row${checked?' done':''}" data-exkey="${exKey}">
           <div class="ex-check">✓</div>
-          <div class="ex-text"><b>${esc(ex.name)}</b>${ex.detail?` <span class="edit-pencil" data-exedit="${day.iso}:${exi}">✏️</span>
+          <div class="ex-text"><b>${esc(ex.name)}</b>${ex.detail?` <span class="edit-pencil" data-exedit="${day.iso}:${exi}">改</span>
             <div class="ex-detail" data-exedit-content="${day.iso}:${exi}">${esc(ex.detail)}</div>`:''}</div>
         </div>`;
       }).join("");
-      const exEditRow = `<div class="day-ex-editrow"><button type="button" class="day-edit-btn" data-editday="${day.iso}">✏️ 編輯這天運動</button>${dayExOverride[day.iso]?`<button type="button" class="day-edit-reset" data-resetday="${day.iso}">回到計畫</button>`:''}</div>`;
+      const exEditRow = `<div class="day-ex-editrow"><button type="button" class="day-edit-btn" data-editday="${day.iso}">編輯這天運動</button>${dayExOverride[day.iso]?`<button type="button" class="day-edit-reset" data-resetday="${day.iso}">回到計畫</button>`:''}</div>`;
       card.innerHTML = `
         <div class="day-head">
           <div class="left">
@@ -4684,7 +4685,7 @@
     show('metricsSection', true);
     show('reminderSection', t==='origin'||t==='full');
     const ph=document.getElementById("planHeader");
-    if(ph){ if(isOriginPlan()){ ph.style.display="none"; } else { ph.style.display=""; ph.innerHTML=esc(PLAN.name)+' <span class="edit-pencil" style="font-size:0.7em">✏️</span>'; } }
+    if(ph){ if(isOriginPlan()){ ph.style.display="none"; } else { ph.style.display=""; ph.innerHTML=esc(PLAN.name)+' <span class="edit-pencil">改名</span>'; } }
     if(typeof refreshThemeTabs==="function") refreshThemeTabs();
   }
   // ===== 主題分頁:飲食 / 運動 / 數據 =====
