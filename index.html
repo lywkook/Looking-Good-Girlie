@@ -2146,7 +2146,7 @@
     box.innerHTML = fields.map(([f,label])=>`
       <div class="blk">
         <span class="blk-label">${label}</span>
-        <span class="editable-content" data-field="${f}" data-iso="${todayEntry.iso}">${todayEntry.diet[f]}</span>
+        <span class="editable-content" data-field="${f}" data-iso="${todayEntry.iso}">${mealPlus(todayEntry.diet[f])}</span>
         <span class="edit-pencil" data-field="${f}" data-iso="${todayEntry.iso}" role="button" aria-label="改" title="改"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
       </div>`).join("");
     box.querySelectorAll(".edit-pencil").forEach(p=>{
@@ -2181,6 +2181,15 @@
   };
   const altIdx = { breakfast:0, lunch:0, dinner:0, fruit:0 };
   // 把 AI 給的菜單縮短成「只有菜名」,去掉「,提供穩定熱量」「,優先用冰箱食材」之類的說明句
+  // 把菜單裡「搭配 / 配」這種「佐、加上」的字改成「 + 」(例:烤牛排配沙拉 → 烤牛排 + 沙拉)
+  function mealPlus(s){
+    if(s==null) return s;
+    let t=String(s);
+    if(t==="—") return t;
+    t=t.replace(/[、,，]?\s*搭配\s*/g," + ").replace(/\s*配\s*/g," + ");
+    t=t.replace(/(\s*\+\s*)+/g," + ").replace(/^\s*\+\s*/,"").replace(/\s*\+\s*$/,"").trim();
+    return t;
+  }
   function conciseMeal(text){
     if(text==null) return text;
     let s = String(text).trim().replace(/[。.\s]+$/,"");
@@ -2190,7 +2199,7 @@
     const kept=[];
     for(const p of parts){ if(EXPL.test(p)) break; kept.push(p); }
     const out = (kept.length?kept:[parts[0]||s]).join("、");
-    return out||s;
+    return mealPlus(out||s);
   }
   function applyMeal(field, text){
     if(!text) return;
