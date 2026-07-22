@@ -4470,7 +4470,7 @@
     document.querySelectorAll("#woAdjustQuick .wo-chip-btn").forEach(c=> c.addEventListener("click", ()=>{ const inp=document.getElementById("woAdjustInput"); if(inp) inp.value=c.dataset.q; adjustWorkoutPlan(c.dataset.q); }));
     const ct=document.getElementById("checkinToggle"); if(ct) ct.addEventListener("click", ()=>{ const blk=document.getElementById("checkinSection"); setCheckinCollapsed(!blk.classList.contains("collapsed"), true); });
     const cm=document.getElementById("checkinMini"); if(cm) cm.addEventListener("click", ()=> setCheckinCollapsed(false, true));
-    // 每日打卡裡的「調整這週運動計畫」:展開運動計畫、捲到調整區、聚焦輸入(運動計畫內原本的調整區照舊保留)
+    // 每日打卡裡的「調整本日運動計劃」:展開運動計畫、捲到調整區、聚焦輸入(運動計畫內原本的調整區照舊保留)
     const caw=document.getElementById("checkinAdjustWorkout");
     if(caw) caw.addEventListener("click", ()=>{
       const sec=document.getElementById("workoutSection"); if(!sec) return;
