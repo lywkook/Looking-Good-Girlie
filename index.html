@@ -1931,21 +1931,11 @@
   // 這是「顯示層」的判斷,不會去改動已存的資料。
   // 重點:加到主畫面(PWA)後,啟動網址常常會掉了 ?blank,所以「只要偵測到一次」就把這個狀態存起來,
   // 之後就算網址不帶 blank 也維持空白版,不會又冒出範本。
-  // 預設一律是「空白版」——不管用什麼網址、加到主畫面、快取,打開都是空白讓使用者自己建計畫。
-  // 只有「本人專屬版」要在網址帶 ?owner(或 ?mine)才會顯示 64→60 那套個人範本;開過一次就記住。
-  function urlIsOwner(){ try{
-    const s=(location.search+location.hash).toLowerCase();
-    return s.indexOf("owner")>=0 || s.indexOf("mine")>=0;
-  }catch(e){ return false; } }
-  let SHARED_BLANK = !urlIsOwner();
-  async function resolveSharedBlank(){
-    try{
-      if(urlIsOwner()){ SHARED_BLANK=false; try{ await window.storage.set("ownermode","1", false); }catch(e){} return; }
-      const r = await window.storage.get("ownermode", false);
-      if(r && r.value==="1") SHARED_BLANK=false;   // 這台記住是本人版 → 保留範本
-    }catch(e){}
-  }
-  function isOriginPlan(){ return !SHARED_BLANK && !!(typeof PLAN!=="undefined" && PLAN && PLAN.type==="origin"); }
+  // 一律「空白版」:64→60 那套個人範本已徹底移除。不論本人版或分享連結、任何網址打開,
+  // 都是空白讓使用者自己新增計畫,永遠不會出現預設範本。
+  const SHARED_BLANK = true;
+  async function resolveSharedBlank(){ /* 一律空白,無需判斷 */ }
+  function isOriginPlan(){ return false; }
   function workoutForWeekday(wd, liftCounter){
     // 非 origin(如空白分享版):不套用內建範本,顯示空白+簡單指示,讓使用者自行生成/編輯
     if(!isOriginPlan()) return { type:"rest", emoji:"", title:(lang==="en"?"Not set yet":"尚未安排"),
