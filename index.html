@@ -4457,9 +4457,9 @@
   async function loadPlans(){
     try{ const r=await window.storage.get("plans",false); if(r&&r.value) plans=JSON.parse(r.value)||[]; }catch(e){ plans=[]; }
     if(!plans.length){
-      // 分享/空白模式(網址帶 blank):給朋友一個中性的減重規劃起手式,不帶專屬的回台範本
-      const blank = (location.search+location.hash).toLowerCase().indexOf("blank")>=0;
-      plans = blank ? [{id:"default",name:"我的計畫",type:"full"}] : [{id:"default",name:"減重計畫",type:"origin"}];
+      // 分享/空白版:完全不建立任何預設計畫,主畫面留白,讓使用者自己新增第一個計畫。
+      // 本人版(非分享):照舊給一個完整計畫範本。
+      plans = SHARED_BLANK ? [] : [{id:"default",name:"減重計畫",type:"origin"}];
     }
     const _d=plans.find(p=>p.id==="default"); if(_d && _d.name==="回台減重計畫"){ _d.name="減重計畫"; savePlans(); }
     let _mig=false; plans.forEach(p=>{ if(p.type==="weight"||p.type==="calorie"){ p.type="track"; _mig=true; } }); if(_mig) savePlans();
@@ -4468,8 +4468,9 @@
     PLAN = plans.find(p=>p.id===cur) || plans[0];
   }
   async function savePlans(){ try{ await window.storage.set("plans", JSON.stringify(plans), false); }catch(e){} }
-  function updatePlanBar(){ const b=document.getElementById("planCurrent"); if(b) b.textContent = PLAN.name + " ▾"; }
+  function updatePlanBar(){ const b=document.getElementById("planCurrent"); if(b) b.textContent = (PLAN?PLAN.name:"我的計畫") + " ▾"; }
   function applyPlanView(){
+    if(!PLAN) return;   // 空白版尚未建立任何計畫時,主畫面留白即可
     const t = PLAN.type;
     const show=(id,v)=>{ const el=document.getElementById(id); if(el) el.style.display = v?"":"none"; };
     show('heroSection', isOriginPlan());
@@ -4523,7 +4524,9 @@
     const pl=plans.find(p=>p.id===id); if(!pl) return;
     const isLast = plans.length<=1;
     const msg = isLast
-      ? "「"+pl.name+"」是目前唯一的計畫。刪除會清空裡面所有紀錄、重設成一個全新的空白計畫,確定?"
+      ? (SHARED_BLANK
+          ? "刪除「"+pl.name+"」?會清空裡面所有紀錄,主畫面會變成全空白,由你自己再新增計畫。"
+          : "「"+pl.name+"」是目前唯一的計畫。刪除會清空裡面所有紀錄、重設成一個全新的空白計畫,確定?")
       : "刪除計畫「"+pl.name+"」?裡面的紀錄會一起清掉,無法復原";
     if(!confirm(msg)) return;
     await clearPlanData(id);
@@ -4531,7 +4534,15 @@
     const sm=document.getElementById("settingsModal"); if(sm) sm.classList.remove("show");
     const pp=document.getElementById("planPanel"); if(pp) pp.classList.remove("show");
     if(!plans.length){
-      // 至少保留一個計畫:重建一個全新的空白預設(資料一併清空)
+      if(SHARED_BLANK){
+        // 分享/空白版:刪光就真的留白,不自動重建,讓使用者自己新增第一個計畫
+        PLAN=null;
+        await savePlans();
+        try{ await window.storage.set("currentplan","",false); }catch(e){}
+        renderHome(); goHome();
+        return;
+      }
+      // 本人版:至少保留一個計畫,重建一個全新的空白預設(資料一併清空)
       await clearPlanData("default");
       plans=[{id:"default",name:"我的計畫",type:"full"}];
       await savePlans();
