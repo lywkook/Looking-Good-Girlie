@@ -3695,12 +3695,16 @@
   async function analyzeFoodPhoto(b64s){
     if(typeof b64s==="string") b64s=[b64s];
     const many=b64s.length>1;
-    const cacheKey="f"+hashStr(b64s.join("|"));
+    const cacheKey="f2"+hashStr(b64s.join("|"));   // f2:換了更準的估算 prompt,舊快取自動失效重估
     if(aiPhotoCache[cacheKey]) return Object.assign({}, aiPhotoCache[cacheKey]);   // 同張照片 → 同一個結果
     const prompt = (many
         ? '這裡有'+b64s.length+'張食物照片,可能是同一餐的不同角度、或是一桌的多道菜。請綜合所有照片,判斷這一「整餐」是什麼、估計加起來的總熱量(大卡),不要重複計算同一道菜。'
-        : '看這張食物照片,用繁體中文判斷是什麼餐點並估計整份總熱量(大卡)。')
-      + '照片可能是手機截圖或外送/菜單畫面,忽略介面與文字浮水印,只看食物本身。重要:多數人會低估份量,請把烹調用油、醬料、糖、隱藏配料都算進去,寧可估高也不要估低,以餐廳/外食的實際份量為準。'
+        : '看這張食物照片,判斷是什麼餐點並估計整份總熱量(大卡)。')
+      + '照片可能是手機截圖或外送/菜單畫面,忽略介面與文字浮水印,只看食物本身。'
+      + '請「盡量準確、貼近實際」,不要習慣性高估、也不要低估:'
+      + '①份量以照片裡「實際看到的量」為準——看碗盤大小、食物實際佔多少、主食(飯/麵)的份量,不要一律當成餐廳大份。'
+      + '②有明顯的油、醬汁、糖、勾芡、油炸再算進去;若看起來清爽、少油、家常、水煮或清炒,就用「較低」的油量估,不要假設很油。'
+      + '③蔬菜、瘦肉(例如雞胸肉)、清淡家常菜本身熱量就不高,如實估計即可,不要為了保險而灌高。'
       + (lang==="en"
           ? ' Respond in English. Return only JSON: {"name":"dish name, max ~4 words","kcal":integer,"note":"one-line reason"}. If it is not food, return an empty string for name.'
           : '用繁體中文,只回 JSON:{"name":"餐點名不超過12字","kcal":整數,"note":"一句話依據"}。看不出是食物就 name 回空字串。');
