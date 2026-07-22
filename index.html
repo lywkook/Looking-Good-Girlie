@@ -625,6 +625,7 @@
   .menu-ai-adjust{ margin-top:12px; }
   .menu-ai-label{ font-size:var(--fs-body); color:var(--ink); font-weight:900; margin-bottom:8px; }
   .menu-ai-row{ display:flex; gap:8px; }
+  .coach-result{ margin-top:10px; padding:12px 14px; background:var(--pink-soft); border-radius:14px; font-size:var(--fs-label); color:var(--ink); line-height:1.6; }
   .menu-sync{ margin-top:12px; }
   .menu-sync-row{ display:flex; gap:8px; }
   .menu-sync-row .mini-btn{ flex:1; }
@@ -851,6 +852,8 @@
   <div class="weight-box" id="todayMenuBox" style="border-style:solid;">
     <!-- filled by JS -->
   </div>
+  <button type="button" class="ai-photo-btn" id="coachBtn" style="margin-top:12px;line-height:1.4;">依我的紀錄與數據,重新調整菜單和運動</button>
+  <div class="ai-photo-status" id="coachStatus"></div>
   <div class="menu-ai-adjust">
     <div class="menu-ai-label">調整菜單推薦需求</div>
     <div class="menu-ai-row">
@@ -1339,7 +1342,7 @@
     "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
     "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
     "① 更改菜單":"① Change the menu","② 上傳餐廳菜單,推薦適合我的":"② Upload a restaurant menu for a pick that suits you","收起來 ▲":"Close ▲",
-    "調整菜單推薦需求":"Adjust menu recommendation","例:我不吃早餐 / 都要吃素 / 午晚餐低碳":"e.g. skip breakfast / all vegetarian / low-carb lunch & dinner","套用":"Apply",
+    "依我的紀錄與數據,重新調整菜單和運動":"Adjust my menu & workout from my records & data","調整菜單推薦需求":"Adjust menu recommendation","例:我不吃早餐 / 都要吃素 / 午晚餐低碳":"e.g. skip breakfast / all vegetarian / low-carb lunch & dinner","套用":"Apply",
     "今日菜單 ↔ 飲食紀錄 同步(選一個方向)":"Sync today's menu ↔ food log (pick a direction)","菜單 → 飲食紀錄":"Menu → food log","飲食紀錄 → 菜單":"Food log → menu",
     "選一餐,AI 會依你的熱量目標重新配好。下面全部都可以留空,直接按也會推薦。":"Pick a meal and AI re-plans it to your calorie target. Everything below is optional — just tap and it still recommends.",
     "口味喜好(可複選 / 不選)":"Taste preferences (pick any, or none)",
@@ -2338,6 +2341,58 @@
     }
     if(btn){ btn.disabled=false; btn.textContent=old; }
   }
+  // AI 教練:結合「飲食紀錄 + 運動 + 每天量測數據 + 目標與期限」→ 判斷進度,重新調整今天的菜單和運動
+  async function coachAdjust(){
+    const status=document.getElementById("coachStatus");
+    const iso=curIso();
+    const te=days.find(d=>d.iso===iso)||days[0]; if(!te) return;
+    if(!anyKey()){ status.innerHTML='<span class="err">'+RP('這個功能需要一把免費 AI 金鑰,到 ⚙️ 設定最上面貼上即可。','This needs a free AI key — paste one at the top of ⚙️ Settings.')+'</span>'; return; }
+    const g=id=>{ const el=document.getElementById(id); return el?String(el.value||"").trim():""; };
+    const sex=g("pfSex")==="male"?"男":(g("pfSex")==="female"?"女":"未填");
+    const age=g("pfAge")||"未填", h=g("pfHeight")||"未填";
+    const curW=g("pfWeight"), tw=g("pfTargetW"), tbf=g("pfTargetBf"), date=g("pfDate");
+    const target=kcalTarget||parseInt(g("inKcalTarget"),10)||1500;
+    const metricArr=(typeof log!=="undefined"&&Array.isArray(log))?log:[];
+    const recentMetrics=metricArr.slice().sort((a,b)=>a.date<b.date?-1:1).slice(-10)
+      .map(m=>m.date+" "+(m.weight!=null?m.weight+"kg":"")+(m.fat!=null?" 體脂"+m.fat+"%":"")+(m.muscle!=null?" 肌肉"+m.muscle+"kg":"")).join(" / ") || "尚無紀錄";
+    const dayKcal={};
+    (typeof foodLog!=="undefined"?foodLog:[]).forEach(f=>{ dayKcal[f.date]=(dayKcal[f.date]||0)+(Number(f.kcal)||0); });
+    const recentDays=Object.keys(dayKcal).sort().slice(-4);
+    const foodSummary=recentDays.map(d=>d+":"+Math.round(dayKcal[d])+"大卡"+((typeof exBurn!=="undefined"&&exBurn[d])?"(運動-"+Math.round(exBurn[d])+")":"")).join(" / ") || "尚無紀錄";
+    const last2=recentDays.slice(-2);
+    const recentFoods=(typeof foodLog!=="undefined"?foodLog:[]).filter(f=>last2.includes(f.date)).map(f=>f.name).slice(-15).join("、") || "無";
+    const woSummary=(typeof workoutPlan!=="undefined"&&workoutPlan&&Array.isArray(workoutPlan.week))
+      ? workoutPlan.week.map(d=>d.day+":"+(d.focus||d.type||"")).join("、") : "尚未規劃";
+    const prompt="你是專業的減重營養與健身教練。根據使用者的『目標』和『實際紀錄與量測數據』,先判斷進度,再同時調整『今天的菜單』和『運動方向』,幫他在期限內達成目標。\n"
+      +"【目標】性別"+sex+"、年齡"+age+"、身高"+h+"cm、目前體重"+(curW||"未填")+"kg、目標體重"+(tw||"未填")+"kg"+(tbf?("、目標體脂"+tbf+"%"):"")+"、希望達成日期"+(date||"未填")+"。目前每日熱量目標約"+target+"大卡。\n"
+      +"【最近體重/體脂/肌肉趨勢】"+recentMetrics+"。\n"
+      +"【最近幾天實際攝取熱量】"+foodSummary+"。\n"
+      +"【最近吃的東西】"+recentFoods+"。\n"
+      +"【目前運動安排】"+woSummary+"。\n"
+      +"請判斷:照目前的吃法和運動,能不能在期限內達標?然後(1)重新設計『今天的菜單』(早/午/晚/點心),原型食物、好準備、貼近他平常吃的但更有助達標;(2)給『運動調整方向』(加強哪裡、頻率或強度怎麼調);(3)建議每日熱量。\n"
+      +"只回 JSON:{\"analysis\":\"進度判斷+關鍵建議,不超過60字\",\"dailyKcal\":整數,\"menu\":{\"breakfast\":\"\",\"lunch\":\"\",\"dinner\":\"\",\"fruit\":\"\"},\"workout\":\"運動調整建議,不超過50字\"}。菜單每項不超過25字。"+TW_RULE;
+    const btn=document.getElementById("coachBtn"); const old=btn?btn.textContent:""; if(btn){ btn.disabled=true; btn.textContent=RP("分析中…","Analyzing…"); }
+    status.innerHTML='<span class="ai-spin"></span>'+RP('依你的紀錄與數據分析、重新調整菜單和運動…','Analyzing your records and adjusting…');
+    try{
+      const m=await geminiJSON(prompt,null,0.5);
+      if(!m||!m.menu) throw new Error("回傳格式看不懂");
+      ["breakfast","lunch","dinner","fruit"].forEach(f=>{ if(m.menu[f]!=null){ const v=String(m.menu[f]).trim()||"—"; applyMeal(f,v); } });
+      if(m.dailyKcal && Number(m.dailyKcal)>0){ const t=document.getElementById("inKcalTarget"); const dk=Math.round(Number(m.dailyKcal));
+        if(t){ t.value=dk; } kcalTarget=dk; if(typeof saveTarget==="function") saveTarget(); if(typeof renderFoodLog==="function") renderFoodLog(); }
+      status.innerHTML='<div class="coach-result">'
+        +'<div><b>'+RP('進度分析','Progress')+':</b> '+esc(m.analysis||"")+'</div>'
+        +(m.workout?'<div style="margin-top:6px"><b>'+RP('運動調整','Workout')+':</b> '+esc(m.workout)+'</div>':'')
+        +'<div class="ok" style="margin-top:8px">'+RP('已依你的進度更新今日菜單'+(m.dailyKcal?'與熱量目標':'')+' ✅','Menu updated to your progress ✅')+'</div>'
+        +'</div>';
+      // 同時把運動也依建議調整(需已有運動計畫)
+      if(m.workout && typeof workoutPlan!=="undefined" && workoutPlan && Array.isArray(workoutPlan.week) && typeof adjustWorkoutPlan==="function"){
+        adjustWorkoutPlan("依我的目標與進度:"+m.workout);
+      }
+    }catch(e){
+      status.innerHTML='<span class="err">'+RP('這次分析沒成功,再試一次。','That didn\'t work — try again.')+'</span>';
+    }
+    if(btn){ btn.disabled=false; btn.textContent=old; }
+  }
   // 同步到菜單時只留「食物名稱」,去掉份量(如「雞蛋一顆」→「雞蛋」、「聖女番茄 (10顆)」→「聖女番茄」)
   function foodNameOnly(name){
     let s=String(name==null?"":name).trim();
@@ -2388,6 +2443,7 @@
     const aiBtn=document.getElementById("menuAiBtn"), aiInput=document.getElementById("menuAiInput");
     if(aiBtn) aiBtn.addEventListener("click", menuAiAdjust);
     if(aiInput) aiInput.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); menuAiAdjust(); } });
+    const coach=document.getElementById("coachBtn"); if(coach) coach.addEventListener("click", coachAdjust);
     const f2m=document.getElementById("syncFoodToMenu"); if(f2m) f2m.addEventListener("click", syncFoodLogToMenu);
     const m2f=document.getElementById("syncMenuToFood"); if(m2f) m2f.addEventListener("click", syncMenuToFoodLog);
     const collapseBtn = document.getElementById("menuRegenCollapse");
