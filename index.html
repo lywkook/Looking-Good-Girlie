@@ -388,7 +388,11 @@
   .qbtn{ width:32px; height:32px; border-radius:50%; border:2px solid var(--line); background:#fff;
     color:var(--ink); font-size:var(--fs-body); font-weight:900; line-height:1; cursor:pointer; font-family:inherit; }
   .qty-val{ font-size:var(--fs-body); font-weight:900; color:var(--ink); min-width:26px; text-align:center; }
+  input.qty-val{ width:52px; min-width:52px; padding:5px 6px; border:2px solid var(--line); border-radius:10px;
+    background:#FFFDFA; font-family:inherit; }
   .qty-hint{ font-size:var(--fs-hint); color:var(--ink-soft); }
+  input.fc-qty-input{ width:46px; text-align:center; font-size:var(--fs-label); font-weight:900; color:var(--ink);
+    padding:3px 4px; border:2px solid var(--line); border-radius:9px; background:#FFFDFA; font-family:inherit; }
   .kcal-total{
     display:inline-block; background:var(--pink-soft); border-radius:20px; padding:6px 16px;
     font-size:var(--fs-num); font-weight:900; color:var(--ink);
@@ -976,9 +980,9 @@
     <div class="food-suggest" id="foodSuggest"></div>
     <div class="qty-row"><span class="qty-lbl">數量</span>
       <button type="button" class="qbtn" id="addQtyMinus">−</button>
-      <span class="qty-val" id="addQty">1</span>
+      <input type="text" inputmode="decimal" class="qty-val" id="addQty" value="1" autocomplete="off">
       <button type="button" class="qbtn" id="addQtyPlus">＋</button>
-      <span class="qty-hint">份 / 顆 / 個(熱量會 ×數量)</span>
+      <span class="qty-hint">份 / 顆 / 個(可打小數或分數,如 0.5、1/4;熱量會 ×數量)</span>
     </div>
     <div class="food-photo-row">
       <input type="file" accept="image/*" id="foodPhotoInput" style="display:none">
@@ -1289,7 +1293,7 @@
     // 餐 / 食物
     "早餐":"Breakfast","午餐":"Lunch","晚餐":"Dinner","點心":"Snack","點心/水果":"Snack / fruit","水果":"Fruit","水果點心":"Fruit / snack",
     "吃了什麼?打字會跳建議選":"What did you eat? Type to see suggestions","數量":"Qty","熱量":"kcal","加入":"Add",
-    "份 / 顆 / 個(熱量會 ×數量)":"servings / pcs (kcal × qty)","加入這一餐":"Add this meal",
+    "份 / 顆 / 個(可打小數或分數,如 0.5、1/4;熱量會 ×數量)":"servings / pcs — decimals or fractions ok (0.5, 1/4); kcal × qty","加入這一餐":"Add this meal",
     "常用(點一下加入):":"Common (tap to add):","其他?打字加入":"Other? Type to add",
     "不想吃這些?換一份":"Not these? Swap","換這一餐":"Swap this meal",
     "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
@@ -3161,10 +3165,10 @@
           ${f.thumb?`<img src="${f.thumb}">`:''}
           <div class="fc-main">
             <div class="fc-name" data-fid="${f.id}">${esc(f.name)}</div>
-            <div class="fc-kcal"><span class="fc-kcal-num" data-fid="${f.id}">${Math.round(unit*qty)}</span> kcal${qty>1?`(×${qty})`:''}</div>
+            <div class="fc-kcal"><span class="fc-kcal-num" data-fid="${f.id}">${Math.round(unit*qty)}</span> kcal${qty!==1?`(×${fmtQty(qty)})`:''}</div>
             <div class="fc-qtyrow" data-fid="${f.id}" style="display:none;">
               <button type="button" class="fc-q" data-fid="${f.id}" data-d="-1">−</button>
-              <span class="fc-qty">×${qty}</span>
+              <input type="text" inputmode="decimal" class="fc-qty-input" data-fid="${f.id}" value="${fmtQty(qty)}" autocomplete="off">
               <button type="button" class="fc-q" data-fid="${f.id}" data-d="1">＋</button>
             </div>
           </div>
@@ -3190,7 +3194,18 @@
       btn.addEventListener("click", async (e)=>{ e.stopPropagation();
         const f = foodLog.find(x=>x.id===btn.dataset.fid); if(!f) return;
         const unit = foodUnit(f); let qty = foodQty(f) + parseInt(btn.dataset.d,10);
-        if(qty<1) qty=1;
+        if(qty<0.25) qty=0.25;
+        f.qty = qty; f.unit = unit; f.kcal = Math.round(unit*qty);
+        await saveFoodLog(); renderFoodLog();
+      });
+    });
+    area.querySelectorAll(".fc-qty-input").forEach(inp=>{
+      inp.addEventListener("click", e=>e.stopPropagation());
+      inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
+      inp.addEventListener("blur", async ()=>{
+        const f = foodLog.find(x=>x.id===inp.dataset.fid); if(!f) return;
+        let qty = parseQty(inp.value); if(qty<0.05) qty=0.05;
+        const unit = foodUnit(f);
         f.qty = qty; f.unit = unit; f.kcal = Math.round(unit*qty);
         await saveFoodLog(); renderFoodLog();
       });
@@ -3232,6 +3247,16 @@
   }
   function foodUnit(f){ return f.unit!=null ? Number(f.unit) : (Number(f.kcal)||0); }
   function foodQty(f){ return f.qty!=null ? Number(f.qty) : 1; }
+  // 數量解析:支援小數(0.5)與分數(1/4、3/2);解析不出來就當 1
+  function parseQty(s){
+    s=String(s==null?"":s).trim().replace(/\s+/g,"").replace(/[／]/g,"/");
+    if(!s) return 1;
+    const fm=/^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/.exec(s);
+    if(fm){ const n=parseFloat(fm[1]), d=parseFloat(fm[2]); if(n>0&&d>0) return n/d; }
+    const v=parseFloat(s);
+    return (isNaN(v)||v<=0) ? 1 : v;
+  }
+  function fmtQty(q){ q=Math.round(Number(q)*100)/100; return String(q); }
   async function moveFoodMeal(fid, meal){
     const f = foodLog.find(x=>x.id===fid); if(!f || f.meal===meal) return;
     f.meal = meal; await saveFoodLog(); renderFoodLog();
@@ -3801,23 +3826,26 @@
     });
 
     const qtyEl = document.getElementById("addQty");
-    const setQty = q=>{ if(q<1)q=1; qtyEl.textContent=q; };
-    document.getElementById("addQtyMinus").addEventListener("click", ()=> setQty((parseInt(qtyEl.textContent,10)||1)-1));
-    document.getElementById("addQtyPlus").addEventListener("click", ()=> setQty((parseInt(qtyEl.textContent,10)||1)+1));
+    const setQty = q=>{ if(q<0.05)q=0.05; qtyEl.value=fmtQty(q); };
+    const stepQty = d=>{ let q=parseQty(qtyEl.value)+d; if(q<0.25)q=0.25; setQty(q); };
+    document.getElementById("addQtyMinus").addEventListener("click", ()=> stepQty(-1));
+    document.getElementById("addQtyPlus").addEventListener("click", ()=> stepQty(1));
+    qtyEl.addEventListener("blur", ()=> setQty(parseQty(qtyEl.value)));
+    qtyEl.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); qtyEl.blur(); } });
     document.getElementById("addFoodBtn").addEventListener("click", async ()=>{
       const name = nameEl.value.trim();
       if(!name){ nameEl.focus(); return; }
       let unit = parseFloat(kcalEl.value);
       if(isNaN(unit)) unit = (FOOD_MAP[name] != null) ? FOOD_MAP[name] : 0;
       unit = Math.round(unit);
-      const qty = parseInt(qtyEl.textContent,10)||1;
+      const qty = parseQty(qtyEl.value);
       if(!Object.prototype.hasOwnProperty.call(FOOD_MAP, name)){
         customFoods = customFoods.filter(f=>f.n!==name);
         customFoods.unshift({n:name, k:unit});
         if(customFoods.length>80) customFoods = customFoods.slice(0,80);
         rebuildFoodMap(); saveCustomFoods();
       }
-      const entry = { id: Date.now().toString(), date: curIso(), meal: selectedMeal, name: name, unit: unit, qty: qty, kcal: unit*qty };
+      const entry = { id: Date.now().toString(), date: curIso(), meal: selectedMeal, name: name, unit: unit, qty: qty, kcal: Math.round(unit*qty) };
       if(pendingThumb) entry.thumb = pendingThumb;
       foodLog.push(entry);
       await saveFoodLog();
