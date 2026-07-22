@@ -193,8 +193,8 @@
   #foodSection{ order:2; }
   #fridgeSection{ order:3; }
   #waterSection{ order:4; }
-  #workoutSection{ order:5; }
-  #checkinSection{ order:6; }
+  #checkinSection{ order:5; }
+  #workoutSection{ order:6; }
   #metricsSection{ order:7; }
   /* ===== 主題分頁 (飲食 / 運動 / 數據) ===== */
   .theme-nav{ order:0; position:sticky; top:0; z-index:50;
@@ -573,9 +573,6 @@
   .plan-item .pi-type{ font-size:var(--fs-label); color:var(--ink-soft); }
   .plan-item .pi-edit{ font-size:var(--fs-label); color:var(--pink); padding:2px 8px; }
   .plan-item .pi-del{ font-size:var(--fs-label); color:var(--ink-soft); padding:2px 8px; }
-  .plan-new{ margin-top:10px; border-top:1px dashed var(--line); padding-top:12px; display:flex; flex-direction:column; gap:8px; }
-  .plan-new input, .plan-new select{ padding:10px 12px; border-radius:12px; border:2px solid var(--line);
-    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
   #planHeader{ padding:14px 20px 2px; margin:0; font-size:30px; line-height:1.25; font-weight:900; cursor:pointer; }
   .mini-btn{ background:var(--mint-soft); color:var(--ink); border:none; border-radius:12px;
     padding:8px 14px; font-size:var(--fs-label); font-family:inherit; cursor:pointer; }
@@ -817,15 +814,6 @@
 <div class="plan-panel" id="planPanel">
   <div class="plan-panel-title">切換計畫</div>
   <div class="plan-list" id="planList"></div>
-  <div class="plan-new">
-    <div style="font-size:18.4px;color:var(--ink-soft);font-weight:700;">新增計畫</div>
-    <input id="newPlanName" placeholder="計畫名稱(例:長期體重紀錄)" autocomplete="off">
-    <select id="newPlanType">
-      <option value="track">紀錄飲食 + 喝水 + 體重</option>
-      <option value="full">幫我規劃減重減脂</option>
-    </select>
-    <button id="addPlanBtn" class="save-btn cute">＋ 建立新計畫</button>
-  </div>
 </div>
 <h2 class="cute" id="planHeader" style="display:none;"></h2>
 
@@ -4696,7 +4684,7 @@
   // ===== 主題分頁:飲食 / 運動 / 數據 =====
   const THEME_TABS = {
     diet: ["menuSection","foodSection","fridgeSection","waterSection"],
-    exercise: ["workoutSection","checkinSection"],
+    exercise: ["checkinSection","workoutSection"],
     data: ["metricsSection"]
   };
   const TAB_OF_SECTION = (()=>{ const m={}; Object.keys(THEME_TABS).forEach(t=>THEME_TABS[t].forEach(id=>m[id]=t)); return m; })();
@@ -4816,21 +4804,9 @@
     if(typeof renderDays==="function") renderDays();
     await applyScopeTheme(id);   // 套用「這個計畫」自己的主題色 + 背景
   }
-  async function addPlan(){
-    const nameEl=document.getElementById("newPlanName");
-    const name=(nameEl.value||"").trim();
-    const type=document.getElementById("newPlanType").value;
-    if(!name){ nameEl.focus(); return; }
-    const id="pl"+Date.now().toString(36);
-    plans.push({id,name,type}); await savePlans();
-    nameEl.value="";
-    await switchPlan(id);
-    document.getElementById("planPanel").classList.remove("show");
-  }
   function initPlanModule(){
     updatePlanBar(); renderPlanList();
     document.getElementById("planCurrent").addEventListener("click", ()=> document.getElementById("planPanel").classList.toggle("show"));
-    document.getElementById("addPlanBtn").addEventListener("click", addPlan);
     const ph=document.getElementById("planHeader"); if(ph) ph.addEventListener("click", renamePlan);   // 點計畫名稱即可改名
   }
 
