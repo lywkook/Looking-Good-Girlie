@@ -615,6 +615,9 @@
   .menu-ai-adjust{ margin-top:12px; }
   .menu-ai-label{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; margin-bottom:6px; }
   .menu-ai-row{ display:flex; gap:8px; }
+  .menu-sync{ margin-top:12px; }
+  .menu-sync-row{ display:flex; gap:8px; }
+  .menu-sync-row .mini-btn{ flex:1; }
   .menu-ai-row input{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
     font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
   .menu-regen-box{ display:none; margin-top:12px; padding:14px; background:var(--pink-soft); border-radius:16px; }
@@ -844,8 +847,14 @@
     </div>
     <div class="ai-photo-status" id="menuAiStatus"></div>
   </div>
-  <button type="button" class="mini-btn" id="syncFoodBtn" style="margin-top:10px;width:100%;">自己選了別的?依飲食紀錄更新今日菜單</button>
-  <div class="ai-photo-status" id="syncFoodStatus"></div>
+  <div class="menu-sync">
+    <div class="menu-ai-label">今日菜單 ↔ 飲食紀錄 同步(選一個方向)</div>
+    <div class="menu-sync-row">
+      <button type="button" class="mini-btn" id="syncMenuToFood">菜單 → 飲食紀錄</button>
+      <button type="button" class="mini-btn" id="syncFoodToMenu">飲食紀錄 → 菜單</button>
+    </div>
+    <div class="ai-photo-status" id="syncStatus"></div>
+  </div>
   <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;width:100%;padding:14px 18px;font-weight:700;line-height:1.4;"><span class="mrb-main">① 更改菜單</span><span class="mrb-sub">② 上傳餐廳菜單,推薦適合我的</span></button>
   <div class="menu-regen-box" id="menuRegenBox">
     <div class="meal-tabs" id="regenMealTabs">
@@ -1321,7 +1330,7 @@
     "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
     "① 更改菜單":"① Change the menu","② 上傳餐廳菜單,推薦適合我的":"② Upload a restaurant menu for a pick that suits you","收起來 ▲":"Close ▲",
     "調整菜單推薦需求":"Adjust menu recommendation","例:我不吃早餐 / 都要吃素 / 午晚餐低碳":"e.g. skip breakfast / all vegetarian / low-carb lunch & dinner","套用":"Apply",
-    "自己選了別的?依飲食紀錄更新今日菜單":"Ate something else? Update today's menu from your food log",
+    "今日菜單 ↔ 飲食紀錄 同步(選一個方向)":"Sync today's menu ↔ food log (pick a direction)","菜單 → 飲食紀錄":"Menu → food log","飲食紀錄 → 菜單":"Food log → menu",
     "選一餐,AI 會依你的熱量目標重新配好。下面全部都可以留空,直接按也會推薦。":"Pick a meal and AI re-plans it to your calorie target. Everything below is optional — just tap and it still recommends.",
     "口味喜好(可複選 / 不選)":"Taste preferences (pick any, or none)",
     "高蛋白":"High protein","少油清爽":"Light / low oil","低卡":"Low calorie","低碳水":"Low carb","多蔬菜":"More veg","吃辣":"Spicy OK","不辣":"Not spicy","不吃牛":"No beef","不吃豬":"No pork","海鮮":"Seafood","素食":"Vegetarian","飯類":"Rice dishes","麵食":"Noodles","湯品":"Soup",
@@ -2326,9 +2335,9 @@
     s=s.replace(/\s*[0-9０-９一二兩三四五六七八九十半幾]+\s*(顆|杯|份|片|瓶|碗|個|支|條|塊|球|包|盒|根|尾|隻|串|把|克|公克|g|ml|毫升|大匙|茶匙)\s*$/,"");   // 去掉結尾份量
     return s.trim() || String(name==null?"":name).trim();
   }
-  // 使用者沒照推薦菜單、而是自己選了別的(記在「飲食紀錄」)→ 一鍵把實際吃的更新到今日菜單
+  // 方向一:飲食紀錄 → 今日菜單(自己選了別的,把實際吃的更新到菜單;只覆蓋有紀錄的餐,去掉份量)
   function syncFoodLogToMenu(){
-    const status=document.getElementById("syncFoodStatus");
+    const status=document.getElementById("syncStatus");
     const iso=curIso();
     const te=days.find(d=>d.iso===iso)||days[0]; if(!te) return;
     const todays=(typeof foodLog!=="undefined"?foodLog:[]).filter(f=>f.date===iso);
@@ -2343,6 +2352,25 @@
     status.innerHTML = n ? '<span class="ok">'+RP('已依飲食紀錄更新今日菜單 ✅','Menu updated from your log ✅')+'</span>'
                          : '<span class="err">'+RP('沒有可同步的餐','Nothing to sync')+'</span>';
   }
+  // 方向二:今日菜單 → 飲食紀錄(把菜單的每一餐加進飲食紀錄;熱量抓得到就帶入,抓不到給 0 讓使用者自己填)
+  function syncMenuToFoodLog(){
+    const status=document.getElementById("syncStatus");
+    const iso=curIso();
+    const te=days.find(d=>d.iso===iso)||days[0]; if(!te) return;
+    const map={breakfast:"早餐",lunch:"午餐",dinner:"晚餐",fruit:"點心"};
+    const fields=Object.keys(map).filter(f=> te.diet[f] && String(te.diet[f]).trim() && String(te.diet[f]).trim()!=="—");
+    if(!fields.length){ status.innerHTML='<span class="err">'+RP('今日菜單還是空的,沒有可複製的內容。','Today\'s menu is empty — nothing to copy.')+'</span>'; return; }
+    if(!confirm(RP('把今日菜單的內容加進「飲食紀錄」嗎?(熱量抓不到的地方會是 0,可自行點數字修改)','Add today\'s menu into the food log? (unknown calories start at 0 — tap to edit)'))) return;
+    let n=0, i=0;
+    fields.forEach(f=>{
+      const name=String(te.diet[f]).trim();
+      const unit = (typeof FOOD_MAP!=="undefined" && (FOOD_MAP[name]!=null ? FOOD_MAP[name] : FOOD_MAP[foodNameOnly(name)])) || 0;
+      foodLog.push({ id: Date.now().toString()+"_"+(i++), date: iso, meal: map[f], name: name, unit: unit, qty:1, kcal: unit });
+      n++;
+    });
+    saveFoodLog(); renderFoodLog();
+    status.innerHTML = '<span class="ok">'+RP('已把今日菜單加進飲食紀錄 ✅','Menu added to your food log ✅')+'</span>';
+  }
   function initMenuModule(){
     const tgl = document.getElementById("menuRegenBtn");
     const box = document.getElementById("menuRegenBox");
@@ -2350,8 +2378,8 @@
     const aiBtn=document.getElementById("menuAiBtn"), aiInput=document.getElementById("menuAiInput");
     if(aiBtn) aiBtn.addEventListener("click", menuAiAdjust);
     if(aiInput) aiInput.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); menuAiAdjust(); } });
-    const syncBtn=document.getElementById("syncFoodBtn");
-    if(syncBtn) syncBtn.addEventListener("click", syncFoodLogToMenu);
+    const f2m=document.getElementById("syncFoodToMenu"); if(f2m) f2m.addEventListener("click", syncFoodLogToMenu);
+    const m2f=document.getElementById("syncMenuToFood"); if(m2f) m2f.addEventListener("click", syncMenuToFoodLog);
     const collapseBtn = document.getElementById("menuRegenCollapse");
     if(collapseBtn && box) collapseBtn.addEventListener("click", ()=>{ box.classList.remove("show"); if(tgl) tgl.scrollIntoView({block:"center", behavior:"smooth"}); });
     document.querySelectorAll("#regenMealTabs .meal-tab").forEach(b=>{
