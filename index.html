@@ -626,8 +626,17 @@
   .menu-ai-label{ font-size:var(--fs-body); color:var(--ink); font-weight:900; margin-bottom:8px; }
   .menu-ai-row{ display:flex; gap:8px; }
   .coach-result{ margin-top:10px; padding:12px 14px; background:var(--pink-soft); border-radius:14px; font-size:var(--fs-label); color:var(--ink); line-height:1.6; }
-  .menu-chat-log{ display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto; margin-bottom:10px; }
+  .menu-ai-reply{ margin-top:10px; padding:11px 14px; background:#fff; border:1.5px solid var(--line); border-radius:14px;
+    font-size:var(--fs-body); line-height:1.55; color:var(--ink); white-space:pre-wrap; word-break:break-word; }
+  .menu-ai-reply:empty{ display:none; }
+  .menu-hist-toggle{ display:block; margin:8px 0 0; padding:5px 2px; background:none; border:none; cursor:pointer;
+    font-size:calc(var(--fs-body) - 1px); color:var(--muted); font-family:inherit; }
+  .menu-chat-log{ display:flex; flex-direction:column; gap:6px; max-height:260px; overflow-y:auto; margin-top:8px;
+    padding:10px 12px; background:var(--pink-soft); border-radius:12px; }
   .menu-chat-log:empty{ display:none; }
+  .menu-chat-log .hist-line{ font-size:calc(var(--fs-body) - 1px); line-height:1.5; color:var(--ink); white-space:pre-wrap; word-break:break-word; }
+  .menu-chat-log .hist-q{ font-weight:900; }
+  .menu-chat-log .hist-a{ color:var(--muted); }
   .menu-sync{ margin-top:12px; }
   .menu-sync-row{ display:flex; gap:8px; }
   .menu-sync-row .mini-btn{ flex:1; }
@@ -858,12 +867,14 @@
   <div class="ai-photo-status" id="coachStatus"></div>
   <div class="menu-ai-adjust">
     <div class="menu-ai-label">提出需求 / 問 AI</div>
-    <div class="menu-chat-log" id="menuChatLog"></div>
     <div class="menu-ai-row">
       <input id="menuAiInput" placeholder="問問題或說需求,例:這樣夠嗎?/ 我不吃早餐 / 換低碳" autocomplete="off">
       <button type="button" class="mini-btn" id="menuAiBtn">傳送</button>
     </div>
+    <div class="menu-ai-reply" id="menuAiReply"></div>
     <div class="ai-photo-status" id="menuAiStatus"></div>
+    <button type="button" class="menu-hist-toggle" id="menuHistToggle" hidden>▾ 對話紀錄</button>
+    <div class="menu-chat-log" id="menuChatLog" hidden></div>
   </div>
   <div class="menu-sync">
     <div class="menu-ai-label">今日菜單 ↔ 飲食紀錄 同步(選一個方向)</div>
@@ -2313,27 +2324,47 @@
   }
   // 跟 AI 對話:使用者可以問問題或提需求,AI 回答,並在需要時調整今日菜單(優先用冰箱食材)
   let menuChatHistory=[];
-  function menuChatAppend(role, text){
-    const logEl=document.getElementById("menuChatLog"); if(!logEl) return null;
-    const div=document.createElement("div");
-    div.className="ask-bubble "+(role==="user"?"ask-q":"ask-a");
-    div.textContent=text;
-    logEl.appendChild(div); logEl.scrollTop=logEl.scrollHeight;
-    return div;
+  function renderMenuHist(){
+    const logEl=document.getElementById("menuChatLog");
+    const tgl=document.getElementById("menuHistToggle");
+    if(!logEl) return;
+    logEl.innerHTML="";
+    menuChatHistory.forEach(mm=>{
+      const div=document.createElement("div");
+      div.className="hist-line "+(mm.role==="user"?"hist-q":"hist-a");
+      div.textContent=(mm.role==="user"?RP("你:","You: "):RP("AI:","AI: "))+mm.text;
+      logEl.appendChild(div);
+    });
+    logEl.scrollTop=logEl.scrollHeight;
+    if(tgl) tgl.hidden = menuChatHistory.length===0;
+  }
+  async function saveMenuHist(){ try{ await window.storage.set(K("menuChatHist"), JSON.stringify(menuChatHistory.slice(-40))); }catch(e){} }
+  async function loadMenuHist(){
+    try{ const r=await window.storage.get(K("menuChatHist")); menuChatHistory = (r&&r.value)?(JSON.parse(r.value)||[]):[]; }
+    catch(e){ menuChatHistory=[]; }
+    if(!Array.isArray(menuChatHistory)) menuChatHistory=[];
+    renderMenuHist();
+    // 歷史對話預設收起,只保留最後一則 AI 回覆顯示在上方
+    const logEl=document.getElementById("menuChatLog"), tgl=document.getElementById("menuHistToggle");
+    if(logEl) logEl.hidden=true; if(tgl) tgl.textContent="▾ 對話紀錄";
+    const replyEl=document.getElementById("menuAiReply");
+    const lastAi=[...menuChatHistory].reverse().find(mm=>mm.role==="ai");
+    if(replyEl) replyEl.textContent=lastAi?lastAi.text:"";
   }
   async function menuChatSend(){
     const input = document.getElementById("menuAiInput");
     const status = document.getElementById("menuAiStatus");
+    const replyEl = document.getElementById("menuAiReply");
     const req = ((input&&input.value)||"").trim();
     if(!req){ if(input) input.focus(); return; }
     const iso = curIso();
     const te = days.find(d=>d.iso===iso) || days[0];
     if(!te) return;
     if(!anyKey()){ status.innerHTML='<span class="err">'+RP('這個功能需要一把免費 AI 金鑰,到 ⚙️ 設定最上面貼上即可。','This needs a free AI key — paste one at the top of ⚙️ Settings.')+'</span>'; return; }
-    menuChatAppend("user", req); menuChatHistory.push({role:"user", text:req});
+    menuChatHistory.push({role:"user", text:req});
     if(input) input.value="";
     status.innerHTML="";
-    const thinking=menuChatAppend("ai", "…");
+    if(replyEl) replyEl.textContent=RP("思考中…","Thinking…");
     const btn=document.getElementById("menuAiBtn"); if(btn) btn.disabled=true;
     const target = parseInt(document.getElementById("inKcalTarget").value,10) || kcalTarget || 1500;
     const cur = '早餐:'+(te.diet.breakfast||'—')+'、午餐:'+(te.diet.lunch||'—')+'、晚餐:'+(te.diet.dinner||'—')+'、點心/水果:'+(te.diet.fruit||'—');
@@ -2348,15 +2379,17 @@
     try{
       const m = await geminiJSON(prompt, null, 0.6);
       const reply=(m&&m.reply)?String(m.reply):RP("好的!","OK!");
-      if(thinking) thinking.textContent=reply;
+      if(replyEl) replyEl.textContent=reply;
       menuChatHistory.push({role:"ai", text:reply});
       if(m && m.menu && typeof m.menu==="object"){
         let applied=false;
         ["breakfast","lunch","dinner","fruit"].forEach(f=>{ if(m.menu[f]!=null){ applyMeal(f, String(m.menu[f]).trim()||"—"); applied=true; } });
         if(applied) status.innerHTML='<span class="ok">'+RP('已依對話調整今日菜單 ✅','Menu updated from chat ✅')+'</span>';
       }
+      renderMenuHist(); saveMenuHist();
     }catch(e){
-      if(thinking) thinking.textContent=RP('這次沒回覆成功,再試一次。','That didn\'t work — try again.');
+      menuChatHistory.pop();
+      if(replyEl) replyEl.textContent=RP('這次沒回覆成功,再試一次。','That didn\'t work — try again.');
     }
     if(btn) btn.disabled=false;
   }
@@ -2473,6 +2506,12 @@
     const aiBtn=document.getElementById("menuAiBtn"), aiInput=document.getElementById("menuAiInput");
     if(aiBtn) aiBtn.addEventListener("click", menuChatSend);
     if(aiInput) aiInput.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); menuChatSend(); } });
+    const histTgl=document.getElementById("menuHistToggle"), histLog=document.getElementById("menuChatLog");
+    if(histTgl && histLog) histTgl.addEventListener("click", ()=>{
+      const show = histLog.hidden;
+      histLog.hidden = !show;
+      histTgl.textContent = show ? RP("▴ 收起對話紀錄","▴ Hide history") : RP("▾ 對話紀錄","▾ History");
+    });
     const coach=document.getElementById("coachBtn"); if(coach) coach.addEventListener("click", coachAdjust);
     const f2m=document.getElementById("syncFoodToMenu"); if(f2m) f2m.addEventListener("click", syncFoodLogToMenu);
     const m2f=document.getElementById("syncMenuToFood"); if(m2f) m2f.addEventListener("click", syncMenuToFoodLog);
@@ -4806,6 +4845,7 @@
     updatePlanBar(); renderPlanList(); applyPlanView();
     buildDays();   // 依這個計畫類型重建每日內容(origin=範本;其他=空白)
     await loadLog(); await loadFoodLog(); await loadWater(); await loadProfile(); await loadWorkout(); await loadFridge(); await loadReminder();
+    if(typeof loadMenuHist==="function") await loadMenuHist();
     if(typeof loadOverrides==="function") await loadOverrides();   // 套回使用者的編輯
     if(typeof loadDoneState==="function") await loadDoneState();   // 這個計畫自己的打卡/完成狀態(並清掉上一個計畫的殘留)
     if(typeof renderTodayMenu==="function") renderTodayMenu();
@@ -5491,6 +5531,7 @@
     await loadOverrides();
     renderTodayMenu();
     initMenuModule();
+    await loadMenuHist();
     initFridgeModule();
     await loadFridge();
     await loadDoneState();
