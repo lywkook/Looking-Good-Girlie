@@ -2319,6 +2319,13 @@
     }
     if(btn){ btn.disabled=false; btn.textContent=old; }
   }
+  // 同步到菜單時只留「食物名稱」,去掉份量(如「雞蛋一顆」→「雞蛋」、「聖女番茄 (10顆)」→「聖女番茄」)
+  function foodNameOnly(name){
+    let s=String(name==null?"":name).trim();
+    s=s.replace(/\s*[（(][^（()）]*[顆杯份片瓶碗個支條塊球包盒根尾隻串把克g][^（()）]*[)）]\s*/g," ");   // 去掉括號份量
+    s=s.replace(/\s*[0-9０-９一二兩三四五六七八九十半幾]+\s*(顆|杯|份|片|瓶|碗|個|支|條|塊|球|包|盒|根|尾|隻|串|把|克|公克|g|ml|毫升|大匙|茶匙)\s*$/,"");   // 去掉結尾份量
+    return s.trim() || String(name==null?"":name).trim();
+  }
   // 使用者沒照推薦菜單、而是自己選了別的(記在「飲食紀錄」)→ 一鍵把實際吃的更新到今日菜單
   function syncFoodLogToMenu(){
     const status=document.getElementById("syncFoodStatus");
@@ -2331,7 +2338,7 @@
     let n=0;
     Object.keys(map).forEach(mz=>{
       const items=todays.filter(f=>f.meal===mz);
-      if(items.length){ applyMeal(map[mz], items.map(f=>f.name).join("、")); n++; }
+      if(items.length){ applyMeal(map[mz], items.map(f=>foodNameOnly(f.name)).join("、")); n++; }
     });
     status.innerHTML = n ? '<span class="ok">'+RP('已依飲食紀錄更新今日菜單 ✅','Menu updated from your log ✅')+'</span>'
                          : '<span class="err">'+RP('沒有可同步的餐','Nothing to sync')+'</span>';
