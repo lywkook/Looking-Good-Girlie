@@ -602,6 +602,8 @@
   .fridge-add-row{ display:flex; gap:8px; }
   .fridge-add-row input{ flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
     font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
+  .fridge-wish{ width:100%; box-sizing:border-box; margin-top:10px; padding:10px 12px; border-radius:12px; border:2px solid var(--line);
+    font-size:var(--fs-body); background:#FFFDFA; color:var(--ink); font-family:inherit; }
   .dish{ display:flex; justify-content:space-between; gap:10px; align-items:center;
     background:#FFFBF6; border:2px solid var(--line); border-radius:14px; padding:11px 14px; margin-top:8px; }
   .dish .d-name{ font-size:var(--fs-body); color:var(--ink); }
@@ -872,6 +874,7 @@
     </div>
     <div class="fridge-sugg-label">常用(點一下加入):</div>
     <div class="fridge-sugg" id="fridgeSugg"></div>
+    <input id="fridgeWish" class="fridge-wish" placeholder="想吃什麼?(可留空,會結合冰箱食材推薦)" autocomplete="off">
     <button type="button" class="ai-photo-btn" id="fridgeGenBtn" style="margin-top:12px;">推薦可以煮的菜</button>
     <div class="ai-photo-status" id="fridgeStatus"></div>
     <div id="fridgeResult"></div>
@@ -1331,6 +1334,7 @@
     "週一":"Mon","週二":"Tue","週三":"Wed","週四":"Thu","週五":"Fri","週六":"Sat","週日":"Sun",
     // 冰箱
     "打字加入你有的食材":"Type ingredients you have","打字加入":"Add",
+    "想吃什麼?(可留空,會結合冰箱食材推薦)":"Craving anything? (optional — combined with your fridge)","先點一下你冰箱有的食材,或在下面打上想吃什麼":"Tap the ingredients you have, or type a craving below.",
     // 提醒
     "提醒時間":"Reminder time","提醒內容:":"Message:","開啟提醒":"Enable reminder","5-8 磅":"5–8 lbs",
     // 問 AI
@@ -2355,15 +2359,25 @@
   }
   async function suggestDishes(){
     const status=document.getElementById("fridgeStatus");
-    if(!fridgeHave.length){ status.innerHTML='<span class="err">先點一下你冰箱有的食材</span>'; return; }
+    const wishEl=document.getElementById("fridgeWish");
+    const wish=((wishEl&&wishEl.value)||"").trim();
+    if(!fridgeHave.length && !wish){ status.innerHTML='<span class="err">先點一下你冰箱有的食材,或在下面打上想吃什麼</span>'; return; }
     fridgeDishCollapsed=false;   // 產生新推薦時預設展開
     if(!anyKey()){ renderDishes(localDishes()); status.innerHTML=''; return; }
     const btn=document.getElementById("fridgeGenBtn"); const old=btn.textContent; btn.disabled=true; btn.textContent="想菜中…";
-    status.innerHTML='<span class="ai-spin"></span>依你的食材想菜中…';
+    status.innerHTML='<span class="ai-spin"></span>'+(wish?'依你想吃的和冰箱食材想菜中…':'依你的食材想菜中…');
     try{
       const target=parseInt(document.getElementById("inKcalTarget").value,10)||kcalTarget||1500;
-      const prompt='冰箱食材:'+fridgeHave.join("、")+'。推薦 5-6 道用這些就能煮、適合減重(每日約 '+target+' 大卡)的家常菜。'
-        +'只回 JSON:{"dishes":[{"n":"菜名不超過15字","kcal":整數}]}。';
+      let prompt;
+      if(fridgeHave.length && wish){
+        prompt='使用者想吃:「'+wish+'」。冰箱現有食材:'+fridgeHave.join("、")+'。'
+          +'請「結合使用者想吃的」和冰箱食材,推薦 5-6 道能煮、適合減重(每日約 '+target+' 大卡)的家常菜:盡量用到冰箱食材,並貼近想吃的口味/類型;若想吃的需要少量常見的額外食材(如調味料)也可以。';
+      } else if(wish){
+        prompt='使用者想吃:「'+wish+'」。推薦 5-6 道貼近這個、適合減重(每日約 '+target+' 大卡)、在家好準備的家常菜。';
+      } else {
+        prompt='冰箱食材:'+fridgeHave.join("、")+'。推薦 5-6 道用這些就能煮、適合減重(每日約 '+target+' 大卡)的家常菜。';
+      }
+      prompt+='只回 JSON:{"dishes":[{"n":"菜名不超過15字","kcal":整數}]}。'+TW_RULE;
       const m=await geminiJSON(prompt,null,0.5);
       const dishes=(m&&m.dishes)||[];
       if(!dishes.length) throw new Error("回傳格式看不懂");
