@@ -3110,7 +3110,7 @@
       </div>
       <div class="kcal-bar ${over?'over':''}"><span style="width:${pct}%"></span></div>`;
 
-    document.getElementById("foodAdvice").innerHTML = buildAdvice(todays, net);
+    document.getElementById("foodAdvice").innerHTML = "";   // 移除熱量建議文字(還可以吃…/超過…等),只保留上面的數字與進度條
 
     const base = ["早餐","午餐","晚餐","點心"];
     const groups = {}; base.forEach(m=>groups[m]=[]);
