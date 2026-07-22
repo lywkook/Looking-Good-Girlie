@@ -1000,6 +1000,15 @@
   <h2 class="cute" id="foodToggle"><span class="dot"></span>飲食紀錄 <span class="pf-caret" id="foodCaret">▾</span></h2>
   <div class="pf-mini" id="foodMini"></div>
   <div class="weight-box">
+    <div class="target-row">
+      <span>今日目標</span>
+      <div class="kwrap"><input type="number" step="50" id="inKcalTarget" value="1500"><span class="unit">kcal</span></div>
+    </div>
+    <div class="target-row">
+      <span>今日運動消耗</span>
+      <div class="kwrap"><input type="number" step="10" id="inExBurn" placeholder="0"><span class="unit">kcal</span></div>
+    </div>
+    <div id="kcalSummary"></div>
     <div class="meal-tabs" id="mealTabs">
       <button class="meal-tab active" data-meal="早餐">早餐</button>
       <button class="meal-tab" data-meal="午餐">午餐</button>
@@ -1031,16 +1040,6 @@
       <div class="ai-photo-status" id="aiPhotoStatus"></div>
     </div>
 
-    <div class="target-row">
-      <span>今日目標</span>
-      <div class="kwrap"><input type="number" step="50" id="inKcalTarget" value="1500"><span class="unit">kcal</span></div>
-    </div>
-    <div class="target-row">
-      <span>今日運動消耗</span>
-      <div class="kwrap"><input type="number" step="10" id="inExBurn" placeholder="0"><span class="unit">kcal</span></div>
-    </div>
-
-    <div id="kcalSummary"></div>
     <div id="foodAdvice"></div>
     <div id="foodLogArea"></div>
     <div class="clear-row"><button type="button" class="clear-all-btn" id="clearFoodBtn">清空今日所有紀錄</button></div>
