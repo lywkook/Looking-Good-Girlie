@@ -27,6 +27,11 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Mirror app into /app (fresh, cache-busted share URL — auto-synced every deploy)
+        run: |
+          mkdir -p app
+          cp index.html sw.js manifest.webmanifest app/
+          cp -r assets app/assets
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
