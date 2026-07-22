@@ -3506,18 +3506,8 @@
     updateAIKeyHint();
   }
   function updateAIKeyHint(){
-    const h=document.getElementById("aiKeyHint"); if(!h) return;
-    const gLink='<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google</a>';
-    const qLink='<a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>';
-    if(groqKey && googleKey){
-      h.innerHTML='✅ Groq + Google 都已設定。文字(換餐/運動規劃)優先用 Groq 省額度,拍照/看菜單自動用 Google 最穩,全部功能都能用。';
-    } else if(groqKey){
-      h.innerHTML='✅ Groq 金鑰已設定(文字額度高)。但 Groq 常常不能看圖——要「拍照估熱量、讀菜單照片、運動照片」請再貼一把免費 '+gLink+' 金鑰(貼上就會自動分工)。';
-    } else if(googleKey){
-      h.innerHTML='✅ Google 金鑰已設定,全部功能都能用(拍照、讀連結最穩)。想要更高文字額度,可再貼一把免費 '+qLink+' 金鑰。';
-    } else {
-      h.innerHTML='貼上免費金鑰即可用 AI 功能。建議兩把都貼:'+qLink+'(文字額度高)+ '+gLink+'(拍照最穩);只貼一把也行。免費、免信用卡,只存這支手機。';
-    }
+    // 不再顯示金鑰狀態說明文字(只保留下方「免費申請:Google Groq」連結)
+    const h=document.getElementById("aiKeyHint"); if(h) h.innerHTML="";
   }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
   // 把 AI 常用的 Markdown(**粗體**、* 項目、#標題)轉成乾淨的 HTML(先跳脫再轉,安全)
