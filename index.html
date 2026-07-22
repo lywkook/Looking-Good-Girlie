@@ -707,8 +707,35 @@
   .ask-modal-close{ width:38px; height:38px; border:none; background:var(--pink-soft); color:var(--ink);
     border-radius:50%; font-size:18px; cursor:pointer; font-family:inherit; flex:none; }
   .ask-modal-close:active{ opacity:0.6; }
+  /* 對話分頁列 */
+  .ask-tabs{ display:flex; gap:6px; align-items:center; overflow-x:auto; -webkit-overflow-scrolling:touch;
+    padding:8px 12px; background:var(--card); border-bottom:1px solid var(--line); }
+  .ask-tabs::-webkit-scrollbar{ display:none; }
+  .ask-tab{ flex:none; display:inline-flex; align-items:center; gap:6px; max-width:180px;
+    padding:6px 10px; border-radius:14px; background:var(--pink-soft); color:var(--ink-soft);
+    font-size:var(--fs-label); font-weight:700; cursor:pointer; white-space:nowrap; }
+  .ask-tab.active{ background:var(--pink); color:#fff; }
+  .ask-tab .at-name{ overflow:hidden; text-overflow:ellipsis; max-width:130px; }
+  .ask-tab .at-x{ font-size:var(--fs-label); opacity:0.75; padding:0 2px; line-height:1; }
+  .ask-tab .at-x:active{ opacity:0.4; }
+  .ask-tab-new{ flex:none; width:30px; height:30px; border:none; border-radius:50%; background:var(--mint-soft);
+    color:var(--ink); font-size:18px; line-height:1; cursor:pointer; font-family:inherit; }
   .ask-log{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; gap:10px; padding:16px; }
   .ask-empty{ margin:auto; text-align:center; color:var(--ink-soft); font-size:var(--fs-body); line-height:1.7; padding:0 20px; }
+  .ask-q .bubble-atts{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px; }
+  .bubble-atts img{ width:60px; height:60px; object-fit:cover; border-radius:10px; }
+  .bubble-atts .att-file{ font-size:var(--fs-hint); background:rgba(255,255,255,0.25); border-radius:8px; padding:4px 8px; }
+  /* 待送出的附件預覽 */
+  .ask-attach-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .ask-attach-row:empty{ display:none; }
+  .ask-attach-row:not(:empty){ margin-bottom:8px; }
+  .ask-att-chip{ position:relative; display:inline-flex; align-items:center; gap:6px;
+    background:var(--pink-soft); border-radius:10px; padding:4px 8px; font-size:var(--fs-hint); color:var(--ink); }
+  .ask-att-chip img{ width:34px; height:34px; object-fit:cover; border-radius:7px; }
+  .ask-att-chip .aac-x{ cursor:pointer; color:var(--ink-soft); font-weight:900; padding:0 2px; }
+  .ask-attach-btn{ flex:none; width:42px; height:42px; border:2px solid var(--line); border-radius:14px;
+    background:#FFFDFA; color:var(--pink); font-size:22px; line-height:1; cursor:pointer; font-family:inherit; }
+  .ask-attach-btn:active{ opacity:0.6; }
   .ask-bubble{ font-size:var(--fs-body); line-height:1.55; padding:11px 14px; border-radius:16px; word-break:break-word; }
   .ask-q{ align-self:flex-end; background:var(--pink); color:#fff; border-bottom-right-radius:5px; max-width:85%; white-space:pre-wrap; }
   .ask-a{ align-self:flex-start; background:#fff; border:1.5px solid var(--line); color:var(--ink); border-bottom-left-radius:5px; max-width:92%; }
@@ -1126,15 +1153,17 @@
 
 <div class="ask-modal" id="askModal">
   <div class="ask-modal-head">
-    <span class="ask-modal-title cute">不懂問 AI</span>
+    <span class="ask-modal-title cute">問 AI</span>
     <button type="button" class="ask-modal-close" id="askClose">✕</button>
   </div>
-  <div id="askLog" class="ask-log">
-    <div class="ask-empty" id="askEmpty">飲食、運動、健康、生活,都可以問。<br>(需要先在「飲食紀錄」貼上免費金鑰)</div>
-  </div>
+  <div class="ask-tabs" id="askTabs"></div>
+  <div id="askLog" class="ask-log"></div>
   <div class="ask-bottom">
     <div class="ask-status" id="askStatus"></div>
+    <div class="ask-attach-row" id="askAttachRow"></div>
     <div class="ask-input-bar">
+      <input type="file" id="askFileInput" accept="image/*,application/pdf,.txt,.csv,.md,.json" multiple style="display:none">
+      <button type="button" class="ask-attach-btn" id="askAttachBtn" aria-label="附加照片或檔案" title="附加照片或檔案">＋</button>
       <textarea id="askInput" class="ask-textarea" rows="1" placeholder="問我任何問題…"></textarea>
       <button type="button" class="ask-send" id="askBtn">問</button>
     </div>
@@ -1821,7 +1850,7 @@
   const EN2ZH = {}; Object.keys(I18N_EN).forEach(z=>{ if(!(I18N_EN[z] in EN2ZH)) EN2ZH[I18N_EN[z]]=z; });
   let lang = "zh";
   function t(zh){ return lang==="en" ? (I18N_EN[zh]!=null?I18N_EN[zh]:zh) : zh; }
-  const I18N_SKIP = 'script,style,textarea,input,[contenteditable="true"],.editable-content,.home-card-name,.pi-name,#heroTitle,.plan-current,#askLog';
+  const I18N_SKIP = 'script,style,textarea,input,[contenteditable="true"],.editable-content,.home-card-name,.pi-name,#heroTitle,.plan-current,#askLog,.ask-tab,.ask-attach-row';
   function translateTree(root, target){
     if(!root) return;
     if(root.nodeType===1){
@@ -3871,36 +3900,207 @@
     if(quota) throw new Error("Groq 額度滿了,稍等再試。");
     throw new Error(lastMsg);
   }
-  function openAskModal(){
+  // ===== 問 AI:多分頁對話 + 附加照片/檔案 + 記住歷史 =====
+  let askThreads = [];   // [{id,name,msgs:[{role:'user'|'ai',text,atts:[...]}]}]
+  let askActiveId = null;
+  let askPending = [];   // 這一則待送出的附件 [{kind:'image'|'pdf'|'file',name,mime,data,thumb,text}]
+  function askActive(){ return askThreads.find(t=>t.id===askActiveId) || askThreads[0] || null; }
+  async function saveAskThreads(){
+    try{
+      const slim = askThreads.map(t=>({ id:t.id, name:t.name, msgs:(t.msgs||[]).slice(-40).map(m=>({ role:m.role, text:m.text||"",
+        atts:(m.atts||[]).map(a=> a.kind==='image'?{kind:'image',name:a.name,thumb:a.thumb}:{kind:a.kind,name:a.name}) })) }));
+      await window.storage.set("askthreads", JSON.stringify(slim), false);
+      await window.storage.set("askactive", askActiveId||"", false);
+    }catch(e){}
+  }
+  async function loadAskThreads(){
+    try{ const r=await window.storage.get("askthreads",false); askThreads=(r&&r.value)?(JSON.parse(r.value)||[]):[]; }catch(e){ askThreads=[]; }
+    if(!Array.isArray(askThreads)) askThreads=[];
+    try{ const a=await window.storage.get("askactive",false); if(a&&a.value) askActiveId=a.value; }catch(e){}
+    if(!askThreads.length){ const t={id:"a"+Date.now().toString(36),name:"新對話",msgs:[]}; askThreads.push(t); askActiveId=t.id; }
+    if(!askActive()) askActiveId=askThreads[0].id;
+  }
+  function newAskThread(){
+    const t={id:"a"+Date.now().toString(36),name:"新對話",msgs:[]};
+    askThreads.push(t); askActiveId=t.id; askPending=[]; saveAskThreads();
+    renderAskTabs(); renderAskLog(); renderAskPending();
+    const inp=document.getElementById("askInput"); if(inp) try{ inp.focus(); }catch(_){}
+  }
+  function deleteAskThread(id){
+    const t=askThreads.find(x=>x.id===id); if(!t) return;
+    if(!confirm(RP('刪除對話「'+t.name+'」?','Delete chat “'+t.name+'”?'))) return;
+    askThreads=askThreads.filter(x=>x.id!==id);
+    if(!askThreads.length){ const nt={id:"a"+Date.now().toString(36),name:"新對話",msgs:[]}; askThreads.push(nt); }
+    if(askActiveId===id) askActiveId=askThreads[0].id;
+    saveAskThreads(); renderAskTabs(); renderAskLog();
+  }
+  function renameAskThread(id){
+    const t=askThreads.find(x=>x.id===id); if(!t) return;
+    const nn=prompt(RP('對話名稱:','Chat name:'), t.name);
+    if(nn && nn.trim()){ t.name=nn.trim().slice(0,30); saveAskThreads(); renderAskTabs(); }
+  }
+  function switchAskThread(id){ askActiveId=id; askPending=[]; saveAskThreads(); renderAskTabs(); renderAskLog(); renderAskPending(); }
+  function renderAskTabs(){
+    const box=document.getElementById("askTabs"); if(!box) return;
+    box.innerHTML="";
+    askThreads.forEach(t=>{
+      const el=document.createElement("div"); el.className="ask-tab"+(t.id===askActiveId?" active":"");
+      el.innerHTML='<span class="at-name"></span><span class="at-x" title="刪除">✕</span>';
+      el.querySelector(".at-name").textContent=t.name;
+      el.querySelector(".at-name").addEventListener("click", ()=>{ if(t.id===askActiveId) renameAskThread(t.id); else switchAskThread(t.id); });
+      el.querySelector(".at-x").addEventListener("click", (e)=>{ e.stopPropagation(); deleteAskThread(t.id); });
+      box.appendChild(el);
+    });
+    const add=document.createElement("button"); add.type="button"; add.className="ask-tab-new"; add.textContent="＋"; add.title="新對話";
+    add.addEventListener("click", newAskThread); box.appendChild(add);
+  }
+  function attBubbleHtml(atts){
+    if(!atts||!atts.length) return "";
+    return '<div class="bubble-atts">'+atts.map(a=> (a.kind==='image'&&a.thumb) ? '<img src="'+a.thumb+'" alt="">' : '<span class="att-file">📎 '+esc(a.name||'檔案')+'</span>').join("")+'</div>';
+  }
+  function renderAskLog(){
+    const log=document.getElementById("askLog"); if(!log) return;
+    const t=askActive();
+    if(!t || !t.msgs.length){ log.innerHTML='<div class="ask-empty">'+RP('飲食、運動、健康、生活,都可以問,也能附上照片或檔案一起分析。<br>(需要先在 ⚙️ 設定貼上免費金鑰)','Ask anything — food, workouts, health, life. You can attach photos or files too.<br>(Paste a free AI key in ⚙️ Settings first)')+'</div>'; return; }
+    log.innerHTML="";
+    t.msgs.forEach(m=>{
+      const div=document.createElement("div"); div.className="ask-bubble "+(m.role==="user"?"ask-q":"ask-a");
+      if(m.role==="user"){ const tx=document.createElement("span"); tx.textContent=m.text||""; div.innerHTML=attBubbleHtml(m.atts); div.appendChild(tx); }
+      else div.innerHTML=mdToHtml(m.text||"");
+      log.appendChild(div);
+    });
+    log.scrollTop=log.scrollHeight;
+  }
+  function renderAskPending(){
+    const box=document.getElementById("askAttachRow"); if(!box) return;
+    box.innerHTML="";
+    askPending.forEach((a,i)=>{
+      const chip=document.createElement("div"); chip.className="ask-att-chip";
+      const label = a.kind==='image' ? '' : (a.name||'檔案');
+      chip.innerHTML=(a.kind==='image'&&a.thumb?'<img src="'+a.thumb+'" alt="">':'📎')+'<span class="aac-n"></span><span class="aac-x">✕</span>';
+      chip.querySelector(".aac-n").textContent=label;
+      chip.querySelector(".aac-x").addEventListener("click", ()=>{ askPending.splice(i,1); renderAskPending(); });
+      box.appendChild(chip);
+    });
+  }
+  function fileToScaled(file, maxDim, q){ return new Promise((resolve,reject)=>{
+    const img=new Image(); const url=URL.createObjectURL(file);
+    img.onload=()=>{ let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height; const s=Math.min(1, maxDim/Math.max(w,h||1));
+      const cw=Math.max(1,Math.round(w*s)), ch=Math.max(1,Math.round(h*s));
+      const cv=document.createElement("canvas"); cv.width=cw; cv.height=ch;
+      try{ cv.getContext("2d").drawImage(img,0,0,cw,ch); const out=cv.toDataURL("image/jpeg", q); URL.revokeObjectURL(url); resolve(out); }
+      catch(e){ URL.revokeObjectURL(url); reject(new Error("圖片處理失敗")); } };
+    img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error("圖片讀取失敗")); }; img.src=url;
+  }); }
+  function readAsDataURL(file){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result||"")); fr.onerror=()=>rej(new Error("讀取失敗")); fr.readAsDataURL(file); }); }
+  function readAsTextFile(file){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result||"")); fr.onerror=()=>rej(new Error("讀取失敗")); fr.readAsText(file); }); }
+  async function handleAskFiles(files){
+    const status=document.getElementById("askStatus");
+    for(const file of files){
+      try{
+        if(/^image\//.test(file.type)){
+          const full=await fileToScaled(file,1280,0.72), thumb=await fileToScaled(file,150,0.6);
+          askPending.push({kind:'image', name:file.name, mime:'image/jpeg', data:full.split(",")[1], thumb});
+        } else if(file.type==="application/pdf" || /\.pdf$/i.test(file.name)){
+          const durl=await readAsDataURL(file); askPending.push({kind:'pdf', name:file.name, mime:'application/pdf', data:durl.split(",")[1]});
+        } else if(/^text\//.test(file.type) || /\.(txt|csv|md|json)$/i.test(file.name)){
+          const txt=(await readAsTextFile(file)).slice(0,20000); askPending.push({kind:'file', name:file.name, text:txt});
+        } else {
+          if(status) status.innerHTML='<span class="err">'+RP('只支援照片、PDF 或文字檔','Only images, PDF or text files')+'</span>';
+        }
+      }catch(e){ if(status) status.innerHTML='<span class="err">'+esc(e.message||"檔案讀取失敗")+'</span>'; }
+    }
+    renderAskPending();
+  }
+  async function googleChatMulti(contents){
+    if(!googleKey) throw new Error("看照片/讀檔需要一把免費 Google 金鑰,請到 ⚙️ 設定貼上。");
+    const body={ contents, generationConfig:{ temperature:0.6 } };
+    let models=GEMINI_MODELS.slice(); if(geminiLastGood && models.indexOf(geminiLastGood)>=0) models=[geminiLastGood].concat(models.filter(m=>m!==geminiLastGood));
+    let lastMsg="連線失敗", quota=false;
+    for(const mdl of models){
+      let res;
+      try{ res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+mdl+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":googleKey},body:JSON.stringify(body)}); }
+      catch(e){ lastMsg="無法連線到 Google,請檢查網路"; continue; }
+      if(res.ok){ const d=await res.json(); const parts=((((d.candidates||[])[0]||{}).content||{}).parts)||[]; const txt=parts.map(p=>p.text||"").join("").trim(); geminiLastGood=mdl; if(txt) return txt; throw new Error("沒有回覆內容,換個問法再試"); }
+      let msg="錯誤 "+res.status; const st=res.status; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
+      lastMsg=msg; if(st===401||st===400||st===403) throw new Error("Google 金鑰無法通過驗證,請重貼、或改用有效金鑰。"); if(st===429) quota=true;
+    }
+    if(quota) throw new Error("Google 免費額度滿了,稍等再試。"); throw new Error(lastMsg);
+  }
+  async function groqChatMulti(messages){
+    if(!groqKey) throw new Error("尚未設定金鑰");
+    const avail=await groqModelList(groqKey);
+    let models=avail.filter(id=>/llama|gemma|qwen|mixtral|instant|versatile|gpt-oss|kimi/i.test(id) && !/guard|whisper|tts|vision/i.test(id));
+    GROQ_TEXT.forEach(m=>{ if(models.indexOf(m)<0) models.push(m); });
+    if(groqGoodText) models=[groqGoodText].concat(models.filter(m=>m!==groqGoodText));
+    let lastMsg="連線失敗", quota=false;
+    for(const mdl of models){
+      let res;
+      try{ res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+groqKey},body:JSON.stringify({model:mdl,messages,temperature:0.6})}); }
+      catch(e){ lastMsg="無法連線到 Groq(可能是瀏覽器限制)"; continue; }
+      if(res.ok){ const d=await res.json(); const txt=((((d.choices||[])[0]||{}).message)||{}).content||""; groqGoodText=mdl; if(txt.trim()) return txt.trim(); throw new Error("沒有回覆內容,換個問法再試"); }
+      let msg="錯誤 "+res.status; const st=res.status; try{ const e=await res.json(); if(e.error&&e.error.message) msg=e.error.message; }catch(_){}
+      lastMsg=msg; if(st===401||st===403) throw new Error("Groq 金鑰無效(需 gsk_ 開頭)。"); if(st===429) quota=true;
+    }
+    if(quota) throw new Error("Groq 額度滿了,稍等再試。"); throw new Error(lastMsg);
+  }
+  async function askSend(){
+    const input=document.getElementById("askInput"), status=document.getElementById("askStatus"), btn=document.getElementById("askBtn"), log=document.getElementById("askLog");
+    const q=((input&&input.value)||"").trim();
+    if(!q && !askPending.length){ if(input) input.focus(); return; }
+    if(!anyKey()){ status.innerHTML='<span class="err">'+RP('請先到 ⚙️ 設定貼上免費金鑰,才能問 AI','Paste a free AI key in ⚙️ Settings first')+'</span>'; return; }
+    const hasMedia = askPending.some(a=>a.kind==='image'||a.kind==='pdf');
+    if(hasMedia && !googleKey){ status.innerHTML='<span class="err">'+RP('分析照片/PDF 需要 Google 金鑰(到 ⚙️ 設定貼上一把免費的)','Analyzing photos/PDF needs a free Google key (paste in ⚙️ Settings)')+'</span>'; return; }
+    const t=askActive(); if(!t) return;
+    const sending=askPending.slice(); askPending=[]; renderAskPending();
+    t.msgs.push({role:'user', text:q, atts:sending.map(a=> a.kind==='image'?{kind:'image',name:a.name,thumb:a.thumb}:{kind:a.kind,name:a.name})});
+    if(input){ input.value=""; input.style.height="auto"; }
+    if(t.name==="新對話" && q){ t.name=q.slice(0,16); }
+    renderAskTabs(); renderAskLog(); status.innerHTML=""; if(btn) btn.disabled=true;
+    const ab=document.createElement("div"); ab.className="ask-bubble ask-a"; ab.textContent="…思考中"; if(log){ log.appendChild(ab); log.scrollTop=log.scrollHeight; }
+    const preamble = (lang==="en"
+      ? "You are a friendly, knowledgeable assistant. Reply in English, concise and to the point. If images or files are attached, analyze them and answer about them. For health/medical topics, advise seeing a doctor when serious.\n\n"
+      : "你是親切、專業的小幫手。用繁體中文回答,簡短扼要講重點;若有附上照片或檔案,請一併看過並針對它回答。涉及健康醫療、嚴重時提醒看醫生。\n\n");
+    const prior = t.msgs.slice(0,-1);
+    try{
+      let ans;
+      if(hasMedia || sending.some(a=>a.kind==='file')){
+        const contents = prior.map(m=>({ role:m.role==='user'?'user':'model', parts:[{text:m.text||"(附件)"}] }));
+        const parts=[{text: preamble+(q||"請分析我附上的內容。")}];
+        sending.forEach(a=>{ if(a.kind==='image'||a.kind==='pdf') parts.push({inline_data:{mime_type:a.mime, data:a.data}}); else if(a.kind==='file') parts.push({text:"附加檔案「"+a.name+"」內容:\n"+a.text}); });
+        contents.push({role:'user', parts});
+        ans = await googleChatMulti(contents);
+      } else if(groqKey){
+        const messages=[{role:'system', content:preamble}].concat(prior.map(m=>({role:m.role==='user'?'user':'assistant', content:m.text||""})), [{role:'user', content:q}]);
+        try{ ans = await groqChatMulti(messages); }
+        catch(e){ if(googleKey){ const c=prior.map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.text||""}]})); c.push({role:'user',parts:[{text:preamble+q}]}); ans=await googleChatMulti(c); } else throw e; }
+      } else {
+        const c=prior.map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.text||""}]})); c.push({role:'user',parts:[{text:preamble+q}]}); ans=await googleChatMulti(c);
+      }
+      ab.innerHTML=mdToHtml(ans);
+      t.msgs.push({role:'ai', text:ans}); saveAskThreads();
+    }catch(e){ ab.textContent="⚠️ "+(e.message||e); }
+    if(btn) btn.disabled=false; if(log) log.scrollTop=log.scrollHeight;
+  }
+  async function openAskModal(){
     const m=document.getElementById("askModal"); if(!m) return;
+    if(!askThreads.length) await loadAskThreads();
+    renderAskTabs(); renderAskLog(); renderAskPending();
     m.classList.add("show");
     const inp=document.getElementById("askInput"); if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 250);
   }
   function closeAskModal(){ const m=document.getElementById("askModal"); if(m) m.classList.remove("show"); }
   function initAskModule(){
     const m=document.getElementById("askModal"); if(!m) return;
-    const input=document.getElementById("askInput");
-    const btn=document.getElementById("askBtn");
-    const log=document.getElementById("askLog");
-    const status=document.getElementById("askStatus");
-    const closeBtn=document.getElementById("askClose");
+    const input=document.getElementById("askInput"), btn=document.getElementById("askBtn"), closeBtn=document.getElementById("askClose");
+    const attachBtn=document.getElementById("askAttachBtn"), fileInput=document.getElementById("askFileInput");
     if(closeBtn) closeBtn.addEventListener("click", closeAskModal);
-    const autoGrow=()=>{ if(!input) return; input.style.height="auto"; input.style.height=Math.min(120, input.scrollHeight)+"px"; };
-    async function ask(){
-      const q=(input.value||"").trim(); if(!q) return;
-      if(!anyKey()){ status.innerHTML='<span class="err">請先到「飲食紀錄」的 🔑 貼上免費金鑰,才能問 AI</span>'; return; }
-      const empty=document.getElementById("askEmpty"); if(empty) empty.remove();
-      input.value=""; autoGrow(); btn.disabled=true;
-      const qb=document.createElement("div"); qb.className="ask-bubble ask-q"; qb.textContent=q; log.appendChild(qb);
-      const ab=document.createElement("div"); ab.className="ask-bubble ask-a"; ab.textContent="…思考中"; log.appendChild(ab);
-      status.innerHTML=""; log.scrollTop=log.scrollHeight;
-      try{ const ans=await askAIText(q); ab.innerHTML=mdToHtml(ans); }
-      catch(e){ ab.textContent="⚠️ "+(e.message||e); }
-      btn.disabled=false; log.scrollTop=log.scrollHeight;
-    }
-    if(btn) btn.addEventListener("click", ask);
+    const autoGrow=()=>{ if(!input) return; input.style.height="auto"; input.style.height=Math.min(120,input.scrollHeight)+"px"; };
+    if(btn) btn.addEventListener("click", askSend);
     if(input){ input.addEventListener("input", autoGrow);
-      input.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); ask(); } }); }
+      input.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); askSend(); } }); }
+    if(attachBtn && fileInput) attachBtn.addEventListener("click", ()=> fileInput.click());
+    if(fileInput) fileInput.addEventListener("change", async ()=>{ if(fileInput.files&&fileInput.files.length) await handleAskFiles(Array.from(fileInput.files)); fileInput.value=""; });
   }
   async function analyzeFoodPhoto(b64s){
     if(typeof b64s==="string") b64s=[b64s];
@@ -5554,6 +5754,7 @@
     initReminderModule();
     await loadReminder();
     initAskModule();
+    await loadAskThreads();
     await initSimpleCollapse();
     initHomeModule();
     initBottomNav();
