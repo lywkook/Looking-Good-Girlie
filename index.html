@@ -4306,7 +4306,7 @@
     const collapsed=woPlanCollapsed;
     let h='<div class="wo-plan-head" id="woPlanToggle"><span class="wo-plan-title">你的運動計畫</span><span class="wo-plan-caret">'+(collapsed?'展開 ▸':'收起 ▾')+'</span></div>';
     h+='<div class="wo-plan-body" id="woPlanBody"'+(collapsed?' style="display:none;"':'')+'>';
-    h+='<div class="advice">'+esc(plan.summary||"")+'</div><div class="wo-week">';
+    h+='<div class="wo-week">';
     (plan.week||[]).forEach(d=>{
       const t=d.type||""; const tag = /重訓|肌力/.test(t)?"tag-lift":(/有氧|燃脂|跑/.test(t)?"tag-cardio":"tag-rest");
       h+='<div class="wo-day"><div class="wo-day-h"><b>'+esc(d.day||"")+'</b> <span class="day-tag '+tag+'">'+esc(t)+(d.focus?" · "+esc(d.focus):"")+'</span></div>';
