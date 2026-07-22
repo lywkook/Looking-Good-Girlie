@@ -163,12 +163,6 @@
   .nav-ic{ width:26px; height:26px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; display:block; }
   .nav-btn span{ font-size:var(--fs-label); color:#fff; font-weight:700; }
   .nav-btn:active{ background:rgba(255,255,255,0.18); }
-  .nav-jump-menu{ position:fixed; right:16px; bottom:98px; background:var(--card); border-radius:16px;
-    box-shadow:var(--shadow); border:2px solid var(--pink); padding:10px; display:none; z-index:201; max-height:62vh; overflow:auto; }
-  .nav-jump-menu.show{ display:block; }
-  .nav-jump-item{ padding:12px 24px 12px 30px; border-radius:12px; font-size:var(--fs-title); color:var(--ink); cursor:pointer; white-space:nowrap; }
-  .nav-jump-item:active{ background:var(--pink-soft); }
-  .nav-jump-group{ padding:8px 12px 4px; font-size:var(--fs-label); font-weight:900; color:var(--ink-soft); white-space:nowrap; }
   .cute{ font-family:var(--font-main), "ZCOOL KuaiLe", "Noto Sans TC", sans-serif; }
   /* 字重微調:粗線體本來很粗 → 取消合成粗體、看起來細一點;紅豆奶霜體較細 → 加一點描邊、看起來粗一點 */
   :root[data-font="cu"] *{ font-weight:400 !important; }
@@ -203,14 +197,21 @@
   #checkinSection{ order:6; }
   #metricsSection{ order:7; }
   /* ===== 主題分頁 (飲食 / 運動 / 數據) ===== */
-  .theme-tabs{ order:0; display:flex; gap:6px; position:sticky; top:0; z-index:50;
-    background:rgba(245,241,235,0.92); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
-    padding:8px 8px 10px; margin:0 -8px 2px; border-radius:0 0 14px 14px; }
+  .theme-nav{ order:0; position:sticky; top:0; z-index:50;
+    background:rgba(245,241,235,0.94); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    padding:8px 8px 8px; margin:0 -8px 2px; border-radius:0 0 14px 14px; }
+  .theme-tabs{ display:flex; gap:6px; }
   .theme-tab{ flex:1; border:none; border-radius:14px; padding:11px 6px; cursor:pointer;
     font-family:inherit; font-size:var(--fs-body); font-weight:800; color:var(--ink-soft);
     background:var(--pink-soft); display:flex; align-items:center; justify-content:center; gap:5px; line-height:1.2; }
   .theme-tab.active{ background:var(--pink); color:#fff; box-shadow:var(--shadow); }
   .theme-tab[hidden]{ display:none; }
+  .tab-subnav{ display:flex; gap:6px; margin-top:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .tab-subnav::-webkit-scrollbar{ display:none; }
+  .subnav-chip{ flex:none; border:1.5px solid var(--pink-soft); background:var(--card); color:var(--ink-soft);
+    border-radius:16px; padding:6px 13px; cursor:pointer; font-family:inherit;
+    font-size:var(--fs-label); font-weight:700; white-space:nowrap; }
+  .subnav-chip:active{ background:var(--pink-soft); color:var(--ink); }
   /* 只隱藏不屬於當前分頁的區塊(從不強制顯示,交給 applyPlanView 決定) */
   #appView[data-tab="diet"] .tab-exercise,
   #appView[data-tab="diet"] .tab-data,
@@ -846,10 +847,13 @@
   </div>
 </header>
 
-<div class="theme-tabs" id="themeTabs">
-  <button type="button" class="theme-tab active" data-tab="diet">🍽️ 飲食</button>
-  <button type="button" class="theme-tab" data-tab="exercise">🏃 運動</button>
-  <button type="button" class="theme-tab" data-tab="data">📈 數據</button>
+<div class="theme-nav" id="themeNav">
+  <div class="theme-tabs" id="themeTabs">
+    <button type="button" class="theme-tab active" data-tab="diet">飲食</button>
+    <button type="button" class="theme-tab" data-tab="exercise">運動</button>
+    <button type="button" class="theme-tab" data-tab="data">數據</button>
+  </div>
+  <div class="tab-subnav" id="tabSubnav"></div>
 </div>
 
 <div class="section tab-diet" id="menuSection">
@@ -1125,11 +1129,9 @@
   </div>
 </div>
 
-<div class="nav-jump-menu" id="navJumpMenu"></div>
 <nav id="bottomNav">
   <button type="button" class="nav-btn" id="navHome"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v9h14v-9"/></svg><span>主畫面</span></button>
   <button type="button" class="nav-btn" id="navNew"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>新增計畫</span></button>
-  <button type="button" class="nav-btn" id="navJump"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M12 4v16"/><path d="M8 8l4-4 4 4"/><path d="M8 16l4 4 4-4"/></svg><span>跳到</span></button>
   <button type="button" class="nav-btn" id="navAsk"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg><span>問AI</span></button>
   <button type="button" class="nav-btn" id="navSettings"><svg class="nav-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/></svg><span>設定</span></button>
 </nav>
@@ -4702,11 +4704,21 @@
   function tabHasVisible(tab){
     return (THEME_TABS[tab]||[]).some(id=>{ const el=document.getElementById(id); return el && el.style.display!=="none"; });
   }
+  function renderSubnav(tab){
+    const box=document.getElementById("tabSubnav"); if(!box) return;
+    const ids=(THEME_TABS[tab]||[]).filter(id=>{ const el=document.getElementById(id); return el && el.style.display!=="none"; });
+    // 只有一個區塊(例:數據)就不用顯示子選單
+    if(ids.length<2){ box.innerHTML=""; box.style.display="none"; return; }
+    box.style.display="flex";
+    box.innerHTML = ids.map(id=>`<button type="button" class="subnav-chip" data-sec="${id}">${SECTION_LABELS[id]}</button>`).join("");
+    box.querySelectorAll(".subnav-chip").forEach(c=> c.addEventListener("click", ()=> jumpToSection(c.dataset.sec)));
+  }
   function applyThemeTab(tab, scroll){
     if(!THEME_TABS[tab]) tab="diet";
     activeTab=tab;
     const av=document.getElementById("appView"); if(av) av.setAttribute("data-tab",tab);
     document.querySelectorAll(".theme-tab").forEach(b=> b.classList.toggle("active", b.dataset.tab===tab));
+    renderSubnav(tab);
     try{ window.storage.set("activetab", tab, false); }catch(e){}
     if(scroll){ try{ window.scrollTo({top:0, behavior:"smooth"}); }catch(e){ window.scrollTo(0,0); } }
   }
@@ -5116,28 +5128,20 @@
 
   // ---------- 底部主選單(回主畫面 / 新增 / 跳到某區塊) ----------
   const SECTION_LABELS = { menuSection:"今日菜單", foodSection:"飲食紀錄", waterSection:"今日喝水", metricsSection:"身體數據", fridgeSection:"冰箱煮什麼", workoutSection:"運動計畫", checkinSection:"每日打卡" };
-  const TAB_LABELS = { diet:"🍽️ 飲食", exercise:"🏃 運動", data:"📈 數據" };
-  function buildJumpMenu(){
-    const box=document.getElementById("navJumpMenu"); if(!box) return;
-    // 依主題分頁分組列出區塊
-    let html="";
-    ["diet","exercise","data"].forEach(tab=>{
-      const ids=(THEME_TABS[tab]||[]).filter(id=>{ const el=document.getElementById(id); return el && el.style.display!=="none"; });
-      if(!ids.length) return;
-      html += `<div class="nav-jump-group">${TAB_LABELS[tab]}</div>`;
-      html += ids.map(id=>`<div class="nav-jump-item" data-sec="${id}">${SECTION_LABELS[id]}</div>`).join("");
-    });
-    box.innerHTML = html;
-    box.querySelectorAll(".nav-jump-item").forEach(it=> it.addEventListener("click", ()=> jumpToSection(it.dataset.sec)));
-  }
   function jumpToSection(id){
     const el=document.getElementById(id); if(!el) return;
     // 先切到該區塊所屬的分頁,再捲動過去
     const tab=TAB_OF_SECTION[id]; if(tab && tab!==activeTab) applyThemeTab(tab, false);
     el.classList.remove("collapsed");
     const caret=el.querySelector(".pf-caret"); if(caret) caret.textContent="▾";
-    document.getElementById("navJumpMenu").classList.remove("show");
-    setTimeout(()=>{ try{ el.scrollIntoView({behavior:"smooth", block:"start"}); }catch(_){} }, 40);
+    setTimeout(()=>{
+      try{
+        const nav=document.getElementById("themeNav");
+        const offset=(nav?nav.getBoundingClientRect().height:0)+8;
+        const y=el.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({top:Math.max(0,y), behavior:"smooth"});
+      }catch(_){ try{ el.scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){} }
+    }, 40);
   }
   function initScrollTop(){
     const btn=document.getElementById("scrollTopBtn"); if(!btn) return;
@@ -5150,10 +5154,8 @@
   function initBottomNav(){
     const h=document.getElementById("navHome"); if(h) h.addEventListener("click", goHome);
     const n=document.getElementById("navNew"); if(n) n.addEventListener("click", ()=>{ goHome(); const el=document.getElementById("homeNewName"); if(el){ try{el.scrollIntoView({block:"center"});}catch(_){} el.focus(); } });
-    const j=document.getElementById("navJump"); if(j) j.addEventListener("click", (e)=>{ e.stopPropagation(); buildJumpMenu(); document.getElementById("navJumpMenu").classList.toggle("show"); });
     const ak=document.getElementById("navAsk"); if(ak) ak.addEventListener("click", openAskModal);
     const s=document.getElementById("navSettings"); if(s) s.addEventListener("click", openSettings);
-    document.addEventListener("click", (e)=>{ const menu=document.getElementById("navJumpMenu"); if(menu && menu.classList.contains("show") && !menu.contains(e.target) && e.target.id!=="navJump") menu.classList.remove("show"); });
   }
   // 主題色/背景色:色票 + 取色器 + 直接輸入色號
   function normHex(v){ v=(v||"").trim(); if(!v) return null; if(v[0]!=="#") v="#"+v; return /^#[0-9a-fA-F]{6}$/.test(v)||/^#[0-9a-fA-F]{3}$/.test(v) ? v : null; }
