@@ -704,6 +704,8 @@
   .wo-sub-toggle{ cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
   .wo-sub-toggle .pf-caret{ font-size:var(--fs-label); color:var(--pink); }
   #checkinSection.collapsed #checkinBody{ display:none; }
+  /* 每日打卡收起來時,仍保留「調整本日運動計劃」按鈕可見 */
+  #checkinSection.collapsed > #checkinAdjustWorkout{ display:block; }
   .wo-datepick{ display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:var(--fs-label); color:var(--ink-soft); }
   .wo-datepick input{ padding:8px 10px; border-radius:12px; border:2px solid var(--line);
     font-size:var(--fs-label); background:#FFFDFA; color:var(--ink); font-family:inherit; }
@@ -924,14 +926,15 @@
   <div class="pf-mini" id="checkinMini"></div>
   <div id="checkinBody">
     <div id="dayList"></div>
-    <button type="button" class="ai-photo-btn" id="checkinAdjustWorkout" style="margin-top:12px;">調整本日運動計劃</button>
-    <div class="wo-adjust" id="woAdjustBox" style="display:none;">
-      <div class="wo-adjust-row">
-        <input id="woAdjustInput" placeholder="例:今天休息 / 只練上半身 / 這週練 3 天" autocomplete="off">
-        <button type="button" class="mini-btn" id="woAdjustBtn">重新調整</button>
-      </div>
-      <div class="ai-photo-status" id="woAdjustStatus"></div>
+  </div>
+  <!-- 調整本日運動計劃:放在收合區塊外面,每日打卡收起來時仍看得到 -->
+  <button type="button" class="ai-photo-btn" id="checkinAdjustWorkout" style="margin-top:12px;">調整本日運動計劃</button>
+  <div class="wo-adjust" id="woAdjustBox" style="display:none;">
+    <div class="wo-adjust-row">
+      <input id="woAdjustInput" placeholder="例:今天休息 / 只練上半身 / 這週練 3 天" autocomplete="off">
+      <button type="button" class="mini-btn" id="woAdjustBtn">重新調整</button>
     </div>
+    <div class="ai-photo-status" id="woAdjustStatus"></div>
   </div>
 </div>
 
@@ -4534,8 +4537,8 @@
     const caw=document.getElementById("checkinAdjustWorkout");
     if(caw) caw.addEventListener("click", ()=>{
       const ab=document.getElementById("woAdjustBox"); if(!ab) return;
-      const open = ab.style.display!=="none";
-      ab.style.display = open ? "none" : "";
+      const open = ab.style.display!=="none" && ab.style.display!=="";
+      ab.style.display = open ? "none" : "block";
       if(!open){
         try{ ab.scrollIntoView({behavior:"smooth", block:"center"}); }catch(_){ }
         const inp=document.getElementById("woAdjustInput"); if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 300);
