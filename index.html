@@ -1072,7 +1072,7 @@
   <div class="pf-mini" id="rmMini"></div>
   <div class="weight-box">
     <label class="rm-check"><input type="checkbox" id="rmOn"> 開啟提醒</label>
-    <div class="rm-row">提醒時間 <input type="time" id="rmTime" value="16:20"></div>
+    <div class="rm-row">提醒時間 <input type="time" id="rmTime"></div>
     <div class="rm-row" style="align-items:flex-start;">提醒內容:
       <div class="rm-items">
         <label class="rm-item"><input type="checkbox" id="rmBreakfast"> 今日早餐</label>
@@ -3803,7 +3803,7 @@
 
   async function loadProfile(){
     const rst=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
-    rst("pfSex", isOriginPlan()?"female":""); rst("pfAge",""); rst("pfHeight",""); rst("pfWeight",""); rst("pfTargetW",""); rst("pfTargetBf",""); rst("pfDate", isOriginPlan()?"2026-08-28":"");
+    rst("pfSex",""); rst("pfAge",""); rst("pfHeight",""); rst("pfWeight",""); rst("pfTargetW",""); rst("pfTargetBf",""); rst("pfDate", isOriginPlan()?"2026-08-28":"");
     // 空白版(非 origin):個人資料不顯示預設數字,改為「—」
     const ph=(id,num)=>{ const el=document.getElementById(id); if(el) el.placeholder = isOriginPlan()?num:"—"; };
     ph("pfAge","30"); ph("pfHeight","160"); ph("pfWeight","64"); ph("pfTargetW","60"); ph("pfTargetBf","22");
@@ -5034,7 +5034,7 @@
   }
 
   // ---------- 提醒(內容即時反映 App 內的更動;可設定時間/內容) ----------
-  const RM_DEFAULT = { on:false, time:"16:20", breakfast:false, lunch:false, dinner:true, snack:false, tmrLunch:true, workout:true, body:true };
+  const RM_DEFAULT = { on:false, time:"", breakfast:false, lunch:false, dinner:true, snack:false, tmrLunch:true, workout:true, body:true };
   let reminderCfg = Object.assign({}, RM_DEFAULT);
   function dayEntryFor(iso){ return days.find(d=>d.iso===iso) || (typeof resolveDay==="function"?resolveDay(iso):null); }
   function reminderLinesForDay(te, tm){
@@ -5096,6 +5096,7 @@
   }
   function downloadReminderICS(){
     try{
+      if(!reminderCfg.time){ alert(lang==="en"?"Set a reminder time first.":"請先設定提醒時間。"); return false; }
       const r=buildReminderICS();
       if(!r.count){ alert(lang==="en"?"Select at least one reminder item first.":"請先勾選要提醒的內容(晚餐、運動等)。"); return false; }
       const blob=new Blob([r.ics],{type:"text/calendar;charset=utf-8"});
@@ -5117,7 +5118,7 @@
     reminderCfg=Object.assign({}, RM_DEFAULT);
     try{ const r=await window.storage.get(K("reminder"),false); if(r&&r.value){ reminderCfg=Object.assign(reminderCfg, JSON.parse(r.value)||{}); } }catch(e){}
     const on=document.getElementById("rmOn"); if(on) on.checked=reminderCfg.on;
-    const tm=document.getElementById("rmTime"); if(tm) tm.value=reminderCfg.time||"16:20";
+    const tm=document.getElementById("rmTime"); if(tm) tm.value=reminderCfg.time||"";
     const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.checked=!!v; };
     set("rmBreakfast",reminderCfg.breakfast); set("rmLunch",reminderCfg.lunch); set("rmDinner",reminderCfg.dinner);
     set("rmSnack",reminderCfg.snack); set("rmTmrLunch",reminderCfg.tmrLunch); set("rmWorkout",reminderCfg.workout); set("rmBody",reminderCfg.body);
@@ -5131,7 +5132,7 @@
       if(el) el.addEventListener("change", ()=>{
         const g=x=>{ const e=document.getElementById(x); return e?e.checked:false; };
         reminderCfg.on=g("rmOn");
-        reminderCfg.time=document.getElementById("rmTime").value||"16:20";
+        reminderCfg.time=document.getElementById("rmTime").value||"";
         reminderCfg.breakfast=g("rmBreakfast"); reminderCfg.lunch=g("rmLunch"); reminderCfg.dinner=g("rmDinner");
         reminderCfg.snack=g("rmSnack"); reminderCfg.tmrLunch=g("rmTmrLunch"); reminderCfg.workout=g("rmWorkout"); reminderCfg.body=g("rmBody");
         saveReminder(); renderReminder();
