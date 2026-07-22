@@ -2689,7 +2689,8 @@
             <div class="ex-detail" data-exedit-content="${day.iso}:${exi}">${esc(ex.detail)}</div>`:''}</div>
         </div>`;
       }).join("");
-      const exEditRow = `<div class="day-ex-editrow"><button type="button" class="day-edit-btn" data-editday="${day.iso}">編輯這天運動</button>${dayExOverride[day.iso]?`<button type="button" class="day-edit-reset" data-resetday="${day.iso}">回到計畫</button>`:''}</div>`;
+      // 「編輯這天運動」已移除(與下方「調整本日運動計劃」功能重複);仍保留「回到計畫」以便清掉殘留的舊修改
+      const exEditRow = dayExOverride[day.iso] ? `<div class="day-ex-editrow"><button type="button" class="day-edit-reset" data-resetday="${day.iso}">回到計畫</button></div>` : '';
       card.innerHTML = `
         <div class="day-head">
           <div class="left">
