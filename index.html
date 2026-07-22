@@ -844,6 +844,8 @@
     </div>
     <div class="ai-photo-status" id="menuAiStatus"></div>
   </div>
+  <button type="button" class="mini-btn" id="syncFoodBtn" style="margin-top:10px;width:100%;">自己選了別的?依飲食紀錄更新今日菜單</button>
+  <div class="ai-photo-status" id="syncFoodStatus"></div>
   <button type="button" class="mini-btn" id="menuRegenBtn" style="margin-top:12px;width:100%;padding:14px 18px;font-weight:700;line-height:1.4;"><span class="mrb-main">① 更改菜單</span><span class="mrb-sub">② 上傳餐廳菜單,推薦適合我的</span></button>
   <div class="menu-regen-box" id="menuRegenBox">
     <div class="meal-tabs" id="regenMealTabs">
@@ -1319,6 +1321,7 @@
     "讓 AI 幫我換一餐":"Let AI swap a meal","讓 AI 換這一餐":"Let AI swap this meal",
     "① 更改菜單":"① Change the menu","② 上傳餐廳菜單,推薦適合我的":"② Upload a restaurant menu for a pick that suits you","收起來 ▲":"Close ▲",
     "調整菜單推薦需求":"Adjust menu recommendation","例:我不吃早餐 / 都要吃素 / 午晚餐低碳":"e.g. skip breakfast / all vegetarian / low-carb lunch & dinner","套用":"Apply",
+    "自己選了別的?依飲食紀錄更新今日菜單":"Ate something else? Update today's menu from your food log",
     "選一餐,AI 會依你的熱量目標重新配好。下面全部都可以留空,直接按也會推薦。":"Pick a meal and AI re-plans it to your calorie target. Everything below is optional — just tap and it still recommends.",
     "口味喜好(可複選 / 不選)":"Taste preferences (pick any, or none)",
     "高蛋白":"High protein","少油清爽":"Light / low oil","低卡":"Low calorie","低碳水":"Low carb","多蔬菜":"More veg","吃辣":"Spicy OK","不辣":"Not spicy","不吃牛":"No beef","不吃豬":"No pork","海鮮":"Seafood","素食":"Vegetarian","飯類":"Rice dishes","麵食":"Noodles","湯品":"Soup",
@@ -2316,6 +2319,23 @@
     }
     if(btn){ btn.disabled=false; btn.textContent=old; }
   }
+  // 使用者沒照推薦菜單、而是自己選了別的(記在「飲食紀錄」)→ 一鍵把實際吃的更新到今日菜單
+  function syncFoodLogToMenu(){
+    const status=document.getElementById("syncFoodStatus");
+    const iso=curIso();
+    const te=days.find(d=>d.iso===iso)||days[0]; if(!te) return;
+    const todays=(typeof foodLog!=="undefined"?foodLog:[]).filter(f=>f.date===iso);
+    if(!todays.length){ status.innerHTML='<span class="err">'+RP('今天的「飲食紀錄」還是空的,先在下面記錄吃了什麼。','No food logged today yet — add some under the food log first.')+'</span>'; return; }
+    if(!confirm(RP('把今天「飲食紀錄」裡實際吃的內容,更新到上面的今日菜單嗎?(只會覆蓋有紀錄的那幾餐)','Update today\'s menu with what you actually logged? (only overwrites meals you logged)'))) return;
+    const map={"早餐":"breakfast","午餐":"lunch","晚餐":"dinner","點心":"fruit"};
+    let n=0;
+    Object.keys(map).forEach(mz=>{
+      const items=todays.filter(f=>f.meal===mz);
+      if(items.length){ applyMeal(map[mz], items.map(f=>f.name).join("、")); n++; }
+    });
+    status.innerHTML = n ? '<span class="ok">'+RP('已依飲食紀錄更新今日菜單 ✅','Menu updated from your log ✅')+'</span>'
+                         : '<span class="err">'+RP('沒有可同步的餐','Nothing to sync')+'</span>';
+  }
   function initMenuModule(){
     const tgl = document.getElementById("menuRegenBtn");
     const box = document.getElementById("menuRegenBox");
@@ -2323,6 +2343,8 @@
     const aiBtn=document.getElementById("menuAiBtn"), aiInput=document.getElementById("menuAiInput");
     if(aiBtn) aiBtn.addEventListener("click", menuAiAdjust);
     if(aiInput) aiInput.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); menuAiAdjust(); } });
+    const syncBtn=document.getElementById("syncFoodBtn");
+    if(syncBtn) syncBtn.addEventListener("click", syncFoodLogToMenu);
     const collapseBtn = document.getElementById("menuRegenCollapse");
     if(collapseBtn && box) collapseBtn.addEventListener("click", ()=>{ box.classList.remove("show"); if(tgl) tgl.scrollIntoView({block:"center", behavior:"smooth"}); });
     document.querySelectorAll("#regenMealTabs .meal-tab").forEach(b=>{
