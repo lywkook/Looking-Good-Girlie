@@ -364,6 +364,8 @@
   .ex-row.done .ex-check{ background:var(--mint); border-color:var(--mint); color:#fff; }
   .ex-text b{ font-size:var(--fs-body); }
   .ex-detail{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; line-height:1.5; }
+  .ex-howto{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:3px; line-height:1.45; }
+  .ex-howto:empty{ display:none; }
   .ex-demo{ font-size:var(--fs-hint); color:var(--pink); text-decoration:none; border:1px solid var(--pink-soft);
     border-radius:10px; padding:1px 8px; white-space:nowrap; margin-left:7px; display:inline-block; vertical-align:middle; cursor:pointer; }
   .ex-demo:active{ opacity:0.6; background:var(--pink-soft); }
@@ -2681,6 +2683,87 @@
     const mv=stripMoveName(name); if(!mv || mv==="—" || /休息|拉伸|伸展|放鬆|依運動計畫/.test(mv)) return "";
     return ' <a class="ex-demo" href="'+moveDemoUrl(name)+'" target="_blank" rel="noopener" title="看示意圖" onclick="event.stopPropagation()">示意圖</a>';
   }
+  // 每個動作的做法(小字),常見動作用內建說明,其餘的用 AI 補上並快取
+  const MOVE_HOWTO = {
+    "啞鈴深蹲":"雙手持啞鈴,雙腳與肩同寬,臀部後坐蹲到大腿接近平行再站起。",
+    "高腳杯深蹲":"雙手捧一顆啞鈴於胸前,做深蹲,背打直、膝蓋不內夾。",
+    "深蹲跳":"蹲下後用力往上跳,落地時屈膝緩衝再接下一下。",
+    "深蹲推舉":"深蹲站起的同時,把啞鈴從肩膀往頭頂上推直。",
+    "深蹲":"雙腳與肩同寬,臀部向後坐、膝蓋對齊腳尖,蹲到大腿接近平行再站起。",
+    "弓箭步":"一腳向前跨一大步,後膝下沉接近地面,前腳出力站回,左右輪流。",
+    "箭步蹲":"一腳向前跨步下蹲,後膝接近地面再站回,兩腳輪流。",
+    "保加利亞":"後腳墊高在椅面,前腳單腳下蹲再站起,重心放前腳。",
+    "分腿蹲":"前後開立,後腳墊高或不墊,前腳下蹲再站起。",
+    "啞鈴划船":"身體前傾、背打直,手肘沿身側把啞鈴往後拉到腰際,感受背部收縮。",
+    "槓鈴划船":"俯身握槓、背打直,將槓鈴拉向下腹再慢慢放下。",
+    "划船":"身體前傾、背打直,把重量往腰際方向拉,擠壓背部再放下。",
+    "俄羅斯轉身":"坐姿微後躺、雙腳抬離地,雙手(或持重物)左右轉體到身側。",
+    "平板支撐":"前臂與腳尖撐地,身體從頭到腳成一直線,收緊核心撐住不塌腰。",
+    "棒式":"前臂與腳尖撐地,身體成一直線,核心收緊撐住。",
+    "側棒式":"側身用單手前臂撐地,身體側面成直線,髖部往上撐住。",
+    "捲腹":"仰躺屈膝,用腹部力量把上背捲離地面,再慢慢躺回。",
+    "仰臥起坐":"仰躺屈膝,起身讓上半身靠近大腿,再控制躺回。",
+    "腹肌抬舉":"仰躺雙腿伸直,用下腹把雙腿抬起再慢慢放下,不落地。",
+    "抬腿":"仰躺雙腿伸直,靠下腹把腿抬起再緩緩放下。",
+    "登山者":"撐地成伏地挺身姿勢,雙膝輪流快速往胸口收。",
+    "伏地挺身":"雙手略寬於肩撐地、身體打直,屈肘下降再推起。",
+    "俯臥撐":"雙手撐地、身體成直線,屈肘下降再推起。",
+    "肩推":"啞鈴舉於肩側,往頭頂上方推直再放回肩膀。",
+    "過頭推舉":"重量放肩上,垂直往頭頂推直,再控制放回。",
+    "推舉":"把重量從肩膀往上推直,再慢慢放回。",
+    "二頭彎舉":"手臂夾身側,把啞鈴往肩前彎舉,再慢慢放下。",
+    "彎舉":"上臂固定,把啞鈴往上彎到肩前再放下。",
+    "臀橋":"仰躺屈膝,臀部用力往上頂到身體成一直線,停一下再放下。",
+    "橋式":"仰躺屈膝,臀部往上頂到大腿與身體成直線再放下。",
+    "羅馬尼亞硬舉":"微屈膝、臀部後推,重物貼腿下放感受腿後側,再站直。",
+    "硬舉":"背打直、臀部後推,握重物沿腿前緩緩下放再站直。",
+    "開合跳":"跳起同時手腳張開,再跳回合起,連續進行。",
+    "波比":"蹲下撐地跳成平板、起身再往上跳,連續做。",
+    "小腿抬舉":"站立用腳尖把腳跟抬到最高再放下,訓練小腿。",
+    "提踵":"站姿用腳尖把腳跟抬高再放下。",
+    "側平舉":"手臂微彎,把啞鈴往兩側平舉到與肩同高再放下。",
+    "臥推":"仰躺,把啞鈴或槓從胸前往上推直再放回。",
+    "胸推":"仰躺,將重量從胸前往上推直,再控制放回。",
+    "飛鳥":"仰躺手臂微彎,像抱大樹一樣把啞鈴往兩側打開再合起。",
+    "引體向上":"雙手握單槓,用背和手臂把身體拉到下巴過槓再放下。",
+    "超人式":"俯臥,同時抬起雙手雙腳離地,停一下再放下。",
+    "鳥狗":"四足跪姿,伸出對側手腳成一直線,收回換邊。"
+  };
+  function moveHowtoExact(name){ const mv=stripMoveName(name); return MOVE_HOWTO[mv] || ""; }
+  function moveHowtoFuzzy(name){
+    const mv=stripMoveName(name); let best=null;
+    Object.keys(MOVE_HOWTO).forEach(k=>{ if(mv.indexOf(k)>=0 && (!best || k.length>best.length)) best=k; });
+    return best ? MOVE_HOWTO[best] : "";
+  }
+  let howtoCache={};
+  async function loadHowtoCache(){ try{ const r=await window.storage.get("howtocache",false); if(r&&r.value) howtoCache=JSON.parse(r.value)||{}; }catch(e){ howtoCache={}; } }
+  async function aiHowto(mv){
+    if(!mv) return "";
+    if(howtoCache[mv]!=null) return howtoCache[mv];
+    if(!anyKey()) return "";
+    try{
+      const t=await askAIText("用繁體中文一句話(30字內),簡短說明健身動作「"+mv+"」怎麼做的動作要領,只給說明本身,不要加任何前後綴或標點外的字。");
+      let s=String(t||"").trim().replace(/^[「"']+|[」"']+$/g,"").split("\n")[0].trim();
+      if(s.length>50) s=s.slice(0,50);
+      howtoCache[mv]=s; try{ await window.storage.set("howtocache", JSON.stringify(howtoCache), false); }catch(e){}
+      return s;
+    }catch(e){ return ""; }
+  }
+  function moveEligibleForHowto(name){
+    if(!name || isCommonCardio(name)) return false;
+    const mv=stripMoveName(name); return !!mv && mv!=="—" && !/休息|拉伸|伸展|放鬆|依運動計畫/.test(mv);
+  }
+  // 渲染後補上「還沒有做法說明」的動作(用 AI,結果會快取)
+  function fillHowtos(container){
+    if(!container) return;
+    container.querySelectorAll(".ex-howto[data-move]").forEach(el=>{
+      if(el.textContent.trim()) return;   // 已有內建精準說明
+      const mv=stripMoveName(el.dataset.move);
+      if(howtoCache[mv]){ el.textContent=howtoCache[mv]; return; }
+      if(anyKey()){ aiHowto(mv).then(s=>{ if(s) el.textContent=s; else { const f=moveHowtoFuzzy(el.dataset.move); if(f) el.textContent=f; } }); return; }
+      const f=moveHowtoFuzzy(el.dataset.move); if(f) el.textContent=f;   // 沒金鑰:退而用相近動作的說明
+    });
+  }
   function applyAiPlanToDays(){
     // 運動計畫換版了 → 之前針對舊計畫的「每日打卡手動修改」已過期,清掉讓打卡跟著新計畫同步
     const sig=planSig();
@@ -2740,11 +2823,13 @@
       const exRows = exList.map((ex,exi)=>{
         const exKey = "ex:"+day.iso+":"+exi;
         const checked = !!exerciseDone[exKey];
+        const ht = moveEligibleForHowto(ex.name) ? moveHowtoExact(ex.name) : "";
+        const htDiv = moveEligibleForHowto(ex.name) ? `<div class="ex-howto" data-move="${esc(ex.name)}">${esc(ht)}</div>` : "";
         return `
         <div class="ex-row${checked?' done':''}" data-exkey="${exKey}">
           <div class="ex-check">✓</div>
           <div class="ex-text"><b>${esc(ex.name)}</b>${moveDemoTag(ex.name)}${ex.detail?` <span class="edit-pencil" data-exedit="${day.iso}:${exi}" role="button" aria-label="改" title="改"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
-            <div class="ex-detail" data-exedit-content="${day.iso}:${exi}">${esc(ex.detail)}</div>`:''}</div>
+            <div class="ex-detail" data-exedit-content="${day.iso}:${exi}">${esc(ex.detail)}</div>`:''}${htDiv}</div>
         </div>`;
       }).join("");
       // 「編輯這天運動」已移除(與下方「調整本日運動計劃」功能重複);仍保留「回到計畫」以便清掉殘留的舊修改
@@ -2819,6 +2904,7 @@
       listEl.appendChild(card);
     });
     updateDoneCount();
+    if(typeof fillHowtos==="function") fillHowtos(listEl);
   }
   function reopenDay(iso){ const c=document.querySelector('.day-card[data-iso="'+iso+'"]'); if(c) c.classList.add("open"); }
   function openDayExEditor(card, iso, exList){
@@ -5813,6 +5899,7 @@
     initProfileModule();
     await loadProfile();
     initWorkoutModule();
+    await loadHowtoCache();
     await loadWorkout();
     initReminderModule();
     await loadReminder();
