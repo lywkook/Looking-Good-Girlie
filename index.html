@@ -4668,6 +4668,22 @@
     return "【器材限制·務必遵守】使用者只有這些器材,只能用這些:重訓["+(strength.join("、")||"無")+"]、有氧["+(cardio.join("、")||"無")+"]。"
       + "沒有列在上面的器材一律當作使用者沒有、絕對不要出現在計畫裡;若某個動作原本需要沒列出的器材,請改成徒手版本或用現有器材的替代動作。";
   }
+  // 安全網:使用者沒選任何器材(=徒手)時,把 AI 仍推薦的「需要器材/機械」動作換成徒手版
+  function sanitizeEquip(items){
+    if(strengthSel.length || cardioSel.length) return (items||[]).map(x=>String(x)).filter(Boolean);   // 有器材就信任 prompt 限制
+    const subs=[
+      [/(啞鈴|槓鈴|壺鈴|史密斯機?|滑輪|纜繩|機械式?)\s*/g, ""],   // 去掉器材前綴 → 徒手
+      [/腿(部)?推(舉|蹬|機)/g, "深蹲"],
+      [/腿伸(機|展)?/g, "靠牆深蹲"],
+      [/腿彎舉(機)?/g, "臀橋"],
+      [/(胸推機|蝴蝶機|夾胸機?)/g, "伏地挺身"],
+      [/(高位|滑輪)?下拉(機)?/g, "毛巾反向划船"],
+      [/(坐姿)?划船機/g, "俯身徒手划船"],
+      [/引體向上桿?/g, "桌下反式划船"],
+      [/(跑步機|橢圓機|滑步機|飛輪車?|室內腳踏車|登階機)/g, "開合跳"],
+    ];
+    return (items||[]).map(it=>{ let s=String(it); subs.forEach(([re,rep])=>{ s=s.replace(re,rep); }); return s.replace(/\s{2,}/g," ").trim(); }).filter(Boolean);
+  }
   // 把強度偏好(組數/次數/重量/秒數)整理成一句
   function intensityLine(){
     const pf=woPrefs(); const a=[];
@@ -4814,6 +4830,7 @@
         +'只回 JSON:{"summary":"","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
       const obj=await geminiJSON(prompt, null, 0.3);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
+      obj.week.forEach(d=>{ if(Array.isArray(d.items)) d.items=sanitizeEquip(d.items); });   // 徒手模式:把殘留的器材動作換成徒手版
       workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
     }catch(e){
       workoutPlan=localWorkoutPlan(days,cardio,note); await saveWorkout(); renderWorkout(workoutPlan); updateWoMini(); syncWorkoutToCheckin();
@@ -4996,11 +5013,12 @@
     const dayLabel = iso===isoDate(today) ? "今天" : iso;
     const prompt='你是健身教練。使用者「'+dayLabel+'」這一天原本的運動動作是:'+JSON.stringify(curEx.length?curEx:["(尚未安排)"])+'。'
       +'他想這樣調整「這一天」:「'+change+'」。請只針對這一天,重新給一份合理的動作清單(可換部位、強度、動作數量;若他說要休息就回一項「充分休息與伸展 15分鐘」)。'
+      +equipConstraint()
       +'每個動作要寫「具體動作名稱 + 組數×次數 或 時間」(例:深蹲 3組×12、平板支撐 3組×40秒)。\n'
       +'只回 JSON:{"items":["...","..."]}。'+TW_RULE;
     const obj=await geminiJSON(prompt,null,0.3);
     if(!obj||!Array.isArray(obj.items)||!obj.items.length) throw new Error("回傳格式看不懂");
-    dayExOverride[iso]=obj.items.map(x=>String(x).trim()).filter(Boolean);
+    dayExOverride[iso]=sanitizeEquip(obj.items.map(x=>String(x).trim())).filter(Boolean);
     markDayExInSync(); await saveDayExOverride();
     if(typeof renderDays==="function") renderDays();
     return dayExOverride[iso];
