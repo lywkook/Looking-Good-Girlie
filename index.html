@@ -2240,10 +2240,11 @@
     const out = (kept.length?kept:[parts[0]||s]).join("、");
     return mealPlus(out||s);
   }
-  function applyMeal(field, text){
+  function applyMeal(field, text, isoArg){
     if(!text) return;
-    const iso = curIso();
+    const iso = isoArg || curIso();
     const te = days.find(d=>d.iso===iso) || days[0];
+    if(!te) return;
     te.diet[field] = conciseMeal(String(text).trim());
     try{ window.storage.set(K("dietover:"+iso+":"+field), te.diet[field], false); }catch(e){}
     renderTodayMenu(); renderDays();
@@ -2381,7 +2382,7 @@
   // AI 教練:結合「飲食紀錄 + 運動 + 每天量測數據 + 目標與期限」→ 判斷進度,重新調整今天的菜單和運動
   async function coachAdjust(){
     const status=document.getElementById("coachStatus");
-    const iso=curIso();
+    const iso=isoDate(today);   // 這個按鈕只調整「今天(含)之後」,菜單一律套用到今天,不動到之前的日期
     const te=days.find(d=>d.iso===iso)||days[0]; if(!te) return;
     if(!anyKey()){ status.innerHTML='<span class="err">'+RP('這個功能需要一把免費 AI 金鑰,到 ⚙️ 設定最上面貼上即可。','This needs a free AI key — paste one at the top of ⚙️ Settings.')+'</span>'; return; }
     const g=id=>{ const el=document.getElementById(id); return el?String(el.value||"").trim():""; };
@@ -2417,7 +2418,7 @@
     try{
       const m=await geminiJSON(prompt,null,0.5);
       if(!m||!m.menu) throw new Error("回傳格式看不懂");
-      ["breakfast","lunch","dinner","fruit"].forEach(f=>{ if(m.menu[f]!=null){ const v=String(m.menu[f]).trim()||"—"; applyMeal(f,v); } });
+      ["breakfast","lunch","dinner","fruit"].forEach(f=>{ if(m.menu[f]!=null){ const v=String(m.menu[f]).trim()||"—"; applyMeal(f,v,iso); } });
       if(m.dailyKcal && Number(m.dailyKcal)>0){ const t=document.getElementById("inKcalTarget"); const dk=Math.round(Number(m.dailyKcal));
         if(t){ t.value=dk; } kcalTarget=dk; if(typeof saveTarget==="function") saveTarget(); if(typeof renderFoodLog==="function") renderFoodLog(); }
       status.innerHTML='<span class="ok">'+RP('完成','Done')+'</span>';
@@ -2765,10 +2766,13 @@
     });
   }
   function applyAiPlanToDays(){
-    // 運動計畫換版了 → 之前針對舊計畫的「每日打卡手動修改」已過期,清掉讓打卡跟著新計畫同步
+    // 運動計畫換版了 → 只清「今天(含)以後」對舊計畫的手動修改,讓未來跟著新計畫;過去的日期一律保留不動
     const sig=planSig();
     if(dayExSig!==sig){
-      if(Object.keys(dayExOverride).length){ dayExOverride={}; saveDayExOverride(); }
+      const tIso=isoDate(today);
+      let changed=false;
+      Object.keys(dayExOverride).forEach(k=>{ if(k>=tIso){ delete dayExOverride[k]; changed=true; } });
+      if(changed) saveDayExOverride();
       dayExSig=sig; saveDayExSig();
     }
     const byWd={};
@@ -2787,6 +2791,18 @@
         day.workout = day.baseWorkout;
       }
     });
+  }
+  // 換運動計畫前先「凍結過去的日期」:把過去每天目前顯示的動作存成當天的固定內容,之後改計畫也不會動到它們
+  function freezePastWorkouts(){
+    const tIso=isoDate(today); let changed=false;
+    days.forEach(day=>{
+      if(day.iso < tIso && !dayExOverride[day.iso]){
+        const ex=(day.workout&&day.workout.exercises)||[];
+        const names=ex.map(e=> e.detail?(e.name+" "+e.detail):e.name).filter(Boolean);
+        if(names.length){ dayExOverride[day.iso]=names; changed=true; }
+      }
+    });
+    if(changed){ saveDayExOverride(); markDayExInSync(); }
   }
   // 運動計畫有變動時呼叫:重新對應每日打卡並重畫
   function syncWorkoutToCheckin(){ applyAiPlanToDays(); if(typeof renderDays==="function"){ try{ renderDays(); }catch(e){} } }
@@ -4904,6 +4920,7 @@
         +'只回 JSON:{"summary":"一句話說明你怎麼調整的","week":[{"day":"週一","type":"重訓/有氧/休息","focus":"部位","items":["..."]}](共7天),"tips":[""]}。';
       const obj=await geminiJSON(prompt, null, 0.3);
       if(!obj||!Array.isArray(obj.week)) throw new Error("回傳格式看不懂");
+      freezePastWorkouts();   // 先鎖住過去的日期,調整後只影響今天(含)之後
       workoutPlan=obj; await saveWorkout(); renderWorkout(obj); updateWoMini(); syncWorkoutToCheckin();
       if(inp) inp.value="";
       status.innerHTML='<span class="ok">'+RP('完成','Done')+'</span>';
