@@ -2431,21 +2431,9 @@
       if(m.dailyKcal && Number(m.dailyKcal)>0){ const t=document.getElementById("inKcalTarget"); const dk=Math.round(Number(m.dailyKcal));
         if(t){ t.value=dk; } kcalTarget=dk; if(typeof saveTarget==="function") saveTarget(); if(typeof renderFoodLog==="function") renderFoodLog(); }
       status.innerHTML='<span class="ok">'+RP('完成','Done')+'</span>';
-      // 同時把運動也依建議調整(需已有運動計畫);若建議的訓練天數和使用者原本設定不同,先問要不要接受
-      if(m.workout && typeof workoutPlan!=="undefined" && workoutPlan && Array.isArray(workoutPlan.week) && typeof adjustWorkoutPlan==="function"){
-        const woDaysEl=document.getElementById("woDays");
-        const userDays=woDaysEl?parseInt(woDaysEl.value,10):NaN;
-        const recDays=parseInt(m.recDays,10);
-        let instruction="依我的目標與進度:"+m.workout;
-        if(userDays>0 && recDays>0 && recDays!==userDays){
-          const accept=confirm(RP(
-            '你原本設定一週練 '+userDays+' 天。依你的身體數據,建議改成一週練 '+recDays+' 天。\n要接受新的建議嗎?(取消 = 維持你原本的 '+userDays+' 天)',
-            'You set '+userDays+' workout days/week, but your body data suggests '+recDays+'. Accept the new suggestion? (Cancel keeps '+userDays+')'
-          ));
-          if(accept){ if(woDaysEl){ woDaysEl.value=recDays; } if(typeof saveWorkout==="function") saveWorkout(); }
-          else { instruction+="。★請務必維持一週練 "+userDays+" 天,不要更改訓練天數,只在這個天數內調整強度與部位"; }
-        }
-        adjustWorkoutPlan(instruction);
+      // 依建議調整運動:只改「今天」這一天的動作,不動整週計畫、也不動其他天
+      if(m.workout && typeof adjustDayWorkout==="function"){
+        try{ await adjustDayWorkout(iso, "依我的目標與身體數據:"+m.workout); }catch(e){}
       }
     }catch(e){
       status.innerHTML='<span class="err">'+RP('這次分析沒成功,再試一次。','That didn\'t work — try again.')+'</span>';
@@ -4998,7 +4986,26 @@
     }
     if(btn){ btn.disabled=false; btn.textContent=oldT; }
   }
-  // 「調整本日運動計劃」:只改「目前看的那一天」的動作(存成當天的內容),不動整個計畫、也不動其他天
+  // 核心:只調整「某一天」的運動,存成當天的內容(不動整週計畫、也不動其他天);回傳新動作陣列
+  async function adjustDayWorkout(iso, change){
+    const day=(typeof resolveDay==="function")?resolveDay(iso):null;
+    const curEx=(dayExOverride[iso]
+      ? dayExOverride[iso].slice()
+      : (((day&&day.workout&&day.workout.exercises)||[]).map(e=> e.detail?(e.name+" "+e.detail):e.name))
+    ).filter(Boolean);
+    const dayLabel = iso===isoDate(today) ? "今天" : iso;
+    const prompt='你是健身教練。使用者「'+dayLabel+'」這一天原本的運動動作是:'+JSON.stringify(curEx.length?curEx:["(尚未安排)"])+'。'
+      +'他想這樣調整「這一天」:「'+change+'」。請只針對這一天,重新給一份合理的動作清單(可換部位、強度、動作數量;若他說要休息就回一項「充分休息與伸展 15分鐘」)。'
+      +'每個動作要寫「具體動作名稱 + 組數×次數 或 時間」(例:深蹲 3組×12、平板支撐 3組×40秒)。\n'
+      +'只回 JSON:{"items":["...","..."]}。'+TW_RULE;
+    const obj=await geminiJSON(prompt,null,0.3);
+    if(!obj||!Array.isArray(obj.items)||!obj.items.length) throw new Error("回傳格式看不懂");
+    dayExOverride[iso]=obj.items.map(x=>String(x).trim()).filter(Boolean);
+    markDayExInSync(); await saveDayExOverride();
+    if(typeof renderDays==="function") renderDays();
+    return dayExOverride[iso];
+  }
+  // 「調整本日運動計劃」:只改「目前看的那一天」的動作
   async function adjustThisDayWorkout(){
     const status=document.getElementById("woAdjustStatus");
     const inp=document.getElementById("woAdjustInput");
@@ -5006,25 +5013,12 @@
     if(!change){ if(inp) inp.focus(); return; }
     if(!anyKey()){ status.innerHTML='<span class="err">'+RP('調整需要 AI 金鑰(到 ⚙️ 設定貼上免費金鑰)','This needs a free AI key (paste one in ⚙️ Settings)')+'</span>'; return; }
     const iso=curIso();
-    const day=(typeof resolveDay==="function")?resolveDay(iso):null;
-    const curEx=(dayExOverride[iso]
-      ? dayExOverride[iso].slice()
-      : (((day&&day.workout&&day.workout.exercises)||[]).map(e=> e.detail?(e.name+" "+e.detail):e.name))
-    ).filter(Boolean);
     const btn=document.getElementById("woAdjustBtn"); const oldT=btn?btn.textContent:""; if(btn){ btn.disabled=true; btn.textContent=RP("調整中…","Adjusting…"); }
     status.innerHTML='<span class="ai-spin"></span>'+RP('調整這一天…','Adjusting this day…');
     try{
-      const dayLabel = iso===isoDate(today) ? "今天" : iso;
-      const prompt='你是健身教練。使用者「'+dayLabel+'」這一天原本的運動動作是:'+JSON.stringify(curEx.length?curEx:["(尚未安排)"])+'。'
-        +'他想這樣調整「這一天」:「'+change+'」。請只針對這一天,重新給一份合理的動作清單(可換部位、強度、動作數量;若他說要休息就回一項「充分休息與伸展 15分鐘」)。'
-        +'每個動作要寫「具體動作名稱 + 組數×次數 或 時間」(例:深蹲 3組×12、平板支撐 3組×40秒)。\n'
-        +'只回 JSON:{"items":["...","..."]}。'+TW_RULE;
-      const obj=await geminiJSON(prompt,null,0.3);
-      if(!obj||!Array.isArray(obj.items)||!obj.items.length) throw new Error("回傳格式看不懂");
-      dayExOverride[iso]=obj.items.map(x=>String(x).trim()).filter(Boolean);
-      markDayExInSync(); await saveDayExOverride();
-      if(typeof renderDays==="function") renderDays();
+      await adjustDayWorkout(iso, change);
       if(inp) inp.value="";
+      if(typeof reopenDay==="function") reopenDay(iso);
       status.innerHTML='<span class="ok">'+RP('完成','Done')+'</span>';
     }catch(e){ status.innerHTML='<span class="err">'+RP('調整失敗:','Failed: ')+esc(e.message||e)+'</span>'; }
     if(btn){ btn.disabled=false; btn.textContent=oldT; }
