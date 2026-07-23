@@ -364,6 +364,10 @@
   .ex-row.done .ex-check{ background:var(--mint); border-color:var(--mint); color:#fff; }
   .ex-text b{ font-size:var(--fs-body); }
   .ex-detail{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; line-height:1.5; }
+  .ex-demo{ font-size:var(--fs-hint); color:var(--pink); text-decoration:none; border:1px solid var(--pink-soft);
+    border-radius:10px; padding:1px 8px; white-space:nowrap; margin-left:7px; display:inline-block; vertical-align:middle; }
+  .ex-demo:active{ opacity:0.6; background:var(--pink-soft); }
+  .wo-items .ex-demo{ margin-left:6px; }
   .day-ex-editrow{ display:flex; gap:8px; margin-top:8px; }
   .day-edit-btn, .day-edit-reset{ font-size:var(--fs-label); background:var(--pink-soft); color:var(--ink);
     border:none; border-radius:20px; padding:5px 14px; font-weight:700; cursor:pointer; font-family:inherit; }
@@ -2665,6 +2669,18 @@
   // 把上方「運動計畫」的一週安排,依星期對應到下面每日打卡,讓兩邊資訊同步
   const AI_WEEKDAY = {"週日":0,"週一":1,"週二":2,"週三":3,"週四":4,"週五":5,"週六":6,"周日":0,"周一":1,"周二":2,"周三":3,"周四":4,"周五":5,"周六":6};
   function aiTypeToKind(t){ t=String(t||""); return /重訓|肌力|力量|阻力/.test(t)?"lift":(/有氧|燃脂|跑|心肺|快走/.test(t)?"cardio":"rest"); }
+  // 運動動作示意圖:重訓/較不常見的動作附上「示意圖」連結;大家都會的走路/跑步/跑步機等就不用
+  function stripMoveName(name){ let s=String(name||"").trim();
+    s=s.replace(/\s*[（(].*$/,"").replace(/\s*[\d０-９]+\s*(組|下|次|秒|分鐘|分|回|公斤|kg|m|公尺|米)[\s\S]*$/i,"").replace(/\s*[\d０-９][\d０-９\s組次秒分回xX×*·・~～-]*$/,"").trim();
+    return s || String(name||"").trim();
+  }
+  function isCommonCardio(name){ return /跑步機|跑步|慢跑|快走|健走|走路|散步|飛輪|單車|腳踏車|自行車|滑步機|橢圓機|階梯機|游泳|跳繩|開合跳|原地|踏步|treadmill|running|run\b|jog|walk|cycl|swim|elliptical|stair|rope/i.test(String(name||"")); }
+  function moveDemoUrl(name){ return "https://www.google.com/search?tbm=isch&q="+encodeURIComponent(stripMoveName(name)+" 動作 示意圖"); }
+  function moveDemoTag(name){
+    if(!name || isCommonCardio(name)) return "";
+    const mv=stripMoveName(name); if(!mv || mv==="—" || /休息|拉伸|伸展|放鬆|依運動計畫/.test(mv)) return "";
+    return ' <a class="ex-demo" href="'+moveDemoUrl(name)+'" target="_blank" rel="noopener" title="看示意圖" onclick="event.stopPropagation()">示意圖</a>';
+  }
   function applyAiPlanToDays(){
     // 運動計畫換版了 → 之前針對舊計畫的「每日打卡手動修改」已過期,清掉讓打卡跟著新計畫同步
     const sig=planSig();
@@ -2727,7 +2743,7 @@
         return `
         <div class="ex-row${checked?' done':''}" data-exkey="${exKey}">
           <div class="ex-check">✓</div>
-          <div class="ex-text"><b>${esc(ex.name)}</b>${ex.detail?` <span class="edit-pencil" data-exedit="${day.iso}:${exi}" role="button" aria-label="改" title="改"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+          <div class="ex-text"><b>${esc(ex.name)}</b>${moveDemoTag(ex.name)}${ex.detail?` <span class="edit-pencil" data-exedit="${day.iso}:${exi}" role="button" aria-label="改" title="改"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
             <div class="ex-detail" data-exedit-content="${day.iso}:${exi}">${esc(ex.detail)}</div>`:''}</div>
         </div>`;
       }).join("");
@@ -4577,7 +4593,7 @@
     (plan.week||[]).forEach(d=>{
       const t=d.type||""; const tag = /重訓|肌力/.test(t)?"tag-lift":(/有氧|燃脂|跑/.test(t)?"tag-cardio":"tag-rest");
       h+='<div class="wo-day"><div class="wo-day-h"><b>'+esc(d.day||"")+'</b> <span class="day-tag '+tag+'">'+esc(t)+(d.focus?" · "+esc(d.focus):"")+'</span></div>';
-      h+='<ul class="wo-items">'+((d.items||[]).map(it=>"<li>"+esc(it)+"</li>").join(""))+'</ul></div>';
+      h+='<ul class="wo-items">'+((d.items||[]).map(it=>"<li>"+esc(it)+moveDemoTag(it)+"</li>").join(""))+'</ul></div>';
     });
     h+='</div>';
     if(plan.tips&&plan.tips.length) h+='<div class="advice"><b>提醒</b><br>'+plan.tips.map(t=>"· "+esc(t)).join("<br>")+'</div>';
