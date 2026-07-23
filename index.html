@@ -2677,6 +2677,25 @@
     s=s.replace(/\s*[（(].*$/,"").replace(/\s*[\d０-９]+\s*(組|下|次|秒|分鐘|分|回|公斤|kg|m|公尺|米)[\s\S]*$/i,"").replace(/\s*[\d０-９][\d０-９\s組次秒分回xX×*·・~～-]*$/,"").trim();
     return s || String(name||"").trim();
   }
+  // 依動作名判斷主要訓練部位,讓標題的部位跟實際動作一致(AI 給的 focus 常對不上)
+  function moveBodyPart(name){
+    const n=stripMoveName(name);
+    if(/棒式|平板|側棒|捲腹|仰臥起坐|抬腿|舉腿|俄羅斯|登山者|登山|捲體|核心|腹肌|腹/.test(n)) return "核心";
+    if(/反向飛鳥|肩推|側平舉|側舉|上舉|過頭推|推舉|阿諾|肩/.test(n)) return "肩";
+    if(/划船|引體向上|滑輪下拉|背肌|背/.test(n)) return "背";
+    if(/伏地挺身|俯臥撐|臥推|胸推|夾胸|飛鳥|上胸|胸/.test(n)) return "胸";
+    if(/彎舉|二頭|三頭|臂屈伸|肱|手臂/.test(n)) return "手臂";
+    if(/深蹲|弓箭步|箭步|分腿蹲|保加利亞|臀橋|橋式|硬舉|小腿|提踵|腿|臀|蹲/.test(n)) return "腿";
+    return "";
+  }
+  function deriveFocus(items, fallback){
+    const order=["胸","背","肩","手臂","核心","腿"]; const seen={};
+    (items||[]).forEach(it=>{ const bp=moveBodyPart(it); if(bp) seen[bp]=true; });
+    const parts=order.filter(k=>seen[k]);
+    if(parts.length>=4) return "全身";
+    if(parts.length) return parts.join("/");
+    return fallback||"";
+  }
   function isCommonCardio(name){ return /跑步機|跑步|慢跑|快走|健走|走路|散步|飛輪|單車|腳踏車|自行車|滑步機|橢圓機|階梯機|游泳|跳繩|開合跳|原地|踏步|treadmill|running|run\b|jog|walk|cycl|swim|elliptical|stair|rope/i.test(String(name||"")); }
   function moveDemoUrl(name){ return "https://www.google.com/search?tbm=isch&q="+encodeURIComponent(stripMoveName(name)+" 動作 示意圖"); }
   function moveDemoTag(name){
@@ -2783,8 +2802,9 @@
       const ai = byWd[day.date.getDay()];
       if(ai){
         const kind=aiTypeToKind(ai.type||"");
+        const foc=kind==="lift"?deriveFocus(ai.items, ai.focus):(ai.focus||"");
         day.workout={ type:kind, emoji:kind==="lift"?"💪":(kind==="cardio"?"🏃‍♀️":"🌙"),
-          title:((ai.type||"運動")+(ai.focus?(" · "+ai.focus):"")),
+          title:((ai.type||"運動")+(foc?(" · "+foc):"")),
           note:"",
           exercises:(ai.items&&ai.items.length)?ai.items.map(it=>({name:String(it),detail:""})):[{name:"依運動計畫進行",detail:""}] };
       } else {
@@ -2816,8 +2836,8 @@
     let workout=null;
     if(workoutPlan && Array.isArray(workoutPlan.week)){
       const ai=workoutPlan.week.find(x=>AI_WEEKDAY[String(x.day||"").replace(/\s/g,"")]===wd);
-      if(ai){ const kind=aiTypeToKind(ai.type||""); workout={type:kind, emoji:kind==="lift"?"💪":(kind==="cardio"?"🏃‍♀️":"🌙"),
-        title:((ai.type||"運動")+(ai.focus?(" · "+ai.focus):"")), note:"",
+      if(ai){ const kind=aiTypeToKind(ai.type||""); const foc=kind==="lift"?deriveFocus(ai.items, ai.focus):(ai.focus||""); workout={type:kind, emoji:kind==="lift"?"💪":(kind==="cardio"?"🏃‍♀️":"🌙"),
+        title:((ai.type||"運動")+(foc?(" · "+foc):"")), note:"",
         exercises:(ai.items&&ai.items.length)?ai.items.map(it=>({name:String(it),detail:""})):[{name:"依運動計畫進行",detail:""}] }; }
     }
     if(!workout) workout=workoutForWeekday(wd, Math.max(0,idx));
@@ -4694,7 +4714,8 @@
     h+='<div class="wo-week">';
     (plan.week||[]).forEach(d=>{
       const t=d.type||""; const tag = /重訓|肌力/.test(t)?"tag-lift":(/有氧|燃脂|跑/.test(t)?"tag-cardio":"tag-rest");
-      h+='<div class="wo-day"><div class="wo-day-h"><b>'+esc(d.day||"")+'</b> <span class="day-tag '+tag+'">'+esc(t)+(d.focus?" · "+esc(d.focus):"")+'</span></div>';
+      const foc = /重訓|肌力/.test(t) ? deriveFocus(d.items, d.focus) : (d.focus||"");
+      h+='<div class="wo-day"><div class="wo-day-h"><b>'+esc(d.day||"")+'</b> <span class="day-tag '+tag+'">'+esc(t)+(foc?" · "+esc(foc):"")+'</span></div>';
       h+='<ul class="wo-items">'+((d.items||[]).map(it=>"<li>"+esc(it)+moveDemoTag(it)+"</li>").join(""))+'</ul></div>';
     });
     h+='</div>';
