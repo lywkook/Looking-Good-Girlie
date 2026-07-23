@@ -2677,11 +2677,11 @@
   // 依動作名判斷主要訓練部位,讓標題的部位跟實際動作一致(AI 給的 focus 常對不上)
   function moveBodyPart(name){
     const n=stripMoveName(name);
-    if(/棒式|平板|側棒|捲腹|仰臥起坐|抬腿|舉腿|俄羅斯|登山者|登山|捲體|核心|腹肌|腹/.test(n)) return "核心";
-    if(/反向飛鳥|肩推|側平舉|側舉|上舉|過頭推|推舉|阿諾|肩/.test(n)) return "肩";
-    if(/划船|引體向上|滑輪下拉|背肌|背/.test(n)) return "背";
+    if(/棒式|平板|側棒|捲腹|仰臥起坐|抬腿|舉腿|俄羅斯|俄式|轉體|轉身|登山者|登山|捲體|核心|腹肌|腹/.test(n)) return "核心";
+    if(/反向飛鳥|肩推|肩按|側平舉|側舉|上舉|過頭推|推舉|阿諾|肩/.test(n)) return "肩";
+    if(/划船|引體向上|反式划船|滑輪下拉|下拉|背肌|背/.test(n)) return "背";
     if(/伏地挺身|俯臥撐|臥推|胸推|夾胸|飛鳥|上胸|胸/.test(n)) return "胸";
-    if(/彎舉|二頭|三頭|臂屈伸|肱|手臂/.test(n)) return "手臂";
+    if(/臂彎|彎舉|二頭|三頭|臂屈伸|肱|手臂/.test(n)) return "手臂";
     if(/深蹲|弓箭步|箭步|分腿蹲|保加利亞|臀橋|橋式|硬舉|小腿|提踵|腿|臀|蹲/.test(n)) return "腿";
     return "";
   }
@@ -2692,6 +2692,24 @@
     if(parts.length>=4) return "全身";
     if(parts.length) return parts.join("/");
     return fallback||"";
+  }
+  // 判斷一個動作是重訓/有氧/休息
+  function moveKind(name){
+    const n=stripMoveName(name);
+    if(/休息|伸展|拉伸|放鬆/.test(n)) return "rest";
+    if(isCommonCardio(name) || /HIIT|間歇|有氧|開合跳|波比|跳繩|飛輪/i.test(n)) return "cardio";
+    return "lift";
+  }
+  // 依「實際動作清單」推算標題(類型 + 部位)與圖示,讓標題跟動作一致(手動調整後也對得上)
+  function deriveDayMeta(items){
+    const arr=(items||[]).map(String).filter(Boolean);
+    const kinds=arr.map(moveKind);
+    const hasLift=kinds.includes("lift"), hasCardio=kinds.includes("cardio");
+    const kind = hasLift ? "lift" : (hasCardio ? "cardio" : "rest");
+    const typeLabel = (hasLift&&hasCardio) ? "重訓/有氧" : (hasLift ? "重訓" : (hasCardio ? "有氧" : "休息"));
+    const liftItems = arr.filter((it,i)=>kinds[i]==="lift");
+    const foc = hasLift ? deriveFocus(liftItems, "") : "";
+    return { kind, title: typeLabel + (foc?(" · "+foc):"") };
   }
   function isCommonCardio(name){ return /跑步機|跑步|慢跑|快走|健走|走路|散步|飛輪|單車|腳踏車|自行車|滑步機|橢圓機|階梯機|游泳|跳繩|開合跳|原地|踏步|treadmill|running|run\b|jog|walk|cycl|swim|elliptical|stair|rope/i.test(String(name||"")); }
   function moveDemoUrl(name){ return "https://www.google.com/search?tbm=isch&q="+encodeURIComponent(stripMoveName(name)+" 動作 示意圖"); }
@@ -2870,9 +2888,13 @@
       card.dataset.iso = day.iso;
       const isToday = isoDate(today) === day.iso;
       // 若使用者在每日打卡改過這天,就用改過的;否則用計畫/預設的
-      const exList = dayExOverride[day.iso]
-        ? dayExOverride[day.iso].map(t=>({name:t, detail:""}))
+      const overItems = (dayExOverride[day.iso] && dayExOverride[day.iso].length) ? dayExOverride[day.iso] : null;
+      const exList = overItems
+        ? overItems.map(t=>({name:t, detail:""}))
         : (day.workout.exercises||[]);
+      // 手動改過的話,標題(類型/部位)、圖示、標籤都依「實際動作」重算,才會跟內容一致
+      const meta = overItems ? deriveDayMeta(overItems) : { kind:day.workout.type, title:day.workout.title };
+      const dispEmoji = meta.kind==="lift" ? "💪" : (meta.kind==="cardio" ? "🏃‍♀️" : "🌙");
       const exRows = exList.map((ex,exi)=>{
         const exKey = "ex:"+day.iso+":"+exi;
         const checked = !!exerciseDone[exKey];
@@ -2895,16 +2917,16 @@
       card.innerHTML = `
         <div class="day-head">
           <div class="left">
-            <span class="day-emoji">${day.workout.emoji}</span>
+            <span class="day-emoji">${dispEmoji}</span>
             <span class="day-date">${fmtDate(day.date)}(${day.weekdayLabel})</span>
-            ${tagFor(day.workout.type)}
+            ${tagFor(meta.kind)}
             ${isToday ? '<span class="today-marker">今天</span>' : ''}
           </div>
           <div class="check">✓</div>
         </div>
         <div class="day-body">
           <div class="blk">
-            <div class="blk-title">運動:${day.workout.title}</div>
+            <div class="blk-title">運動:${meta.title}</div>
             ${day.workout.note?`<div style="color:var(--ink-soft); margin-bottom:8px;">${day.workout.note}</div>`:''}
             <div class="day-ex-list" data-exlist="${day.iso}">${exRows}</div>
             ${exEditRow}
