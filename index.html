@@ -362,6 +362,15 @@
     background:#fff; margin-top:1px;
   }
   .ex-row.done .ex-check{ background:var(--mint); border-color:var(--mint); color:#fff; }
+  .ex-text{ flex:1; min-width:0; }
+  .ex-del{ flex:none; border:none; background:none; padding:2px 2px; cursor:pointer; color:var(--ink-soft); align-self:center; }
+  .ex-del svg{ width:18px; height:18px; display:block; }
+  .ex-del:active{ opacity:0.5; }
+  .day-ex-add{ display:flex; gap:8px; margin-top:8px; }
+  .day-ex-add-input{ flex:1; min-width:0; padding:9px 12px; border-radius:12px; border:2px solid var(--line);
+    font-size:var(--fs-label); background:#FFFDFA; color:var(--ink); font-family:inherit; }
+  .day-ex-add-input:focus{ outline:none; border-color:var(--pink); }
+  .day-ex-add-btn{ flex:none; white-space:nowrap; }
   .ex-text b{ font-size:var(--fs-body); }
   .ex-detail{ font-size:var(--fs-label); color:var(--ink-soft); margin-top:2px; line-height:1.5; }
   .ex-howto{ font-size:var(--fs-hint); color:var(--ink-soft); margin-top:3px; line-height:1.45; }
@@ -2824,6 +2833,26 @@
     });
     if(changed){ saveDayExOverride(); markDayExInSync(); }
   }
+  // 取得某一天目前的動作清單(字串陣列):有手動修改用修改的,否則用計畫/預設的
+  function dayExStrings(iso){
+    if(dayExOverride[iso]) return dayExOverride[iso].slice();
+    const day=(typeof resolveDay==="function")?resolveDay(iso):null;
+    return (((day&&day.workout&&day.workout.exercises)||[]).map(e=> e.detail?(e.name+" "+e.detail):e.name)).filter(Boolean);
+  }
+  async function deleteDayEx(iso, idx){
+    const list=dayExStrings(iso);
+    if(!(idx>=0 && idx<list.length)) return;
+    list.splice(idx,1);
+    dayExOverride[iso]=list; markDayExInSync(); await saveDayExOverride();
+    if(typeof renderDays==="function") renderDays(); if(typeof reopenDay==="function") reopenDay(iso);
+  }
+  async function addDayEx(iso, text){
+    const t=String(text||"").trim(); if(!t) return;
+    const list=dayExStrings(iso); list.push(t);
+    dayExOverride[iso]=list; markDayExInSync(); await saveDayExOverride();
+    if(typeof renderDays==="function") renderDays(); if(typeof reopenDay==="function") reopenDay(iso);
+    setTimeout(()=>{ const inp=document.querySelector('.day-ex-add-input[data-addday="'+iso+'"]'); if(inp) inp.focus(); }, 30);
+  }
   // 運動計畫有變動時呼叫:重新對應每日打卡並重畫
   function syncWorkoutToCheckin(){ applyAiPlanToDays(); if(typeof renderDays==="function"){ try{ renderDays(); }catch(e){} } }
   // 依日期取得「當天」的資料:計畫範圍內用現成的,範圍外就依星期幾即時算出當天的運動與菜單
@@ -2866,10 +2895,15 @@
           <div class="ex-check">✓</div>
           <div class="ex-text"><b>${esc(ex.name)}</b>${moveDemoTag(ex.name)}${ex.detail?` <span class="edit-pencil" data-exedit="${day.iso}:${exi}" role="button" aria-label="改" title="改"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
             <div class="ex-detail" data-exedit-content="${day.iso}:${exi}">${esc(ex.detail)}</div>`:''}${htDiv}</div>
+          <button type="button" class="ex-del" data-exdel="${day.iso}:${exi}" aria-label="刪除這個動作" title="刪除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/></svg></button>
         </div>`;
       }).join("");
-      // 「編輯這天運動」已移除(與下方「調整本日運動計劃」功能重複);仍保留「回到計畫」以便清掉殘留的舊修改
-      const exEditRow = dayExOverride[day.iso] ? `<div class="day-ex-editrow"><button type="button" class="day-edit-reset" data-resetday="${day.iso}">回到計畫</button></div>` : '';
+      // 新增動作 + (若有手動修改)回到計畫
+      const addRow = `<div class="day-ex-add">
+          <input class="day-ex-add-input" data-addday="${day.iso}" placeholder="新增動作,例:深蹲 3組×12" autocomplete="off">
+          <button type="button" class="mini-btn day-ex-add-btn" data-addday="${day.iso}">＋ 新增</button>
+        </div>`;
+      const exEditRow = addRow + (dayExOverride[day.iso] ? `<div class="day-ex-editrow"><button type="button" class="day-edit-reset" data-resetday="${day.iso}">回到計畫</button></div>` : '');
       card.innerHTML = `
         <div class="day-head">
           <div class="left">
@@ -2901,7 +2935,7 @@
       });
       card.querySelectorAll(".ex-row").forEach(row=>{
         row.addEventListener("click", async (e)=>{
-          if(e.target.classList.contains('edit-pencil') || e.target.hasAttribute('data-exedit-content')) return;
+          if(e.target.classList.contains('edit-pencil') || e.target.hasAttribute('data-exedit-content') || (e.target.closest&&e.target.closest('.ex-del,.ex-demo'))) return;
           e.stopPropagation();
           const key = row.dataset.exkey;
           exerciseDone[key] = !exerciseDone[key];
@@ -2909,6 +2943,20 @@
           try{ await window.storage.set(K(key), exerciseDone[key] ? "1":"0", false); }catch(err){}
         });
       });
+      // 刪除單一動作
+      card.querySelectorAll(".ex-del[data-exdel]").forEach(btn=>{
+        btn.addEventListener("click", (e)=>{ e.stopPropagation();
+          const i=btn.dataset.exdel.lastIndexOf(":"); const iso=btn.dataset.exdel.slice(0,i); const exi=parseInt(btn.dataset.exdel.slice(i+1),10);
+          deleteDayEx(iso, exi);
+        });
+      });
+      // 新增動作
+      const addBtnEl=card.querySelector(".day-ex-add-btn[data-addday]");
+      const addInEl=card.querySelector(".day-ex-add-input[data-addday]");
+      const doAdd=()=>{ if(addInEl){ addDayEx(addInEl.dataset.addday, addInEl.value); } };
+      if(addBtnEl) addBtnEl.addEventListener("click", (e)=>{ e.stopPropagation(); doAdd(); });
+      if(addInEl){ addInEl.addEventListener("click",(e)=>e.stopPropagation());
+        addInEl.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); doAdd(); } }); }
       card.querySelectorAll(".edit-pencil[data-exedit]").forEach(p=>{
         p.addEventListener("click", (e)=>{
           e.stopPropagation();
