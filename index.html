@@ -377,6 +377,7 @@
   .food-card{
     display:flex; gap:10px; background:#FFFBF6; border:2px solid var(--line);
     border-radius:14px; padding:10px; margin-top:10px; align-items:flex-start;
+    -webkit-touch-callout:none;   /* 長按拖曳時不要跳出 iOS 複製/分享選單 */
   }
   .food-card img{ width:56px; height:56px; object-fit:cover; border-radius:10px; flex-shrink:0; }
   .food-card .fc-main{ flex:1; min-width:0; }
@@ -409,6 +410,13 @@
     padding:6px 13px; font-size:var(--fs-label); font-weight:700; font-family:inherit; cursor:pointer; }
   .fc-move-btn:active{ background:var(--pink-soft); }
   .mg-empty{ font-size:var(--fs-label); color:var(--ink-soft); padding:8px 4px; }
+  /* 長按拖曳 */
+  .food-card.dragging{ opacity:0.35; }
+  .food-ghost{ position:fixed; transform:translate(-50%,-50%); z-index:999; pointer-events:none;
+    opacity:0.96; box-shadow:0 10px 26px rgba(94,85,76,0.3); margin:0 !important; background:#FFFBF6;
+    border:2px solid var(--pink); border-radius:14px; }
+  body.food-dragging{ user-select:none; }
+  .meal-group.drop-hi{ outline:2px dashed var(--pink); outline-offset:3px; border-radius:14px; background:var(--pink-soft); }
   .qty-row{ display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
   .qty-lbl{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
   .qbtn{ width:32px; height:32px; border-radius:50%; border:2px solid var(--line); background:#fff;
@@ -3467,7 +3475,13 @@
         await saveFoodLog(); renderFoodLog();
       });
     });
-    // 「移到」:點一下展開其他餐別的選項,點餐別就把這個項目搬過去(取代原本不好用的拖曳)
+    // 長按項目直接拖到別的餐別(主要方式);「移到」按鈕作為備援
+    wireFoodDragDoc();
+    area.querySelectorAll(".food-card").forEach(card=>{
+      const fid=card.dataset.fid;
+      card.addEventListener("touchstart",(e)=>fdStart(e,fid,card),{passive:true});
+      card.addEventListener("mousedown",(e)=>fdStart(e,fid,card));
+    });
     area.querySelectorAll(".fc-move").forEach(mv=>{
       mv.addEventListener("click", (e)=>{ e.stopPropagation();
         const card=mv.closest(".food-card"); if(!card) return;
@@ -3500,38 +3514,78 @@
     const f = foodLog.find(x=>x.id===fid); if(!f || f.meal===meal) return;
     f.meal = meal; await saveFoodLog(); renderFoodLog();
   }
-  // 觸控 / 滑鼠都可用的拖曳(把食物項目拖到別的餐別底下)
-  let dragFid=null, dragCard=null, dragGhost=null;
-  function startFoodDrag(e, fid){
-    dragFid=fid; dragCard=e.currentTarget.closest(".food-card"); if(!dragCard) return;
-    dragCard.classList.add("dragging");
-    dragGhost=dragCard.cloneNode(true); dragGhost.classList.add("drag-ghost");
-    dragGhost.style.width=dragCard.offsetWidth+"px"; document.body.appendChild(dragGhost);
-    positionGhost(e);
-    document.addEventListener("pointermove", onFoodDragMove);
-    document.addEventListener("pointerup", onFoodDragEnd, {once:true});
-    e.preventDefault();
+  // 長按食物項目 → 直接拖到別的餐別底下(觸控/滑鼠都可用)
+  let lp=null;   // {fid, card, startX, startY, active, timer, ghost, dropped}
+  let foodDragDocWired=false;
+  function fdPoint(e){ const t=(e.touches&&e.touches[0])||(e.changedTouches&&e.changedTouches[0])||e; return {x:t.clientX, y:t.clientY}; }
+  function fdGroupAt(pt){
+    if(lp&&lp.ghost) lp.ghost.style.display="none";
+    const el=document.elementFromPoint(pt.x, pt.y);
+    if(lp&&lp.ghost) lp.ghost.style.display="";
+    return (el&&el.closest)?el.closest(".meal-group"):null;
   }
-  function positionGhost(e){ if(dragGhost){ dragGhost.style.left=e.clientX+"px"; dragGhost.style.top=e.clientY+"px"; } }
-  function groupUnder(e){
-    if(dragGhost) dragGhost.style.display="none";
-    const el=document.elementFromPoint(e.clientX, e.clientY);
-    if(dragGhost) dragGhost.style.display="";
-    return el && el.closest ? el.closest(".meal-group") : null;
+  function fdAutoScroll(pt){
+    const h=window.innerHeight, edge=95;
+    if(pt.y<edge) window.scrollBy(0, -Math.ceil((edge-pt.y)/5));
+    else if(pt.y>h-edge) window.scrollBy(0, Math.ceil((pt.y-(h-edge))/5));
   }
-  function onFoodDragMove(e){
-    positionGhost(e);
-    const grp=groupUnder(e);
-    document.querySelectorAll(".meal-group").forEach(g=> g.classList.toggle("drop-hi", g===grp));
+  function fdActivate(pt){
+    if(!lp) return; lp.active=true;
+    try{ navigator.vibrate && navigator.vibrate(15); }catch(_){}
+    const r=lp.card.getBoundingClientRect();
+    const g=lp.card.cloneNode(true); g.classList.add("food-ghost");
+    g.style.width=r.width+"px"; g.style.left=pt.x+"px"; g.style.top=pt.y+"px";
+    document.body.appendChild(g); lp.ghost=g;
+    lp.card.classList.add("dragging");
+    document.body.classList.add("food-dragging");
   }
-  function onFoodDragEnd(e){
-    document.removeEventListener("pointermove", onFoodDragMove);
-    const grp=groupUnder(e); const targetMeal=grp?grp.dataset.meal:null;
-    if(dragGhost){ dragGhost.remove(); dragGhost=null; }
-    document.querySelectorAll(".meal-group").forEach(g=> g.classList.remove("drop-hi"));
-    if(dragCard) dragCard.classList.remove("dragging");
-    const fid=dragFid; dragFid=null; dragCard=null;
-    if(targetMeal && fid && targetMeal!=="其他") moveFoodMeal(fid, targetMeal);
+  function fdCleanup(){
+    if(!lp) return;
+    if(lp.timer) clearTimeout(lp.timer);
+    if(lp.ghost) lp.ghost.remove();
+    if(lp.card) lp.card.classList.remove("dragging");
+    document.querySelectorAll(".meal-group").forEach(x=>x.classList.remove("drop-hi"));
+    document.body.classList.remove("food-dragging");
+    lp=null;
+  }
+  function fdStart(e, fid, card){
+    if(lp) fdCleanup();
+    // 在可操作的控制項上按壓不觸發拖曳(按鈕、輸入框、數量、刪除、移到、熱量數字)
+    if(e.target.closest("button, input, textarea, .fc-del, .fc-move, .fc-move-btn, .fc-qtytoggle, .fc-q, .fc-qty-input, .fc-kcal-num")) return;
+    const pt=fdPoint(e);
+    lp={ fid, card, startX:pt.x, startY:pt.y, active:false, timer:null, ghost:null, dropped:false };
+    lp.timer=setTimeout(()=>{ if(lp&&!lp.active) fdActivate(fdPoint(e)); }, 300);
+  }
+  function fdMove(e){
+    if(!lp) return;
+    const pt=fdPoint(e);
+    if(!lp.active){
+      if(Math.abs(pt.x-lp.startX)>12 || Math.abs(pt.y-lp.startY)>12){ if(lp.timer) clearTimeout(lp.timer); lp=null; }   // 移動太多 = 想捲動,取消長按
+      return;
+    }
+    if(e.cancelable) e.preventDefault();   // 拖曳中阻止頁面捲動
+    lp.ghost.style.left=pt.x+"px"; lp.ghost.style.top=pt.y+"px";
+    const grp=fdGroupAt(pt);
+    document.querySelectorAll(".meal-group").forEach(x=> x.classList.toggle("drop-hi", x===grp));
+    fdAutoScroll(pt);
+  }
+  function fdEnd(e){
+    if(!lp) return;
+    if(!lp.active){ if(lp.timer) clearTimeout(lp.timer); lp=null; return; }
+    const pt=fdPoint(e);
+    const grp=fdGroupAt(pt); const meal=grp?grp.dataset.meal:null;
+    const fid=lp.fid;
+    if(e.cancelable) e.preventDefault();   // 抑制拖曳後的點擊(避免誤觸改名)
+    fdCleanup();
+    if(meal && fid && meal!=="其他") moveFoodMeal(fid, meal);
+  }
+  function wireFoodDragDoc(){
+    if(foodDragDocWired) return; foodDragDocWired=true;
+    document.addEventListener("touchmove", fdMove, {passive:false});
+    document.addEventListener("touchend", fdEnd);
+    document.addEventListener("touchcancel", ()=>fdCleanup());
+    document.addEventListener("mousemove", fdMove);
+    document.addEventListener("mouseup", fdEnd);
   }
   // 把輸入框對準某一餐,方便補打 AI 漏掉的食材
   function focusMealInput(meal){
