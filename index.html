@@ -379,8 +379,6 @@
     border-radius:14px; padding:10px; margin-top:10px; align-items:flex-start;
   }
   .food-card img{ width:56px; height:56px; object-fit:cover; border-radius:10px; flex-shrink:0; }
-  .food-card .fc-drag{ font-size:var(--fs-body); color:var(--ink-soft); cursor:grab; padding:2px 4px;
-    touch-action:none; align-self:center; user-select:none; }
   .food-card .fc-main{ flex:1; min-width:0; }
   .food-card .fc-name{ font-size:var(--fs-body); font-weight:700; }
   .food-card .fc-qtyrow{ display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap; }
@@ -400,12 +398,16 @@
   .food-card .fc-del{ color:var(--ink-soft); cursor:pointer; padding:2px 4px; display:inline-flex; align-items:center; }
   .food-card .fc-del svg{ width:19px; height:19px; display:block; }
   .food-card .fc-del:active{ opacity:0.5; }
+  .food-card .fc-actions{ display:flex; flex-direction:column; align-items:flex-end; gap:7px; }
   .fc-qtytoggle{ font-size:var(--fs-label); color:var(--pink); cursor:pointer; white-space:nowrap; }
   .fc-qtytoggle:active{ opacity:0.6; }
-  .food-card.dragging{ opacity:0.4; }
-  .drag-ghost{ position:fixed; transform:translate(-50%,-50%); z-index:999; pointer-events:none;
-    opacity:0.95; box-shadow:0 8px 24px rgba(94,85,76,0.25); margin:0 !important; }
-  .meal-group.drop-hi{ outline:2px dashed var(--pink); outline-offset:3px; border-radius:14px; background:var(--pink-soft); }
+  .fc-move{ font-size:var(--fs-label); color:var(--pink); cursor:pointer; white-space:nowrap; }
+  .fc-move:active{ opacity:0.6; }
+  .fc-moverow{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px; }
+  .fc-move-lbl{ font-size:var(--fs-label); color:var(--ink-soft); }
+  .fc-move-btn{ border:1.5px solid var(--pink-soft); background:#fff; color:var(--ink); border-radius:14px;
+    padding:6px 13px; font-size:var(--fs-label); font-weight:700; font-family:inherit; cursor:pointer; }
+  .fc-move-btn:active{ background:var(--pink-soft); }
   .mg-empty{ font-size:var(--fs-label); color:var(--ink-soft); padding:8px 4px; }
   .qty-row{ display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
   .qty-lbl{ font-size:var(--fs-label); color:var(--ink-soft); font-weight:700; }
@@ -3382,7 +3384,6 @@
         const qty = foodQty(f), unit = foodUnit(f);
         return `
         <div class="food-card" data-fid="${f.id}" data-meal="${esc(m)}">
-          <span class="fc-drag" data-fid="${f.id}">⠿</span>
           ${f.thumb?`<img src="${f.thumb}">`:''}
           <div class="fc-main">
             <div class="fc-name" data-fid="${f.id}">${esc(f.name)}</div>
@@ -3392,13 +3393,17 @@
               <input type="text" inputmode="decimal" class="fc-qty-input" data-fid="${f.id}" value="${fmtQty(qty)}" autocomplete="off">
               <button type="button" class="fc-q" data-fid="${f.id}" data-d="1">＋</button>
             </div>
+            <div class="fc-moverow" data-fid="${f.id}" style="display:none;"><span class="fc-move-lbl">移到:</span>${base.filter(mm=>mm!==m).map(mm=>`<button type="button" class="fc-move-btn" data-fid="${f.id}" data-meal="${esc(mm)}">${mm==="點心"?"點心/水果":esc(mm)}</button>`).join("")}</div>
           </div>
           <div class="fc-right">
             <span class="fc-del" data-fid="${f.id}" role="button" aria-label="刪除" title="刪除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/></svg></span>
-            <span class="fc-qtytoggle" data-fid="${f.id}">更改數量</span>
+            <div class="fc-actions">
+              <span class="fc-qtytoggle" data-fid="${f.id}">更改數量</span>
+              <span class="fc-move" data-fid="${f.id}">移到</span>
+            </div>
           </div>
         </div>`;
-      }).join("") : '<div class="mg-empty">拖食物到這裡,或按「＋ 補食材」</div>';
+      }).join("") : '<div class="mg-empty">按「＋ 補食材」新增,或用項目上的「移到」搬過來</div>';
       const addBtn = base.includes(m) ? `<span class="mg-add" data-meal="${esc(m)}">＋ 補食材</span>` : '';
       return `<div class="meal-group" data-meal="${esc(m)}"><div class="meal-group-title">${m==="點心"?"點心/水果":esc(m)} ${addBtn}</div>${rows}</div>`;
     }).join("");
@@ -3462,8 +3467,18 @@
         await saveFoodLog(); renderFoodLog();
       });
     });
-    area.querySelectorAll(".fc-drag").forEach(h=>{
-      h.addEventListener("pointerdown", (e)=> startFoodDrag(e, h.dataset.fid));
+    // 「移到」:點一下展開其他餐別的選項,點餐別就把這個項目搬過去(取代原本不好用的拖曳)
+    area.querySelectorAll(".fc-move").forEach(mv=>{
+      mv.addEventListener("click", (e)=>{ e.stopPropagation();
+        const card=mv.closest(".food-card"); if(!card) return;
+        const row=card.querySelector(".fc-moverow"); if(!row) return;
+        const open=row.style.display!=="none";
+        area.querySelectorAll(".fc-moverow").forEach(r=> r.style.display="none");   // 一次只開一個
+        row.style.display=open?"none":"flex";
+      });
+    });
+    area.querySelectorAll(".fc-move-btn").forEach(btn=>{
+      btn.addEventListener("click", (e)=>{ e.stopPropagation(); moveFoodMeal(btn.dataset.fid, btn.dataset.meal); });
     });
   }
   function foodUnit(f){ return f.unit!=null ? Number(f.unit) : (Number(f.kcal)||0); }
