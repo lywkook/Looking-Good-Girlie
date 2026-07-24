@@ -2268,8 +2268,37 @@
   }
   // 把「口味喜好」勾選的 chip + 手打的想吃,合成一句偏好(全部可留空)
   let menuPhotos = [];   // 使用者上傳的菜單照片(base64,不含 data: 前綴)
+  // 「不吃X」要當硬性禁止:把類別展開成實際會出現的食材關鍵字
+  const AVOID_MAP = {
+    "豬":["豬","豚","培根","火腿","香腸","臘腸","叉燒","五花","梅花肉","里肌","豬排","排骨","貢丸","肉燥","焢肉","控肉","豬肝","豬血","骰子豬","滷肉","絞肉","獅子頭","東坡"],
+    "牛":["牛","牛肉","牛排","牛腩","牛小排","板腱"],
+    "雞":["雞","雞肉","雞胸","雞腿","雞排","雞翅"],
+    "鴨":["鴨"], "羊":["羊"],
+    "海鮮":["海鮮","魚","蝦","蟹","蛤","蜆","花枝","魷","墨魚","章魚","小卷","透抽","貝","牡蠣","蚵","鮭","鮪","鯖","鱈","干貝","龍蝦","生魚","魚板","蟹肉","蛤蜊","鮮蝦"],
+    "蝦":["蝦"], "蟹":["蟹"], "魚":["魚"], "蛋":["蛋"], "奶":["奶","起司","乳酪","鮮奶"],
+    "辣":["辣","麻辣"], "香菜":["香菜","芫荽"], "蔥":["蔥"], "薑":["薑"], "蒜":["蒜","蒜蓉","蒜末"], "洋蔥":["洋蔥"]
+  };
+  function collectAvoid(){
+    const set=new Set();
+    document.querySelectorAll("#menuPrefChips .fchip.on").forEach(c=>{
+      const p=c.dataset.pref||"";
+      const mm=/^不吃(.+)$/.exec(p);
+      if(mm){ const cat=mm[1]; (AVOID_MAP[cat]||[cat]).forEach(x=>set.add(x)); }
+      if(p==="素食"){ ["豬","牛","雞","鴨","羊","海鮮","蝦","蟹","魚"].forEach(cat=>(AVOID_MAP[cat]||[]).forEach(x=>set.add(x))); }
+    });
+    const wEl=document.getElementById("menuWish"); const wish=(wEl&&wEl.value)||"";
+    const re=/(?:不吃|不要吃|不想吃|別吃|不加|不要|沒有|忌)\s*([一-龥]{1,4})/g; let m;
+    while((m=re.exec(wish))){ const cat=m[1]; (AVOID_MAP[cat]||[cat]).forEach(x=>set.add(x)); }
+    return Array.from(set);
+  }
+  function violatesAvoid(text, list){
+    if(!list||!list.length) return false;
+    const t=String(text||"");
+    return list.some(k=> k && t.indexOf(k)>=0);
+  }
   function getMenuPrefs(){
-    const chips = Array.from(document.querySelectorAll("#menuPrefChips .fchip.on")).map(c=>c.dataset.pref);
+    // 正向偏好(排除「不吃X」,那些改用硬性禁止處理),再加上自由文字
+    const chips = Array.from(document.querySelectorAll("#menuPrefChips .fchip.on")).map(c=>c.dataset.pref).filter(p=>!/^不吃/.test(p));
     const wish = (document.getElementById("menuWish").value||"").trim();
     return [wish].concat(chips).filter(Boolean).join("、");
   }
@@ -2287,7 +2316,7 @@
   // 所有「讀菜單/網頁再推薦」的共用鐵則:嚴禁虛構、輸出一律繁體中文
   const TW_RULE = '\n★語言:回覆一律用「繁體中文(台灣用語)」。若菜單或網頁是簡體中文,推薦時務必翻成繁體中文,text 與 why 裡「都不可以」出現任何簡體字。';
   // 讀菜單照片(可多張)→ 認出菜單上的餐點 → 挑一道適合減重的
-  async function menuPhotoPick(b64s, wish, label, target){
+  async function menuPhotoPick(b64s, wish, label, target, avoidLine){
     const prompt =
       '你是減重營養教練。這是一份餐廳菜單的照片(共 '+b64s.length+' 張),使用者想從這份菜單點「'+label+'」。\n'
       + '重要:照片可能是螢幕截圖、翻拍、有反光、角度歪或不太清楚。請「盡力」辨識看得到的菜名——即使有點模糊、只讀得出部分品項,也要從你讀得出來的餐點裡挑;不要輕易放棄。\n'
@@ -2295,6 +2324,7 @@
       + '從「這份菜單照片上實際讀得到的餐點」裡挑 1 道最適合減重的。\n'
       + '條件:這一餐盡量控制在約 '+target+' 大卡上下、蛋白質足夠、少油炸勾芡與含糖飲料。'
       + (wish ? ('使用者偏好:'+wish+',在此偏好內挑。') : '')
+      + (avoidLine||'')
       + '\n只回 JSON、不要多餘文字:{"text":"菜單上的餐點名稱+簡短吃法建議(例:去醬、飲料換無糖),不超過25字","why":"為什麼推薦這道,不超過30字"}。'
       + '\n只有在「完全一個字都認不出來」時,text 才回空字串。' + TW_RULE;
     const parts = b64s.map(b=>({inline_data:{mime_type:"image/jpeg", data:b}}));
@@ -2320,14 +2350,20 @@
   const RP=(zh,en)=> (typeof lang!=="undefined"&&lang==="en")?en:zh;
   async function pickMeal(avoid){
     const { field, wish, hasPhoto, photos, target } = regenCtx;
+    const avoidList = (regenCtx.avoidList||[]);
     const label = MEAL_LABEL[field];
     const avoidTxt = avoid ? ('。請不要再推薦「'+avoid+'」,換一道明顯不一樣的') : '';
     const wish2 = (wish||'') + avoidTxt;
+    // 「不吃X」是硬性禁止:主食、配菜、醬料都不能出現這些食材
+    const avoidLine = avoidList.length
+      ? ('\n★【最高優先、務必遵守】使用者「絕對不吃」以下食材:'+avoidList.join("、")+'。推薦的餐點(含主食、配菜、醬汁、配料)完全不可以出現這些食材或它們的任何形式;寧可換完全不同的一道,也不能違反。')
+      : '';
     if(!anyKey()) return { text: localNewMeal(field), why:"" };   // 沒金鑰:用內建替代清單輪替
-    if(hasPhoto) return await menuPhotoPick(photos, wish2, label, target);
+    if(hasPhoto) return await menuPhotoPick(photos, wish2, label, target, avoidLine);
     const prompt = '幫減重的人設計今天的「'+label+'」,每日約 '+target+' 大卡,原型食物、好準備。'
       + '想吃:'+(wish2 || '清爽的')+'。'
       + (fridgeHave.length ? ('冰箱有:'+fridgeHave.join("、")+'(優先用)。') : '')
+      + avoidLine
       + '只回 JSON:{"text":"吃什麼不超過25字","why":"為什麼推薦不超過30字"}。' + TW_RULE;
     return await geminiJSON(prompt, null, avoid?0.85:0.6);
   }
@@ -2359,8 +2395,16 @@
     btn.disabled = true; btn.textContent = RP("產生中…","Working…");
     status.innerHTML = '<span class="ai-spin"></span>'+ (hasPhoto?RP('正在讀菜單照片、幫你挑','Reading the menu photo'):(RP('重新設計','Re-planning your ')+label)) +'…';
     try{
-      const m = await pickMeal(avoid);
-      const text = (m && (m.text || m[field])) || "";
+      const avoidList = (regenCtx.avoidList||[]);
+      let m = await pickMeal(avoid);
+      let text = (m && (m.text || m[field])) || "";
+      // 若推薦仍含「不吃」的食材,把違規那道當作要避開的,再重挑(最多幾次)
+      let tries = 0;
+      while(text && violatesAvoid(text, avoidList) && tries < 4){
+        tries++;
+        m = await pickMeal(text);
+        text = (m && (m.text || m[field])) || "";
+      }
       if(!text){
         if(hasPhoto) status.innerHTML = '<span class="err">'+RP('這張認不太出來,靠近菜名分區拍幾張通常更清楚;或直接打想吃什麼。','Couldn\'t read this one — close-up shots of menu sections read better; or just type a craving.')+'</span>';
         else status.innerHTML = '<span class="err">'+RP('這次沒有建議,再按一次試試。','No suggestion this time — tap again.')+'</span>';
@@ -2385,7 +2429,7 @@
       return;
     }
     const target = parseInt(document.getElementById("inKcalTarget").value,10) || kcalTarget || 1500;
-    regenCtx = { field, wish, hasPhoto, photos: menuPhotos.slice(), target, last:null };
+    regenCtx = { field, wish, hasPhoto, photos: menuPhotos.slice(), target, last:null, avoidList: collectAvoid() };
     await runPick(null);
   }
   // AI 教練:結合「飲食紀錄 + 運動 + 每天量測數據 + 目標與期限」→ 判斷進度,重新調整今天的菜單和運動
