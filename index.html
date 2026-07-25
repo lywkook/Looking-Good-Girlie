@@ -2296,6 +2296,14 @@
     const t=String(text||"");
     return list.some(k=> k && t.indexOf(k)>=0);
   }
+  // AI 有時會把 JSON 範例的說明文字原封不動抄回來(例:「吃什麼不超過25字」),或只回「…」;這些都不是真的餐點
+  function isJunkMeal(text){
+    const t=String(text||"").trim();
+    if(!t) return true;
+    if(/^[.．。…·、,，:：\-\s]+$/.test(t)) return true;                       // 只有標點/省略號
+    if(/不超過\s*\d+\s*字|吃什麼不超過|為什麼推薦|餐點名稱|簡短吃法建議/.test(t)) return true;  // 照抄了範例說明
+    return false;
+  }
   function getMenuPrefs(){
     // 正向偏好(排除「不吃X」,那些改用硬性禁止處理),再加上自由文字
     const chips = Array.from(document.querySelectorAll("#menuPrefChips .fchip.on")).map(c=>c.dataset.pref).filter(p=>!/^不吃/.test(p));
@@ -2325,7 +2333,8 @@
       + '條件:這一餐盡量控制在約 '+target+' 大卡上下、蛋白質足夠、少油炸勾芡與含糖飲料。'
       + (wish ? ('使用者偏好:'+wish+',在此偏好內挑。') : '')
       + (avoidLine||'')
-      + '\n只回 JSON、不要多餘文字:{"text":"菜單上的餐點名稱+簡短吃法建議(例:去醬、飲料換無糖),不超過25字","why":"為什麼推薦這道,不超過30字"}。'
+      + '\n只回一個 JSON 物件、不要多餘文字,格式:{"text":"...","why":"..."}。text 填「菜單上的餐點名稱+簡短吃法建議」(25字內,例:去醬、飲料換無糖),why 填「推薦原因」(30字內)。'
+      + '例如:{"text":"清蒸鱸魚,白飯減半","why":"高蛋白少油,熱量好控制"}。★不要照抄範例或欄位說明。'
       + '\n只有在「完全一個字都認不出來」時,text 才回空字串。' + TW_RULE;
     const parts = b64s.map(b=>({inline_data:{mime_type:"image/jpeg", data:b}}));
     try{ return await geminiJSON(prompt, parts, 0.2); }
@@ -2364,7 +2373,9 @@
       + '想吃:'+(wish2 || '清爽的')+'。'
       + (fridgeHave.length ? ('冰箱有:'+fridgeHave.join("、")+'(優先用)。') : '')
       + avoidLine
-      + '只回 JSON:{"text":"吃什麼不超過25字","why":"為什麼推薦不超過30字"}。' + TW_RULE;
+      + '\n只回一個 JSON 物件,格式:{"text":"...","why":"..."}。text 填「實際的餐點名稱」(25字內),why 填「推薦原因」(30字內)。'
+      + '例如:{"text":"蒜香雞胸花椰菜飯","why":"高蛋白又有膳食纖維,好準備"}。'
+      + '★不要照抄上面的範例或欄位說明,要給真正的餐點。' + TW_RULE;
     return await geminiJSON(prompt, null, avoid?0.85:0.6);
   }
   // 把推薦顯示在換餐區下方(尚未套到今日菜單),附「採用這個 / 換一個」
@@ -2398,13 +2409,14 @@
       const avoidList = (regenCtx.avoidList||[]);
       let m = await pickMeal(avoid);
       let text = (m && (m.text || m[field])) || "";
-      // 若推薦仍含「不吃」的食材,把違規那道當作要避開的,再重挑(最多幾次)
+      // 若推薦仍含「不吃」的食材、或 AI 回了範例/空白等垃圾內容,就重挑(最多幾次)
       let tries = 0;
-      while(text && violatesAvoid(text, avoidList) && tries < 4){
+      while(text && (violatesAvoid(text, avoidList) || isJunkMeal(text)) && tries < 4){
         tries++;
-        m = await pickMeal(text);
+        m = await pickMeal(isJunkMeal(text) ? avoid : text);   // 垃圾內容不當作「要避開的菜名」
         text = (m && (m.text || m[field])) || "";
       }
+      if(isJunkMeal(text)) text = "";   // 試到最後還是垃圾 → 當作沒建議,顯示提示而非亂碼
       if(!text){
         if(hasPhoto) status.innerHTML = '<span class="err">'+RP('這張認不太出來,靠近菜名分區拍幾張通常更清楚;或直接打想吃什麼。','Couldn\'t read this one — close-up shots of menu sections read better; or just type a craving.')+'</span>';
         else status.innerHTML = '<span class="err">'+RP('這次沒有建議,再按一次試試。','No suggestion this time — tap again.')+'</span>';
