@@ -3270,24 +3270,48 @@
     const md=s=>{ const m=/\d{4}-(\d{2})-(\d{2})/.exec(String(s)); return m?(parseInt(m[1],10)+"/"+parseInt(m[2],10)):String(s); };
     const path = pts.map((p,idx)=>(idx===0?"M":"L")+x(idx).toFixed(1)+","+y(p.v).toFixed(1)).join(" ");
     const dots = pts.map((p,idx)=>`<circle cx="${x(idx).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="4" fill="${cfg.color}" stroke="#fff" stroke-width="1.5"/>`).join("");
-    // 每個資料點上標數值(點多就每隔幾點標一次,避免擠在一起)
-    const step = n<=14 ? 1 : Math.ceil(n/10);
+    // 每個資料點上標數值:相鄰的點交錯標在「線上方 / 線下方」,鄰居就不會擠在同一排;
+    // 同一排(相隔兩個點)若還是太近就跳過,點很多時再抽樣。
+    const valFS=11, charW=valFS*0.62;                 // 概略字寬,用來判斷會不會重疊
+    const vstep = n<=16 ? 1 : Math.ceil(n/12);
+    const bandRight=[-1e9,-1e9];                       // [上排, 下排] 目前已用到的右緣
     const labels = pts.map((p,idx)=>{
-      if(idx!==0 && idx!==n-1 && idx%step!==0) return "";
-      const xx=x(idx), yy=y(p.v);
+      const forced = (idx===0 || idx===n-1);
+      if(!forced && idx%vstep!==0) return "";
+      const txt=String(p.v), wpx=txt.length*charW, xx=x(idx), yy=y(p.v);
       const anchor = n===1?"middle":(idx===0?"start":(idx===n-1?"end":"middle"));
-      const ty = (yy-10 > padTop) ? (yy-9) : (yy+18);   // 靠上緣就標到點的下方,避免被切掉
-      const dx = idx===0?2:(idx===n-1?-2:0);
-      return `<text x="${(xx+dx).toFixed(1)}" y="${ty.toFixed(1)}" font-size="12.5" font-weight="800" fill="#6E655B" text-anchor="${anchor}">${p.v}</text>`;
+      const left = anchor==="start"? xx : (anchor==="end"? xx-wpx : xx-wpx/2);
+      let band = idx%2;                                // 交錯:偶數在上、奇數在下
+      if(left < bandRight[band]+2){                    // 這一排會撞到 → 換另一排
+        band = 1-band;
+        if(!forced && left < bandRight[band]+2) return "";   // 兩排都會撞,且非首尾 → 乾脆不標
+      }
+      bandRight[band] = left + wpx;
+      let ty = band===0 ? yy-8 : yy+16;
+      if(ty < padTop+8) ty = yy+16;                    // 太靠上緣改標下方
+      if(ty > h-padBottom-2) ty = yy-8;                // 太靠下緣改標上方
+      const dx = idx===0?1:(idx===n-1?-1:0);
+      return `<text x="${(xx+dx).toFixed(1)}" y="${ty.toFixed(1)}" font-size="${valFS}" font-weight="700" fill="#6E655B" text-anchor="${anchor}">${txt}</text>`;
     }).join("");
-    // 底部標日期(日期較寬,點多就標少一點)
-    const dstep = n<=8 ? 1 : Math.ceil(n/6);
-    const dateLabels = pts.map((p,idx)=>{
-      if(idx!==0 && idx!==n-1 && idx%dstep!==0) return "";
-      const xx=x(idx);
+    // 底部標日期:首尾一定標,中間由左到右貪婪擺放,和左鄰、以及最後一個日期都保持足夠間距才標
+    const dateFS=11, dCharW=dateFS*0.62, dGap=6;
+    const lbl = idx=>{ const xx=x(idx), txt=md(pts[idx].date), wpx=txt.length*dCharW;
       const anchor = n===1?"middle":(idx===0?"start":(idx===n-1?"end":"middle"));
-      const dx = idx===0?2:(idx===n-1?-2:0);
-      return `<text x="${(xx+dx).toFixed(1)}" y="${(h-8).toFixed(1)}" font-size="11" fill="#A69C90" text-anchor="${anchor}">${md(p.date)}</text>`;
+      const left = anchor==="start"? xx : (anchor==="end"? xx-wpx : xx-wpx/2);
+      return {xx,txt,anchor,left,right:left+wpx}; };
+    const lastL = lbl(n-1);
+    let lastDR = -1e9;
+    const dateLabels = pts.map((p,idx)=>{
+      let L;
+      if(idx===0 || idx===n-1){ L=lbl(idx); }
+      else{
+        L=lbl(idx);
+        if(L.left < lastDR+dGap) return "";              // 撞到左鄰
+        if(idx!==n-1 && L.right > lastL.left-dGap) return "";  // 會擠到最後一個 → 讓給它
+      }
+      lastDR = L.right;
+      const dx = idx===0?1:(idx===n-1?-1:0);
+      return `<text x="${(L.xx+dx).toFixed(1)}" y="${(h-8).toFixed(1)}" font-size="${dateFS}" fill="#A69C90" text-anchor="${L.anchor}">${L.txt}</text>`;
     }).join("");
     let goalLine="";
     if(goal!=null){
